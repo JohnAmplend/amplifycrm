@@ -23,8 +23,6 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
   const [showAddField, setShowAddField] = useState(false);
   const [showAddStandardField, setShowAddStandardField] = useState(null);
   const [showAddCustomField, setShowAddCustomField] = useState(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const buttonRefs = useRef({});
   const [newField, setNewField] = useState({
     name: "",
     label: "",
@@ -150,42 +148,6 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
     onSave(viewConfig);
   };
 
-  const handleOpenStandardFieldDropdown = (sectionId) => {
-    if (showAddStandardField === sectionId) {
-      setShowAddStandardField(null);
-      return;
-    }
-
-    const buttonElement = buttonRefs.current[`standard-${sectionId}`];
-    if (buttonElement) {
-      const rect = buttonElement.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX
-      });
-    }
-    setShowAddStandardField(sectionId);
-    setShowAddCustomField(null);
-  };
-
-  const handleOpenCustomFieldDropdown = (sectionId) => {
-    if (showAddCustomField === sectionId) {
-      setShowAddCustomField(null);
-      return;
-    }
-
-    const buttonElement = buttonRefs.current[`custom-${sectionId}`];
-    if (buttonElement) {
-      const rect = buttonElement.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX
-      });
-    }
-    setShowAddCustomField(sectionId);
-    setShowAddStandardField(null);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -259,27 +221,83 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
             </div>
 
             {/* Add field buttons */}
-            <div className="flex gap-2">
-              <NeuroButton
-                size="sm"
-                onClick={() => handleOpenStandardFieldDropdown(section.id)}
-                ref={(el) => buttonRefs.current[`standard-${section.id}`] = el}
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Add Standard Field
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </NeuroButton>
-
-              {customFields.length > 0 && (
+            <div className="flex gap-2 relative">
+              <div className="relative">
                 <NeuroButton
                   size="sm"
-                  onClick={() => handleOpenCustomFieldDropdown(section.id)}
-                  ref={(el) => buttonRefs.current[`custom-${section.id}`] = el}
+                  onClick={() => setShowAddStandardField(showAddStandardField === section.id ? null : section.id)}
                 >
                   <Plus className="w-3 h-3 mr-1" />
-                  Add Custom Field
+                  Add Standard Field
                   <ChevronDown className="w-3 h-3 ml-1" />
                 </NeuroButton>
+                
+                {showAddStandardField === section.id && (
+                  <div 
+                    className="absolute bottom-full left-0 mb-2 p-3 shadow-2xl w-72 max-h-80 overflow-y-auto rounded-xl border"
+                    style={{ 
+                      zIndex: 99999,
+                      background: 'white',
+                      borderColor: 'rgba(0, 168, 107, 0.2)',
+                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+                    }}
+                  >
+                    {standardFields.map((field) => (
+                      <button
+                        key={field.name}
+                        onClick={() => handleAddFieldToSection(section.id, field)}
+                        className="w-full text-left px-4 py-3 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                        style={{ 
+                          color: '#333',
+                          fontWeight: '500'
+                        }}
+                      >
+                        <span style={{ color: '#333', fontSize: '14px' }}>{field.label}</span>
+                        <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {customFields.length > 0 && (
+                <div className="relative">
+                  <NeuroButton
+                    size="sm"
+                    onClick={() => setShowAddCustomField(showAddCustomField === section.id ? null : section.id)}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Custom Field
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </NeuroButton>
+                  
+                  {showAddCustomField === section.id && (
+                    <div 
+                      className="absolute bottom-full left-0 mb-2 p-3 shadow-2xl w-72 max-h-80 overflow-y-auto rounded-xl border"
+                      style={{ 
+                        zIndex: 99999,
+                        background: 'white',
+                        borderColor: 'rgba(0, 168, 107, 0.2)',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      {customFields.map((field) => (
+                        <button
+                          key={field.id}
+                          onClick={() => handleAddFieldToSection(section.id, field)}
+                          className="w-full text-left px-4 py-3 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                          style={{ 
+                            color: '#333',
+                            fontWeight: '500'
+                          }}
+                        >
+                          <span style={{ color: '#333', fontSize: '14px' }}>{field.label}</span>
+                          <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </NeuroCard>
@@ -290,79 +308,6 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
           Add Section
         </NeuroButton>
       </div>
-
-      {/* Fixed position dropdowns */}
-      {showAddStandardField && (
-        <>
-          <div 
-            className="fixed inset-0"
-            style={{ zIndex: 99998 }}
-            onClick={() => setShowAddStandardField(null)}
-          />
-          <div 
-            className="fixed p-3 shadow-2xl w-72 max-h-80 overflow-y-auto rounded-xl border"
-            style={{ 
-              zIndex: 99999,
-              background: 'white',
-              borderColor: 'rgba(0, 168, 107, 0.2)',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`
-            }}
-          >
-            {standardFields.map((field) => (
-              <button
-                key={field.name}
-                onClick={() => handleAddFieldToSection(showAddStandardField, field)}
-                className="w-full text-left px-4 py-3 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-                style={{ 
-                  color: '#333',
-                  fontWeight: '500'
-                }}
-              >
-                <span style={{ color: '#333', fontSize: '14px' }}>{field.label}</span>
-                <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {showAddCustomField && (
-        <>
-          <div 
-            className="fixed inset-0"
-            style={{ zIndex: 99998 }}
-            onClick={() => setShowAddCustomField(null)}
-          />
-          <div 
-            className="fixed p-3 shadow-2xl w-72 max-h-80 overflow-y-auto rounded-xl border"
-            style={{ 
-              zIndex: 99999,
-              background: 'white',
-              borderColor: 'rgba(0, 168, 107, 0.2)',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`
-            }}
-          >
-            {customFields.map((field) => (
-              <button
-                key={field.id}
-                onClick={() => handleAddFieldToSection(showAddCustomField, field)}
-                className="w-full text-left px-4 py-3 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-                style={{ 
-                  color: '#333',
-                  fontWeight: '500'
-                }}
-              >
-                <span style={{ color: '#333', fontSize: '14px' }}>{field.label}</span>
-                <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
 
       {/* Custom Fields Management */}
       <NeuroCard>
