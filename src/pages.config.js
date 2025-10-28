@@ -28,6 +28,8 @@ import AllTickets from './pages/AllTickets';
 import MyTickets from './pages/MyTickets';
 import CreateTicket from './pages/CreateTicket';
 import TicketDetail from './pages/TicketDetail';
+import CannedResponses from './pages/CannedResponses';
+import SLAPolicies from './pages/SLAPolicies';
 import Layout from './Layout.jsx';
 
 
@@ -62,6 +64,8 @@ export const PAGES = {
     "MyTickets": MyTickets,
     "CreateTicket": CreateTicket,
     "TicketDetail": TicketDetail,
+    "CannedResponses": CannedResponses,
+    "SLAPolicies": SLAPolicies,
 }
 
 export const pagesConfig = {
