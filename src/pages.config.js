@@ -18,6 +18,8 @@ import SyncLogs from './pages/SyncLogs';
 import APISettings from './pages/APISettings';
 import EmailTemplates from './pages/EmailTemplates';
 import TemplateBuilder from './pages/TemplateBuilder';
+import Campaigns from './pages/Campaigns';
+import CreateCampaign from './pages/CreateCampaign';
 import Layout from './Layout.jsx';
 
 
@@ -42,6 +44,8 @@ export const PAGES = {
     "APISettings": APISettings,
     "EmailTemplates": EmailTemplates,
     "TemplateBuilder": TemplateBuilder,
+    "Campaigns": Campaigns,
+    "CreateCampaign": CreateCampaign,
 }
 
 export const pagesConfig = {
