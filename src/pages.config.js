@@ -43,6 +43,7 @@ import Workflows from './pages/Workflows';
 import Goals from './pages/Goals';
 import Notifications from './pages/Notifications';
 import Dashboards from './pages/Dashboards';
+import WorkflowBuilder from './pages/WorkflowBuilder';
 import Layout from './Layout.jsx';
 
 
@@ -92,6 +93,7 @@ export const PAGES = {
     "Goals": Goals,
     "Notifications": Notifications,
     "Dashboards": Dashboards,
+    "WorkflowBuilder": WorkflowBuilder,
 }
 
 export const pagesConfig = {
