@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Plus, X, GripVertical, Save, Edit2, Trash2, ChevronDown } from "lucide-react";
 import NeuroButton from "./NeuroButton";
@@ -36,7 +37,8 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
     { value: "phone", label: "Phone" },
     { value: "number", label: "Number" },
     { value: "date", label: "Date" },
-    { value: "select", label: "Dropdown" },
+    { value: "select", label: "Single Select" },
+    { value: "multi-select", label: "Multiple Select" },
     { value: "textarea", label: "Text Area" },
     { value: "checkbox", label: "Checkbox" }
   ];
