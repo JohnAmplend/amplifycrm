@@ -39,6 +39,8 @@ import FormSubmissions from './pages/FormSubmissions';
 import WebsiteTracking from './pages/WebsiteTracking';
 import KnowledgeBase from './pages/KnowledgeBase';
 import Reports from './pages/Reports';
+import Workflows from './pages/Workflows';
+import Goals from './pages/Goals';
 import Layout from './Layout.jsx';
 
 
@@ -84,6 +86,8 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "KnowledgeBase": KnowledgeBase,
     "Reports": Reports,
+    "Workflows": Workflows,
+    "Goals": Goals,
 }
 
 export const pagesConfig = {
