@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -198,12 +199,13 @@ export default function Layout({ children, currentPageName }) {
         *::-webkit-scrollbar-thumb:hover { background: rgba(0, 168, 107, 0.5); }
         h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
         body, p, span, div { line-height: 1.5; }
-        .mega-menu { position: absolute; top: 100%; left: 0; right: 0; opacity: 0; visibility: hidden; transition: all 0.3s ease; pointer-events: none; }
+        .mega-menu { position: absolute; top: 100%; left: 0; right: 0; opacity: 0; visibility: hidden; transition: all 0.3s ease; pointer-events: none; z-index: 1000; }
         .mega-menu.active { opacity: 1; visibility: visible; pointer-events: auto; }
+        .nav-bar { position: sticky; top: 0; z-index: 999; }
       `}</style>
 
       {/* Top Navigation Bar */}
-      <div className="ampvibe-card m-4 mb-0">
+      <div className="ampvibe-card m-4 mb-0 nav-bar">
         <div className="flex items-center justify-between px-6 py-4">
           {/* Logo & Brand */}
           <div className="flex items-center gap-6">
@@ -232,7 +234,12 @@ export default function Layout({ children, currentPageName }) {
 
                   {/* Mega Menu Dropdown */}
                   <div className={`mega-menu ${activeMegaMenu === category ? 'active' : ''}`}>
-                    <div className="ampvibe-card mt-2 p-6 shadow-2xl" style={{ minWidth: '600px' }}>
+                    <div className="ampvibe-card mt-2 p-6 shadow-2xl" style={{ 
+                      minWidth: '600px',
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      backdropFilter: 'blur(30px)',
+                      WebkitBackdropFilter: 'blur(30px)'
+                    }}>
                       <div className="grid grid-cols-2 gap-6">
                         {megaMenuData[category].sections.map((section) => (
                           <div key={section.title}>
