@@ -236,22 +236,26 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
                 
                 {showAddStandardField === section.id && (
                   <div 
-                    className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl w-64 max-h-64 overflow-y-auto"
+                    className="absolute top-full left-0 mt-2 p-2 shadow-2xl w-64 max-h-64 overflow-y-auto rounded-xl border"
                     style={{ 
                       zIndex: 9999,
-                      background: 'rgba(255, 255, 255, 0.98)',
-                      backdropFilter: 'blur(30px)',
-                      WebkitBackdropFilter: 'blur(30px)'
+                      background: 'white',
+                      borderColor: 'rgba(0, 168, 107, 0.2)',
+                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                     }}
                   >
                     {standardFields.map((field) => (
                       <button
                         key={field.name}
                         onClick={() => handleAddFieldToSection(section.id, field)}
-                        className="ampvibe-button w-full text-left px-3 py-2 mb-1 text-sm"
+                        className="w-full text-left px-3 py-2 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                        style={{ 
+                          color: '#333',
+                          fontWeight: '500'
+                        }}
                       >
-                        {field.label}
-                        <span className="text-xs ml-2" style={{ color: "#aaa" }}>({field.type})</span>
+                        <span style={{ color: '#333' }}>{field.label}</span>
+                        <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
                       </button>
                     ))}
                   </div>
@@ -271,22 +275,26 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
                   
                   {showAddCustomField === section.id && (
                     <div 
-                      className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl w-64 max-h-64 overflow-y-auto"
+                      className="absolute top-full left-0 mt-2 p-2 shadow-2xl w-64 max-h-64 overflow-y-auto rounded-xl border"
                       style={{ 
                         zIndex: 9999,
-                        background: 'rgba(255, 255, 255, 0.98)',
-                        backdropFilter: 'blur(30px)',
-                        WebkitBackdropFilter: 'blur(30px)'
+                        background: 'white',
+                        borderColor: 'rgba(0, 168, 107, 0.2)',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                       }}
                     >
                       {customFields.map((field) => (
                         <button
                           key={field.id}
                           onClick={() => handleAddFieldToSection(section.id, field)}
-                          className="ampvibe-button w-full text-left px-3 py-2 mb-1 text-sm"
+                          className="w-full text-left px-3 py-2 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                          style={{ 
+                            color: '#333',
+                            fontWeight: '500'
+                          }}
                         >
-                          {field.label}
-                          <span className="text-xs ml-2" style={{ color: "#aaa" }}>({field.type})</span>
+                          <span style={{ color: '#333' }}>{field.label}</span>
+                          <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
                         </button>
                       ))}
                     </div>
