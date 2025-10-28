@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +33,28 @@ export default function Deals() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Deal.create(data),
+    onMutate: async (newDeal) => {
+      await queryClient.cancelQueries(['deals']);
+      const previousDeals = queryClient.getQueryData(['deals']);
+
+      queryClient.setQueryData(['deals'], (old) => {
+        const optimisticDeal = {
+          ...newDeal,
+          id: 'temp-' + Date.now(),
+          created_date: new Date().toISOString(),
+          created_by: currentUser?.email
+        };
+        return [optimisticDeal, ...(old || [])];
+      });
+
+      return { previousDeals };
+    },
+    onError: (err, newDeal, context) => {
+      if (context?.previousDeals) {
+        queryClient.setQueryData(['deals'], context.previousDeals);
+      }
+      alert('Failed to create deal: ' + err.message);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['deals']);
       setShowForm(false);
@@ -40,6 +63,22 @@ export default function Deals() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Deal.update(id, data),
+    onMutate: async ({ id, data: updatedData }) => {
+      await queryClient.cancelQueries(['deals']);
+      const previousDeals = queryClient.getQueryData(['deals']);
+
+      queryClient.setQueryData(['deals'], (old) => {
+        if (!old) return old;
+        return old.map(d => d.id === id ? { ...d, ...updatedData } : d);
+      });
+
+      return { previousDeals };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousDeals) {
+        queryClient.setQueryData(['deals'], context.previousDeals);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['deals']);
     }

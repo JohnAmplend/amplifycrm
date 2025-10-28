@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -41,6 +42,31 @@ export default function Leads() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Lead.create(data),
+    onMutate: async (newLead) => {
+      await queryClient.cancelQueries(['leads']);
+      const previousLeads = queryClient.getQueryData(['leads']);
+
+      queryClient.setQueryData(['leads'], (old) => {
+        const optimisticLead = {
+          ...newLead,
+          id: 'temp-' + Date.now(), // Temporary ID for optimistic rendering
+          created_date: new Date().toISOString(),
+          created_by: currentUser?.email,
+          lead_owner: newLead.lead_owner || currentUser?.email, // Ensure owner is set
+          lead_status: newLead.lead_status || 'New', // Default status
+          lead_score: newLead.lead_score || 0, // Default score
+        };
+        return [optimisticLead, ...(old || [])];
+      });
+
+      return { previousLeads };
+    },
+    onError: (err, newLead, context) => {
+      if (context?.previousLeads) {
+        queryClient.setQueryData(['leads'], context.previousLeads);
+      }
+      alert('Failed to create lead: ' + err.message);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['leads']);
       setShowForm(false);
@@ -55,14 +81,17 @@ export default function Leads() {
         l.lead_source, l.lead_status, l.lead_score, l.lead_owner,
         new Date(l.created_date).toLocaleDateString()
       ])
-    ].map(row => row.join(',')).join('\n');
+    ].map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n'); // Ensure proper CSV escaping
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a); // Required for Firefox
     a.click();
+    document.body.removeChild(a); // Clean up
+    URL.revokeObjectURL(url); // Release object URL
   };
 
   const filteredLeads = leads.filter(lead => {

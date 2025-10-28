@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -41,7 +42,39 @@ export default function Contacts() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Contact.create(data),
+    onMutate: async (newContact) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries(['contacts']);
+
+      // Snapshot the previous value
+      const previousContacts = queryClient.getQueryData(['contacts']);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['contacts'], (old) => {
+        const optimisticContact = {
+          ...newContact,
+          id: 'temp-' + Date.now(), // Assign a temporary ID
+          created_date: new Date().toISOString(),
+          created_by: currentUser?.email,
+          contact_owner: newContact.contact_owner || currentUser?.email, // Default owner to current user if not provided
+          lifecycle_stage: newContact.lifecycle_stage || 'Lead', // Default stage
+          lead_status: newContact.lead_status || 'New', // Default status
+        };
+        return [optimisticContact, ...(old || [])];
+      });
+
+      // Return context with the snapshot
+      return { previousContacts };
+    },
+    onError: (err, newContact, context) => {
+      // Rollback on error
+      if (context?.previousContacts) {
+        queryClient.setQueryData(['contacts'], context.previousContacts);
+      }
+      alert('Failed to create contact: ' + err.message);
+    },
     onSuccess: () => {
+      // Invalidate and refetch to get the real data from server and remove optimistic entry
       queryClient.invalidateQueries(['contacts']);
       setShowForm(false);
     }
@@ -55,14 +88,15 @@ export default function Contacts() {
         c.company_id, c.contact_owner, c.lead_status,
         new Date(c.created_date).toLocaleDateString()
       ])
-    ].map(row => row.join(',')).join('\n');
+    ].map(row => row.map(field => `"${field ? String(field).replace(/"/g, '""') : ''}"`).join(',')).join('\n'); // Ensure proper CSV escaping
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
+    URL.revokeObjectURL(url); // Clean up the URL object
   };
 
   const filteredContacts = contacts.filter(contact => {

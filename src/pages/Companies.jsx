@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -40,6 +41,45 @@ export default function Companies() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Company.create(data),
+    onMutate: async (newCompany) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries(['companies']);
+
+      // Snapshot the previous value
+      const previousCompanies = queryClient.getQueryData(['companies']);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['companies'], (old) => {
+        const optimisticCompany = {
+          ...newCompany,
+          id: 'temp-' + Date.now(), // Assign a temporary ID
+          created_date: new Date().toISOString(),
+          created_by: currentUser?.email,
+          // If CompanyForm doesn't provide company_owner, default to currentUser
+          company_owner: newCompany.company_owner || currentUser?.email, 
+          // Other default fields for display
+          domain: newCompany.domain || '',
+          industry: newCompany.industry || '',
+          phone: newCompany.phone || '',
+          city: newCompany.city || '',
+          state: newCompany.state || '',
+          country: newCompany.country || '',
+          number_of_employees: newCompany.number_of_employees || null,
+          annual_revenue: newCompany.annual_revenue || null,
+          lifecycle_stage: newCompany.lifecycle_stage || 'Lead', // Default stage
+        };
+        return [optimisticCompany, ...(old || [])];
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousCompanies };
+    },
+    onError: (err, newCompany, context) => {
+      if (context?.previousCompanies) {
+        queryClient.setQueryData(['companies'], context.previousCompanies);
+      }
+      alert('Failed to create company: ' + err.message);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['companies']);
       setShowForm(false);
@@ -54,14 +94,15 @@ export default function Companies() {
         c.number_of_employees, c.annual_revenue, c.company_owner, c.lifecycle_stage,
         new Date(c.created_date).toLocaleDateString()
       ])
-    ].map(row => row.join(',')).join('\n');
+    ].map(row => row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',')).join('\n'); // Ensure CSV formatting handles commas and quotes
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `companies-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
+    URL.revokeObjectURL(url); // Clean up the URL object
   };
 
   const filteredCompanies = companies.filter(company => {
@@ -208,6 +249,8 @@ export default function Companies() {
                       <td className="py-3 px-4" style={{ color: "#888" }}>{company.phone}</td>
                       <td className="py-3 px-4" style={{ color: "#888" }}>
                         {company.city && company.state && `${company.city}, ${company.state}`}
+                        {company.city && !company.state && company.city}
+                        {!company.city && company.state && company.state}
                       </td>
                       <td className="py-3 px-4">
                         <span className="neuro-button px-2 py-1 text-xs">

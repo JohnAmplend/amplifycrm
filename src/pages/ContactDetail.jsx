@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -57,8 +58,42 @@ export default function ContactDetail() {
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Contact.update(contactId, data),
+    onMutate: async (updatedData) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries(['contact', contactId]);
+      await queryClient.cancelQueries(['contacts']);
+
+      // Snapshot previous values
+      const previousContact = queryClient.getQueryData(['contact', contactId]);
+      const previousContacts = queryClient.getQueryData(['contacts']);
+
+      // Optimistically update contact detail
+      queryClient.setQueryData(['contact', contactId], (old) => {
+        // If old data is an array (from filter), update the first item. Otherwise, handle as single object.
+        return old ? (Array.isArray(old) ? [{ ...old[0], ...updatedData }] : { ...old, ...updatedData }) : old;
+      });
+
+      // Optimistically update contacts list
+      queryClient.setQueryData(['contacts'], (old) => {
+        if (!old) return old;
+        return old.map(c => c.id === contactId ? { ...c, ...updatedData } : c);
+      });
+
+      return { previousContact, previousContacts };
+    },
+    onError: (err, updatedData, context) => {
+      // Rollback on error
+      if (context?.previousContact) {
+        queryClient.setQueryData(['contact', contactId], context.previousContact);
+      }
+      if (context?.previousContacts) {
+        queryClient.setQueryData(['contacts'], context.previousContacts);
+      }
+      alert('Failed to update contact: ' + err.message);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['contact', contactId]);
+      queryClient.invalidateQueries(['contacts']);
       setEditMode(false);
     }
   });
@@ -66,6 +101,7 @@ export default function ContactDetail() {
   const deleteMutation = useMutation({
     mutationFn: () => base44.entities.Contact.delete(contactId),
     onSuccess: () => {
+      queryClient.invalidateQueries(['contacts']);
       navigate(createPageUrl("Contacts"));
     }
   });
