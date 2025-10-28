@@ -16,6 +16,8 @@ import AppSync from './pages/AppSync';
 import AddConnection from './pages/AddConnection';
 import SyncLogs from './pages/SyncLogs';
 import APISettings from './pages/APISettings';
+import EmailTemplates from './pages/EmailTemplates';
+import TemplateBuilder from './pages/TemplateBuilder';
 import Layout from './Layout.jsx';
 
 
@@ -38,6 +40,8 @@ export const PAGES = {
     "AddConnection": AddConnection,
     "SyncLogs": SyncLogs,
     "APISettings": APISettings,
+    "EmailTemplates": EmailTemplates,
+    "TemplateBuilder": TemplateBuilder,
 }
 
 export const pagesConfig = {
