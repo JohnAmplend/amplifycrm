@@ -1,0 +1,51 @@
+{
+  "name": "Duplicate_Rules",
+  "type": "object",
+  "properties": {
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Lead"
+      ],
+      "description": "Type of entity this rule applies to"
+    },
+    "field_name": {
+      "type": "string",
+      "description": "Field name to check for duplicates"
+    },
+    "match_type": {
+      "type": "string",
+      "enum": [
+        "exact",
+        "fuzzy"
+      ],
+      "default": "exact",
+      "description": "Type of matching algorithm"
+    },
+    "weight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.5,
+      "description": "Weight of this field in overall similarity score"
+    },
+    "threshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.7,
+      "description": "Minimum score to consider as duplicate"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this rule is currently active"
+    }
+  },
+  "required": [
+    "entity_type",
+    "field_name"
+  ]
+}

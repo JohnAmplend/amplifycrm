@@ -26,18 +26,18 @@
       "description": "Similarity score percentage"
     },
     "matching_fields": {
-      "type": "object",
-      "description": "Which fields matched"
+      "type": "string",
+      "description": "Comma-separated list of fields that matched"
     },
     "status": {
       "type": "string",
       "enum": [
-        "Pending Review",
+        "Pending",
         "Merged",
         "Dismissed",
         "False Positive"
       ],
-      "default": "Pending Review",
+      "default": "Pending",
       "description": "Duplicate status"
     },
     "reviewed_by": {

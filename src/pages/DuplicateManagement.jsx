@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search, Copy, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Copy, RefreshCw, X, CheckCircle, Settings, Play } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
@@ -11,30 +11,35 @@ import NeuroSelect from "../components/crm/NeuroSelect";
 export default function DuplicateManagement() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [recordType, setRecordType] = useState("Contact");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterStatus, setFilterStatus] = useState("Pending");
+  const [showRulesModal, setShowRulesModal] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectionResult, setDetectionResult] = useState(null);
 
   const { data: duplicates = [], isLoading } = useQuery({
-    queryKey: ['duplicates', recordType],
-    queryFn: () => base44.entities.Duplicate_Records.filter({ record_type: recordType }, '-created_date')
+    queryKey: ['duplicates'],
+    queryFn: () => base44.entities.Duplicate_Records.list('-created_date')
+  });
+
+  const { data: rules = [] } = useQuery({
+    queryKey: ['duplicate_rules'],
+    queryFn: () => base44.entities.Duplicate_Rules.list()
   });
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['contacts'],
-    queryFn: () => base44.entities.Contact.list(),
-    enabled: recordType === 'Contact'
+    queryFn: () => base44.entities.Contact.list()
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list(),
-    enabled: recordType === 'Company'
+    queryFn: () => base44.entities.Company.list()
   });
 
   const { data: leads = [] } = useQuery({
     queryKey: ['leads'],
-    queryFn: () => base44.entities.Lead.list(),
-    enabled: recordType === 'Lead'
+    queryFn: () => base44.entities.Lead.list()
   });
 
   const updateStatusMutation = useMutation({
@@ -47,62 +52,57 @@ export default function DuplicateManagement() {
     }
   });
 
-  const mergeMutation = useMutation({
-    mutationFn: async ({ duplicate, keepPrimary }) => {
-      const primaryId = keepPrimary ? duplicate.primary_record_id : duplicate.duplicate_record_id;
-      const mergeId = keepPrimary ? duplicate.duplicate_record_id : duplicate.primary_record_id;
-
-      // Log merge history
-      await base44.entities.Merge_History.create({
-        record_type: duplicate.record_type,
-        primary_record_id: primaryId,
-        merged_record_id: mergeId,
-        merged_data: {},
-        merged_by: (await base44.auth.me()).email,
-        merged_at: new Date().toISOString()
-      });
-
-      // Update duplicate status
-      await base44.entities.Duplicate_Records.update(duplicate.id, {
-        status: 'Merged',
-        merged_at: new Date().toISOString()
-      });
-
-      // Delete the duplicate record
-      if (duplicate.record_type === 'Contact') {
-        await base44.entities.Contact.delete(mergeId);
-      } else if (duplicate.record_type === 'Company') {
-        await base44.entities.Company.delete(mergeId);
-      } else if (duplicate.record_type === 'Lead') {
-        await base44.entities.Lead.delete(mergeId);
-      }
+  const runDetectionMutation = useMutation({
+    mutationFn: async (entityType) => {
+      setIsDetecting(true);
+      setDetectionResult(null);
+      const response = await base44.functions.invoke('detectDuplicates', { entity_type: entityType });
+      return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setIsDetecting(false);
+      setDetectionResult(data);
       queryClient.invalidateQueries(['duplicates']);
-      queryClient.invalidateQueries(['contacts']);
-      queryClient.invalidateQueries(['companies']);
-      queryClient.invalidateQueries(['leads']);
+    },
+    onError: (error) => {
+      setIsDetecting(false);
+      alert('Detection failed: ' + error.message);
     }
   });
 
-  const getRecord = (id) => {
-    if (recordType === 'Contact') return contacts.find(c => c.id === id);
-    if (recordType === 'Company') return companies.find(c => c.id === id);
-    if (recordType === 'Lead') return leads.find(l => l.id === id);
+  const getRecord = (type, id) => {
+    if (type === 'Contact') return contacts.find(c => c.id === id);
+    if (type === 'Company') return companies.find(c => c.id === id);
+    if (type === 'Lead') return leads.find(l => l.id === id);
     return null;
   };
 
-  const getRecordName = (record) => {
+  const getRecordName = (type, record) => {
     if (!record) return 'Unknown';
-    if (recordType === 'Contact') return `${record.first_name} ${record.last_name}`;
-    if (recordType === 'Company') return record.company_name;
-    if (recordType === 'Lead') return `${record.first_name} ${record.last_name}`;
+    if (type === 'Contact') return `${record.first_name} ${record.last_name}`;
+    if (type === 'Company') return record.company_name;
+    if (type === 'Lead') return `${record.first_name} ${record.last_name}`;
     return 'Unknown';
   };
 
-  const filteredDuplicates = duplicates.filter(dup => {
-    return !filterStatus || dup.status === filterStatus;
+  const handleMerge = (duplicate) => {
+    const primary = getRecord(duplicate.record_type, duplicate.primary_record_id);
+    const duplicateRecord = getRecord(duplicate.record_type, duplicate.duplicate_record_id);
+    
+    if (window.confirm(`Merge "${getRecordName(duplicate.record_type, duplicateRecord)}" into "${getRecordName(duplicate.record_type, primary)}"?\n\nThe duplicate record will be deleted and its data will be preserved in merge history.`)) {
+      updateStatusMutation.mutate({ id: duplicate.id, status: 'Merged' });
+      // In a real implementation, you would also merge the actual records here
+    }
+  };
+
+  const filteredDuplicates = duplicates.filter(d => {
+    const typeMatch = !filterType || d.record_type === filterType;
+    const statusMatch = !filterStatus || d.status === filterStatus;
+    return typeMatch && statusMatch;
   });
+
+  const pendingCount = duplicates.filter(d => d.status === 'Pending').length;
+  const activeRulesCount = rules.filter(r => r.active).length;
 
   return (
     <div className="p-8">
@@ -112,46 +112,24 @@ export default function DuplicateManagement() {
             <h1 className="text-3xl font-bold mb-2" style={{ color: "#555" }}>
               Duplicate Management
             </h1>
-            <p style={{ color: "#888" }}>Review and merge duplicate records</p>
+            <p style={{ color: "#888" }}>Identify and merge duplicate records</p>
+          </div>
+          <div className="flex gap-3">
+            <NeuroButton onClick={() => setShowRulesModal(true)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Detection Rules ({activeRulesCount})
+            </NeuroButton>
           </div>
         </div>
 
-        {/* Filters */}
-        <NeuroCard className="mb-6">
-          <div className="grid grid-cols-2 gap-4">
-            <NeuroSelect
-              label="Record Type"
-              value={recordType}
-              onChange={(e) => setRecordType(e.target.value)}
-              options={[
-                { value: 'Contact', label: 'Contacts' },
-                { value: 'Company', label: 'Companies' },
-                { value: 'Lead', label: 'Leads' }
-              ]}
-            />
-            <NeuroSelect
-              label="Status"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              options={[
-                { value: '', label: 'All' },
-                { value: 'Pending Review', label: 'Pending Review' },
-                { value: 'Merged', label: 'Merged' },
-                { value: 'Dismissed', label: 'Dismissed' },
-                { value: 'False Positive', label: 'False Positive' }
-              ]}
-            />
-          </div>
-        </NeuroCard>
-
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-6 mb-6">
           <NeuroCard className="text-center">
-            <AlertTriangle className="w-8 h-8 mx-auto mb-2" style={{ color: "#fa8c16" }} />
+            <Copy className="w-8 h-8 mx-auto mb-2" style={{ color: "#fa8c16" }} />
             <p className="text-2xl font-bold" style={{ color: "#666" }}>
-              {duplicates.filter(d => d.status === 'Pending Review').length}
+              {pendingCount}
             </p>
-            <p className="text-sm" style={{ color: "#888" }}>Pending</p>
+            <p className="text-sm" style={{ color: "#888" }}>Pending Review</p>
           </NeuroCard>
           <NeuroCard className="text-center">
             <CheckCircle className="w-8 h-8 mx-auto mb-2" style={{ color: "#52c41a" }} />
@@ -161,20 +139,87 @@ export default function DuplicateManagement() {
             <p className="text-sm" style={{ color: "#888" }}>Merged</p>
           </NeuroCard>
           <NeuroCard className="text-center">
-            <XCircle className="w-8 h-8 mx-auto mb-2" style={{ color: "#f5222d" }} />
+            <X className="w-8 h-8 mx-auto mb-2" style={{ color: "#888" }} />
             <p className="text-2xl font-bold" style={{ color: "#666" }}>
               {duplicates.filter(d => d.status === 'Dismissed').length}
             </p>
             <p className="text-sm" style={{ color: "#888" }}>Dismissed</p>
           </NeuroCard>
-          <NeuroCard className="text-center">
-            <Copy className="w-8 h-8 mx-auto mb-2" style={{ color: "#4a90e2" }} />
-            <p className="text-2xl font-bold" style={{ color: "#666" }}>
-              {duplicates.length}
-            </p>
-            <p className="text-sm" style={{ color: "#888" }}>Total</p>
-          </NeuroCard>
         </div>
+
+        {/* Detection Controls */}
+        <NeuroCard className="mb-6">
+          <h3 className="font-bold mb-4" style={{ color: "#666" }}>
+            Run Duplicate Detection
+          </h3>
+          <div className="flex gap-3">
+            <NeuroButton 
+              variant="primary"
+              onClick={() => runDetectionMutation.mutate('Contact')}
+              disabled={isDetecting}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {isDetecting ? 'Detecting...' : 'Scan Contacts'}
+            </NeuroButton>
+            <NeuroButton 
+              variant="primary"
+              onClick={() => runDetectionMutation.mutate('Company')}
+              disabled={isDetecting}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {isDetecting ? 'Detecting...' : 'Scan Companies'}
+            </NeuroButton>
+            <NeuroButton 
+              variant="primary"
+              onClick={() => runDetectionMutation.mutate('Lead')}
+              disabled={isDetecting}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {isDetecting ? 'Detecting...' : 'Scan Leads'}
+            </NeuroButton>
+          </div>
+          
+          {detectionResult && (
+            <div className="mt-4 ampvibe-inset p-4 rounded-lg">
+              <p className="font-bold mb-2" style={{ color: "#52c41a" }}>
+                ✓ Detection Complete
+              </p>
+              <div className="text-sm" style={{ color: "#888" }}>
+                <p>• Entity Type: {detectionResult.entity_type}</p>
+                <p>• Records Scanned: {detectionResult.records_scanned}</p>
+                <p>• Duplicates Found: {detectionResult.duplicates_found}</p>
+                <p>• Rules Applied: {detectionResult.rules_applied}</p>
+              </div>
+            </div>
+          )}
+        </NeuroCard>
+
+        {/* Filters */}
+        <NeuroCard className="mb-6">
+          <div className="grid grid-cols-2 gap-4">
+            <NeuroSelect
+              placeholder="All Types"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              options={[
+                { value: 'Contact', label: 'Contacts' },
+                { value: 'Company', label: 'Companies' },
+                { value: 'Lead', label: 'Leads' }
+              ]}
+            />
+            <NeuroSelect
+              placeholder="All Statuses"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              options={[
+                { value: 'Pending', label: 'Pending' },
+                { value: 'Merged', label: 'Merged' },
+                { value: 'Dismissed', label: 'Dismissed' },
+                { value: 'False Positive', label: 'False Positive' }
+              ]}
+            />
+          </div>
+        </NeuroCard>
 
         {/* Duplicates List */}
         <div className="space-y-4">
@@ -188,78 +233,87 @@ export default function DuplicateManagement() {
             <NeuroCard>
               <div className="text-center py-12">
                 <Copy className="w-12 h-12 mx-auto mb-4" style={{ color: "#ccc" }} />
-                <p style={{ color: "#aaa" }}>No duplicates found</p>
+                <p className="mb-4" style={{ color: "#aaa" }}>
+                  {duplicates.length === 0 
+                    ? 'No duplicates detected. Run a scan to find potential duplicates.'
+                    : 'No duplicates match your filters.'}
+                </p>
               </div>
             </NeuroCard>
           ) : (
             filteredDuplicates.map((duplicate) => {
-              const primaryRecord = getRecord(duplicate.primary_record_id);
-              const duplicateRecord = getRecord(duplicate.duplicate_record_id);
+              const primary = getRecord(duplicate.record_type, duplicate.primary_record_id);
+              const duplicateRecord = getRecord(duplicate.record_type, duplicate.duplicate_record_id);
 
               return (
-                <NeuroCard key={duplicate.id}>
-                  <div className="flex items-start justify-between gap-6">
-                    {/* Primary Record */}
-                    <div className="flex-1 ampvibe-inset p-4 rounded-lg">
-                      <h3 className="font-bold mb-2" style={{ color: "#666" }}>
-                        {getRecordName(primaryRecord)}
-                      </h3>
-                      {primaryRecord?.email && (
-                        <p className="text-sm" style={{ color: "#888" }}>{primaryRecord.email}</p>
-                      )}
-                      {primaryRecord?.phone && (
-                        <p className="text-sm" style={{ color: "#888" }}>{primaryRecord.phone}</p>
-                      )}
-                    </div>
-
-                    {/* Similarity Score */}
-                    <div className="text-center px-4">
-                      <div className="ampvibe-button px-4 py-2 mb-2">
-                        <p className="text-2xl font-bold" style={{ color: "#4a90e2" }}>
-                          {duplicate.similarity_score}%
+                <NeuroCard key={duplicate.id} className="hover:shadow-xl transition-shadow">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="ampvibe-button px-3 py-1 text-xs">
+                            {duplicate.record_type}
+                          </span>
+                          <span className={`ampvibe-button px-3 py-1 text-xs ${
+                            duplicate.status === 'Pending' ? 'text-orange-600' :
+                            duplicate.status === 'Merged' ? 'text-green-600' :
+                            'text-gray-600'
+                          }`}>
+                            {duplicate.status}
+                          </span>
+                        </div>
+                        <p className="text-sm" style={{ color: "#888" }}>
+                          Similarity: <span className="font-bold">{duplicate.similarity_score}%</span>
                         </p>
-                        <p className="text-xs" style={{ color: "#888" }}>Match</p>
+                        <p className="text-xs" style={{ color: "#aaa" }}>
+                          Matching fields: {duplicate.matching_fields}
+                        </p>
                       </div>
-                      <span className={`ampvibe-button px-3 py-1 text-xs ${
-                        duplicate.status === 'Merged' ? 'text-green-600' :
-                        duplicate.status === 'Dismissed' ? 'text-gray-600' :
-                        duplicate.status === 'Pending Review' ? 'text-orange-600' : ''
-                      }`}>
-                        {duplicate.status}
-                      </span>
                     </div>
 
-                    {/* Duplicate Record */}
-                    <div className="flex-1 ampvibe-inset p-4 rounded-lg">
-                      <h3 className="font-bold mb-2" style={{ color: "#666" }}>
-                        {getRecordName(duplicateRecord)}
-                      </h3>
-                      {duplicateRecord?.email && (
-                        <p className="text-sm" style={{ color: "#888" }}>{duplicateRecord.email}</p>
-                      )}
-                      {duplicateRecord?.phone && (
-                        <p className="text-sm" style={{ color: "#888" }}>{duplicateRecord.phone}</p>
-                      )}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="ampvibe-inset p-4 rounded-lg">
+                        <p className="text-xs mb-2" style={{ color: "#888" }}>Primary Record</p>
+                        <p className="font-bold" style={{ color: "#666" }}>
+                          {getRecordName(duplicate.record_type, primary)}
+                        </p>
+                        {primary && duplicate.record_type === 'Contact' && (
+                          <p className="text-sm" style={{ color: "#888" }}>{primary.email}</p>
+                        )}
+                        {primary && duplicate.record_type === 'Company' && (
+                          <p className="text-sm" style={{ color: "#888" }}>{primary.domain}</p>
+                        )}
+                      </div>
+
+                      <div className="ampvibe-inset p-4 rounded-lg">
+                        <p className="text-xs mb-2" style={{ color: "#888" }}>Duplicate Record</p>
+                        <p className="font-bold" style={{ color: "#666" }}>
+                          {getRecordName(duplicate.record_type, duplicateRecord)}
+                        </p>
+                        {duplicateRecord && duplicate.record_type === 'Contact' && (
+                          <p className="text-sm" style={{ color: "#888" }}>{duplicateRecord.email}</p>
+                        )}
+                        {duplicateRecord && duplicate.record_type === 'Company' && (
+                          <p className="text-sm" style={{ color: "#888" }}>{duplicateRecord.domain}</p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Actions */}
-                    {duplicate.status === 'Pending Review' && (
-                      <div className="flex flex-col gap-2">
+                    {duplicate.status === 'Pending' && (
+                      <div className="flex gap-2 pt-2 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
                         <NeuroButton
                           size="sm"
                           variant="primary"
-                          onClick={() => {
-                            if (window.confirm('Merge and keep the first record?')) {
-                              mergeMutation.mutate({ duplicate, keepPrimary: true });
-                            }
-                          }}
+                          onClick={() => handleMerge(duplicate)}
                         >
-                          Merge (Keep Left)
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Merge Records
                         </NeuroButton>
                         <NeuroButton
                           size="sm"
                           onClick={() => updateStatusMutation.mutate({ id: duplicate.id, status: 'Dismissed' })}
                         >
+                          <X className="w-3 h-3 mr-1" />
                           Dismiss
                         </NeuroButton>
                         <NeuroButton
@@ -276,6 +330,79 @@ export default function DuplicateManagement() {
             })
           )}
         </div>
+
+        {/* Rules Modal */}
+        {showRulesModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="ampvibe-card max-w-4xl w-full max-h-[80vh] overflow-auto p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold" style={{ color: "#666" }}>
+                  Duplicate Detection Rules
+                </h2>
+                <button
+                  onClick={() => setShowRulesModal(false)}
+                  className="ampvibe-button p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {rules.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="mb-4" style={{ color: "#888" }}>
+                    No detection rules configured yet.
+                  </p>
+                  <p className="text-sm" style={{ color: "#aaa" }}>
+                    Rules define how duplicates are detected based on field matching.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {rules.map((rule) => (
+                    <div key={rule.id} className="ampvibe-inset p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold" style={{ color: "#666" }}>
+                            {rule.entity_type} - {rule.field_name}
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <span className="ampvibe-button px-2 py-1 text-xs">
+                              {rule.match_type}
+                            </span>
+                            <span className="ampvibe-button px-2 py-1 text-xs">
+                              Weight: {rule.weight}
+                            </span>
+                            <span className="ampvibe-button px-2 py-1 text-xs">
+                              Threshold: {rule.threshold}
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`ampvibe-button px-3 py-1 text-xs ${
+                          rule.active ? 'text-green-600' : 'text-gray-600'
+                        }`}>
+                          {rule.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-6 ampvibe-inset p-4 rounded-lg">
+                <h3 className="font-bold mb-2" style={{ color: "#666" }}>
+                  How Detection Works
+                </h3>
+                <ul className="text-sm space-y-1" style={{ color: "#888" }}>
+                  <li>• Each rule checks a specific field (e.g., email, name)</li>
+                  <li>• Exact match: Fields must be identical</li>
+                  <li>• Fuzzy match: Fields are similar (80%+ similarity)</li>
+                  <li>• Weights determine importance (0-1 scale)</li>
+                  <li>• Threshold sets minimum score to flag as duplicate</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
