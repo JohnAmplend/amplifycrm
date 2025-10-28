@@ -38,6 +38,7 @@ import CustomObjects from './pages/CustomObjects';
 import FormSubmissions from './pages/FormSubmissions';
 import WebsiteTracking from './pages/WebsiteTracking';
 import KnowledgeBase from './pages/KnowledgeBase';
+import Reports from './pages/Reports';
 import Layout from './Layout.jsx';
 
 
@@ -82,6 +83,7 @@ export const PAGES = {
     "FormSubmissions": FormSubmissions,
     "WebsiteTracking": WebsiteTracking,
     "KnowledgeBase": KnowledgeBase,
+    "Reports": Reports,
 }
 
 export const pagesConfig = {
