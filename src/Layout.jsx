@@ -12,7 +12,6 @@ import {
   Upload,
   LogOut,
   Phone,
-  RefreshCw,
   Settings
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -20,6 +19,7 @@ import { base44 } from "@/api/base44Client";
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [user, setUser] = React.useState(null);
+  const [showSettings, setShowSettings] = React.useState(false);
 
   React.useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -38,8 +38,6 @@ export default function Layout({ children, currentPageName }) {
 
   const integrations = [
     { name: "RingCentral", icon: Phone, page: "RingCentral" },
-    { name: "App Sync", icon: RefreshCw, page: "AppSync" },
-    { name: "API Settings", icon: Settings, page: "APISettings" },
   ];
 
   const isActive = (page) => {
@@ -171,6 +169,30 @@ export default function Layout({ children, currentPageName }) {
                     </Link>
                   );
                 })}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#aaa" }}>
+                CRM SETTINGS
+              </p>
+              <div className="space-y-1">
+                <Link
+                  to={createPageUrl("AppSync")}
+                  className={`neuro-button ${isActive("AppSync") ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                  style={{ color: isActive("AppSync") ? "#555" : "#888" }}
+                >
+                  <Settings className="w-5 h-5" />
+                  <span className="font-medium">App Sync</span>
+                </Link>
+                <Link
+                  to={createPageUrl("APISettings")}
+                  className={`neuro-button ${isActive("APISettings") ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                  style={{ color: isActive("APISettings") ? "#555" : "#888" }}
+                >
+                  <Settings className="w-5 h-5" />
+                  <span className="font-medium">API Settings</span>
+                </Link>
               </div>
             </div>
           </nav>
