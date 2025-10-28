@@ -1,0 +1,31 @@
+{
+  "name": "Canned_Response",
+  "type": "object",
+  "properties": {
+    "response_name": {
+      "type": "string",
+      "description": "Response name"
+    },
+    "shortcut_code": {
+      "type": "string",
+      "description": "Shortcut to trigger response"
+    },
+    "response_body": {
+      "type": "string",
+      "description": "Response text with tokens"
+    },
+    "category": {
+      "type": "string",
+      "description": "Response category"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether response is active"
+    }
+  },
+  "required": [
+    "response_name",
+    "response_body"
+  ]
+}

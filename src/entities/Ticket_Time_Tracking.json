@@ -1,0 +1,31 @@
+{
+  "name": "Ticket_Time_Tracking",
+  "type": "object",
+  "properties": {
+    "ticket_id": {
+      "type": "string",
+      "description": "Associated ticket ID"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "User who logged time"
+    },
+    "time_spent_minutes": {
+      "type": "number",
+      "description": "Minutes spent"
+    },
+    "description": {
+      "type": "string",
+      "description": "What was done"
+    },
+    "tracked_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When work was done"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "time_spent_minutes"
+  ]
+}

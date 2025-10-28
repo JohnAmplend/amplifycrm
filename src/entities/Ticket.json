@@ -1,0 +1,136 @@
+{
+  "name": "Ticket",
+  "type": "object",
+  "properties": {
+    "ticket_number": {
+      "type": "string",
+      "description": "Auto-generated unique ticket number"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Ticket subject"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "New",
+        "Open",
+        "In Progress",
+        "Waiting on Customer",
+        "Waiting on Third Party",
+        "Resolved",
+        "Closed"
+      ],
+      "default": "New",
+      "description": "Current ticket status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Urgent"
+      ],
+      "default": "Medium",
+      "description": "Ticket priority"
+    },
+    "ticket_type": {
+      "type": "string",
+      "enum": [
+        "Technical Issue",
+        "Billing",
+        "Question",
+        "Feature Request",
+        "Bug Report",
+        "Other"
+      ],
+      "default": "Question",
+      "description": "Type of ticket"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Product",
+        "Service",
+        "General"
+      ],
+      "default": "General",
+      "description": "Ticket category"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "Email",
+        "Form",
+        "Phone",
+        "Chat",
+        "Manual"
+      ],
+      "default": "Manual",
+      "description": "How ticket was created"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Associated contact ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Associated company ID"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "User email assigned to ticket"
+    },
+    "assigned_team": {
+      "type": "string",
+      "description": "Team assigned to ticket"
+    },
+    "requester_email": {
+      "type": "string",
+      "description": "Email for non-contact requesters"
+    },
+    "requester_name": {
+      "type": "string",
+      "description": "Name for non-contact requesters"
+    },
+    "sla_due_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "SLA deadline"
+    },
+    "first_response_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When first response was sent"
+    },
+    "resolved_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When ticket was resolved"
+    },
+    "closed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When ticket was closed"
+    },
+    "resolution_time_hours": {
+      "type": "number",
+      "description": "Time to resolve in hours"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ticket tags"
+    }
+  },
+  "required": [
+    "subject"
+  ]
+}

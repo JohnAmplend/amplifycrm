@@ -1,0 +1,42 @@
+{
+  "name": "SLA_Policy",
+  "type": "object",
+  "properties": {
+    "policy_name": {
+      "type": "string",
+      "description": "Policy name"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Urgent"
+      ],
+      "description": "Ticket priority this applies to"
+    },
+    "first_response_time_hours": {
+      "type": "number",
+      "description": "Hours until first response due"
+    },
+    "resolution_time_hours": {
+      "type": "number",
+      "description": "Hours until resolution due"
+    },
+    "business_hours_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "Count only business hours"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether policy is active"
+    }
+  },
+  "required": [
+    "policy_name",
+    "priority"
+  ]
+}

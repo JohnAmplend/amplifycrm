@@ -16,7 +16,11 @@ import {
   Mail,
   List,
   Send,
-  Layers
+  Layers,
+  Ticket,
+  MessageSquare,
+  Clock,
+  BarChart3
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -37,6 +41,14 @@ export default function Layout({ children, currentPageName }) {
     { name: "Activities", icon: Activity, page: "Activities" },
     { name: "Tasks", icon: CheckSquare, page: "Tasks" },
     { name: "Import", icon: Upload, page: "Import" },
+  ];
+
+  const service = [
+    { name: "Tickets Dashboard", icon: LayoutDashboard, page: "TicketsDashboard" },
+    { name: "All Tickets", icon: Ticket, page: "AllTickets" },
+    { name: "My Tickets", icon: Ticket, page: "MyTickets" },
+    { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
+    { name: "SLA Policies", icon: Clock, page: "SLAPolicies" },
   ];
 
   const integrations = [
@@ -237,6 +249,27 @@ export default function Layout({ children, currentPageName }) {
               </p>
               <div className="space-y-1">
                 {navigation.map((item) => {
+                  const active = isActive(item.page);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      className={`ampvibe-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
+                SERVICE
+              </p>
+              <div className="space-y-1">
+                {service.map((item) => {
                   const active = isActive(item.page);
                   return (
                     <Link

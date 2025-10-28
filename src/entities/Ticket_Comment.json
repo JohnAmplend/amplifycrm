@@ -1,0 +1,47 @@
+{
+  "name": "Ticket_Comment",
+  "type": "object",
+  "properties": {
+    "ticket_id": {
+      "type": "string",
+      "description": "Associated ticket ID"
+    },
+    "comment_body": {
+      "type": "string",
+      "description": "Comment content"
+    },
+    "comment_type": {
+      "type": "string",
+      "enum": [
+        "Internal Note",
+        "Public Reply"
+      ],
+      "default": "Public Reply",
+      "description": "Type of comment"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Name of commenter"
+    },
+    "created_by_email": {
+      "type": "string",
+      "description": "Email of commenter"
+    },
+    "is_customer_visible": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether customer can see this"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "File URLs"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "comment_body"
+  ]
+}
