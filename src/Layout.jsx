@@ -27,7 +27,10 @@ import {
   BarChart,
   Target,
   Zap,
-  Bell
+  Bell,
+  Menu,
+  X,
+  ChevronDown
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -35,6 +38,8 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [user, setUser] = React.useState(null);
   const [unreadNotifications, setUnreadNotifications] = React.useState(0);
+  const [showMobileMenu, setShowMobileMenu] = React.useState(false);
+  const [activeMegaMenu, setActiveMegaMenu] = React.useState(null);
 
   React.useEffect(() => {
     base44.auth.me().then(async (u) => {
@@ -46,97 +51,130 @@ export default function Layout({ children, currentPageName }) {
     }).catch(() => {});
   }, []);
 
-  const navigation = [
-    { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
-    { name: "Contacts", icon: Users, page: "Contacts" },
-    { name: "Companies", icon: Building2, page: "Companies" },
-    { name: "Deals", icon: DollarSign, page: "Deals" },
-    { name: "Leads", icon: UserPlus, page: "Leads" },
-    { name: "Activities", icon: Activity, page: "Activities" },
-    { name: "Tasks", icon: CheckSquare, page: "Tasks" },
-    { name: "Documents", icon: FileText, page: "Documents" },
-    { name: "Import", icon: Upload, page: "Import" },
-  ];
-
-  const service = [
-    { name: "Tickets Dashboard", icon: LayoutDashboard, page: "TicketsDashboard" },
-    { name: "All Tickets", icon: Ticket, page: "AllTickets" },
-    { name: "My Tickets", icon: Ticket, page: "MyTickets" },
-    { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
-    { name: "SLA Policies", icon: Clock, page: "SLAPolicies" },
-  ];
-
-  const website = [
-    { name: "Forms", icon: Layers, page: "Forms" },
-    { name: "Form Submissions", icon: Send, page: "FormSubmissions" },
-    { name: "Website Tracking", icon: BarChart3, page: "WebsiteTracking" },
-    { name: "Knowledge Base", icon: MessageSquare, page: "KnowledgeBase" },
-  ];
-
-  const marketing = [
-    { name: "Campaigns", icon: Send, page: "Campaigns" },
-    { name: "Email Templates", icon: Mail, page: "EmailTemplates" },
-    { name: "Sequences", icon: Layers, page: "EmailSequences" },
-    { name: "Contact Lists", icon: List, page: "ContactLists" },
-  ];
-
-  const analytics = [
-    { name: "Dashboards", icon: LayoutDashboard, page: "Dashboards" },
-    { name: "Reports", icon: BarChart, page: "Reports" },
-    { name: "Goals", icon: Target, page: "Goals" },
-  ];
-
-  const automation = [
-    { name: "Workflows", icon: Zap, page: "Workflows" },
-  ];
-
-  const integrations = [
-    { name: "RingCentral", icon: Phone, page: "RingCentral" },
-  ];
-
-  const advanced = [
-    { name: "Duplicate Management", icon: Copy, page: "DuplicateManagement" },
-    { name: "Custom Objects", icon: Box, page: "CustomObjects" },
-  ];
-
-  const settings = [
-    { name: "App Sync", icon: Settings, page: "AppSync" },
-    { name: "API Settings", icon: Settings, page: "APISettings" },
-  ];
+  const handleLogout = () => {
+    base44.auth.logout();
+  };
 
   const isActive = (page) => {
     return location.pathname === createPageUrl(page);
   };
 
-  const handleLogout = () => {
-    base44.auth.logout();
+  const megaMenuData = {
+    'CRM & Sales': {
+      sections: [
+        {
+          title: 'Core CRM',
+          items: [
+            { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
+            { name: "Contacts", icon: Users, page: "Contacts" },
+            { name: "Companies", icon: Building2, page: "Companies" },
+            { name: "Deals", icon: DollarSign, page: "Deals" },
+            { name: "Leads", icon: UserPlus, page: "Leads" }
+          ]
+        },
+        {
+          title: 'Activities',
+          items: [
+            { name: "All Activities", icon: Activity, page: "Activities" },
+            { name: "Tasks", icon: CheckSquare, page: "Tasks" }
+          ]
+        },
+        {
+          title: 'Data Management',
+          items: [
+            { name: "Import", icon: Upload, page: "Import" },
+            { name: "Documents", icon: FileText, page: "Documents" }
+          ]
+        }
+      ]
+    },
+    'Marketing': {
+      sections: [
+        {
+          title: 'Email Marketing',
+          items: [
+            { name: "Campaigns", icon: Send, page: "Campaigns" },
+            { name: "Email Templates", icon: Mail, page: "EmailTemplates" },
+            { name: "Sequences", icon: Layers, page: "EmailSequences" },
+            { name: "Contact Lists", icon: List, page: "ContactLists" }
+          ]
+        },
+        {
+          title: 'Website',
+          items: [
+            { name: "Forms", icon: Layers, page: "Forms" },
+            { name: "Form Submissions", icon: Send, page: "FormSubmissions" },
+            { name: "Website Tracking", icon: BarChart3, page: "WebsiteTracking" },
+            { name: "Knowledge Base", icon: MessageSquare, page: "KnowledgeBase" }
+          ]
+        }
+      ]
+    },
+    'Service': {
+      sections: [
+        {
+          title: 'Ticketing',
+          items: [
+            { name: "Tickets Dashboard", icon: LayoutDashboard, page: "TicketsDashboard" },
+            { name: "All Tickets", icon: Ticket, page: "AllTickets" },
+            { name: "My Tickets", icon: Ticket, page: "MyTickets" }
+          ]
+        },
+        {
+          title: 'Support Tools',
+          items: [
+            { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
+            { name: "SLA Policies", icon: Clock, page: "SLAPolicies" }
+          ]
+        }
+      ]
+    },
+    'Analytics': {
+      sections: [
+        {
+          title: 'Reporting',
+          items: [
+            { name: "Dashboards", icon: LayoutDashboard, page: "Dashboards" },
+            { name: "Reports", icon: BarChart, page: "Reports" },
+            { name: "Goals", icon: Target, page: "Goals" }
+          ]
+        },
+        {
+          title: 'Automation',
+          items: [
+            { name: "Workflows", icon: Zap, page: "Workflows" }
+          ]
+        },
+        {
+          title: 'Integrations',
+          items: [
+            { name: "RingCentral", icon: Phone, page: "RingCentral" }
+          ]
+        }
+      ]
+    },
+    'Settings': {
+      sections: [
+        {
+          title: 'Advanced',
+          items: [
+            { name: "Duplicate Management", icon: Copy, page: "DuplicateManagement" },
+            { name: "Custom Objects", icon: Box, page: "CustomObjects" }
+          ]
+        },
+        {
+          title: 'App Settings',
+          items: [
+            { name: "App Sync", icon: Settings, page: "AppSync" },
+            { name: "API Settings", icon: Settings, page: "APISettings" }
+          ]
+        }
+      ]
+    }
   };
 
-  const renderNavSection = (title, items) => (
-    <div>
-      <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
-        {title}
-      </p>
-      <div className="space-y-1">
-        {items.map((item) => {
-          const active = isActive(item.page);
-          return (
-            <Link
-              key={item.name}
-              to={createPageUrl(item.page)}
-              className={`ampvibe-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.name}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen flex" style={{ 
+    <div className="min-h-screen flex flex-col" style={{ 
       background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)'
     }}>
       <style>{`
@@ -160,12 +198,16 @@ export default function Layout({ children, currentPageName }) {
         *::-webkit-scrollbar-thumb:hover { background: rgba(0, 168, 107, 0.5); }
         h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
         body, p, span, div { line-height: 1.5; }
+        .mega-menu { position: absolute; top: 100%; left: 0; right: 0; opacity: 0; visibility: hidden; transition: all 0.3s ease; pointer-events: none; }
+        .mega-menu.active { opacity: 1; visibility: visible; pointer-events: auto; }
       `}</style>
 
-      <div className="w-64 flex-shrink-0 p-4 overflow-auto">
-        <div className="ampvibe-card p-6 flex flex-col" style={{ height: 'calc(100vh - 2rem)' }}>
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold" style={{ 
+      {/* Top Navigation Bar */}
+      <div className="ampvibe-card m-4 mb-0">
+        <div className="flex items-center justify-between px-6 py-4">
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-6">
+            <h1 className="text-xl font-bold" style={{ 
               background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -173,33 +215,85 @@ export default function Layout({ children, currentPageName }) {
             }}>
               AmplifyCRM
             </h1>
-            <p className="text-sm mt-1" style={{ color: "#666" }}>Powered by AmpVibe</p>
+
+            {/* Desktop Mega Menu */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {Object.keys(megaMenuData).map((category) => (
+                <div 
+                  key={category}
+                  className="relative"
+                  onMouseEnter={() => setActiveMegaMenu(category)}
+                  onMouseLeave={() => setActiveMegaMenu(null)}
+                >
+                  <button className="ampvibe-button px-4 py-2 flex items-center gap-2">
+                    {category}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+
+                  {/* Mega Menu Dropdown */}
+                  <div className={`mega-menu ${activeMegaMenu === category ? 'active' : ''}`}>
+                    <div className="ampvibe-card mt-2 p-6 shadow-2xl" style={{ minWidth: '600px' }}>
+                      <div className="grid grid-cols-2 gap-6">
+                        {megaMenuData[category].sections.map((section) => (
+                          <div key={section.title}>
+                            <h3 className="font-bold mb-3 text-sm" style={{ color: "#1E3A8A" }}>
+                              {section.title}
+                            </h3>
+                            <div className="space-y-1">
+                              {section.items.map((item) => (
+                                <Link
+                                  key={item.page}
+                                  to={createPageUrl(item.page)}
+                                  className={`ampvibe-button ${isActive(item.page) ? 'active' : ''} flex items-center gap-3 px-3 py-2 w-full text-left text-sm`}
+                                  onClick={() => setActiveMegaMenu(null)}
+                                >
+                                  <item.icon className="w-4 h-4" />
+                                  <span>{item.name}</span>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              className="lg:hidden ampvibe-button p-2"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+            >
+              {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
 
-          <nav className="flex-1 space-y-6 overflow-auto">
-            {renderNavSection("MAIN", navigation)}
-            {renderNavSection("SERVICE", service)}
-            {renderNavSection("WEBSITE", website)}
-            {renderNavSection("MARKETING", marketing)}
-            {renderNavSection("ANALYTICS", analytics)}
-            {renderNavSection("AUTOMATION", automation)}
-            {renderNavSection("INTEGRATIONS", integrations)}
-            {renderNavSection("ADVANCED", advanced)}
-            {renderNavSection("CRM SETTINGS", settings)}
-          </nav>
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-3">
+            <Link to={createPageUrl("Notifications")} className="relative">
+              <button className="ampvibe-button p-3 relative">
+                <Bell className="w-5 h-5" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </button>
+            </Link>
 
-          {user && (
-            <div className="mt-6 pt-6 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-              <div className="flex items-center gap-3 mb-3">
+            {user && (
+              <div className="hidden md:flex items-center gap-3">
                 <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center" style={{
                   background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
                   border: '2px solid rgba(255, 255, 255, 0.5)'
                 }}>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-white text-sm">
                     {user.full_name?.charAt(0) || user.email?.charAt(0)}
                   </span>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: "#333" }}>
                     {user.full_name || "User"}
                   </p>
@@ -207,31 +301,77 @@ export default function Layout({ children, currentPageName }) {
                     {user.role || "User"}
                   </p>
                 </div>
+                <button onClick={handleLogout} className="ampvibe-button p-2">
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
-              <button onClick={handleLogout} className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2">
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm">Logout</span>
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {showMobileMenu && (
+          <div className="lg:hidden border-t px-4 py-4" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+            {Object.entries(megaMenuData).map(([category, data]) => (
+              <div key={category} className="mb-4">
+                <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
+                  {category}
+                </p>
+                {data.sections.map((section) => (
+                  <div key={section.title} className="mb-3">
+                    <p className="text-xs font-medium mb-1 px-2" style={{ color: "#666" }}>
+                      {section.title}
+                    </p>
+                    <div className="space-y-1">
+                      {section.items.map((item) => (
+                        <Link
+                          key={item.page}
+                          to={createPageUrl(item.page)}
+                          className={`ampvibe-button ${isActive(item.page) ? 'active' : ''} flex items-center gap-3 px-4 py-2 w-full text-left text-sm`}
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {user && (
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center" style={{
+                    background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
+                    border: '2px solid rgba(255, 255, 255, 0.5)'
+                  }}>
+                    <span className="font-semibold text-white">
+                      {user.full_name?.charAt(0) || user.email?.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: "#333" }}>
+                      {user.full_name || "User"}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: "#666" }}>
+                      {user.role || "User"}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={handleLogout} className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2">
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm">Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="ampvibe-card m-4 mb-0 p-4 flex items-center justify-end">
-          <Link to={createPageUrl("Notifications")} className="relative">
-            <button className="ampvibe-button p-3 relative">
-              <Bell className="w-5 h-5" />
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                </span>
-              )}
-            </button>
-          </Link>
-        </div>
-        <div className="flex-1 overflow-auto">{children}</div>
-      </div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">{children}</div>
     </div>
   );
 }

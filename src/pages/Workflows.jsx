@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, Zap, Play, Pause, Edit2, Trash2, Clock, Copy, TrendingUp } from "lucide-react";
+import { Plus, Zap, Play, Pause, Edit2, Trash2, Clock, Copy, TrendingUp, ChevronDown } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
@@ -14,6 +15,7 @@ export default function Workflows() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterObject, setFilterObject] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [showHelp, setShowHelp] = React.useState(false);
 
   React.useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -196,14 +198,12 @@ export default function Workflows() {
               {workflowTemplates.map((template, idx) => (
                 <NeuroCard key={idx} className="hover:shadow-xl transition-shadow">
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="ampvibe-inset p-2 rounded-lg">
-                        <Zap className="w-5 h-5" style={{ color: "#4a90e2" }} />
-                      </div>
-                      <h3 className="font-bold" style={{ color: "#666" }}>
-                        {template.name}
-                      </h3>
+                    <div className="ampvibe-inset p-2 rounded-lg">
+                      <Zap className="w-5 h-5" style={{ color: "#4a90e2" }} />
                     </div>
+                    <h3 className="font-bold" style={{ color: "#666" }}>
+                      {template.name}
+                    </h3>
                     <p className="text-sm" style={{ color: "#888" }}>
                       {template.description}
                     </p>
@@ -334,37 +334,49 @@ export default function Workflows() {
           </NeuroCard>
         )}
 
-        {/* Info Card */}
+        {/* Info Card - Now Collapsible */}
         <NeuroCard className="mt-6">
-          <h3 className="font-bold mb-3" style={{ color: "#666" }}>
-            What can Workflows do?
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm" style={{ color: "#888" }}>
-            <div>
-              <p className="font-medium mb-2" style={{ color: "#666" }}>✨ Send Emails</p>
-              <p>Automatically send personalized emails based on triggers</p>
+          <button 
+            onClick={() => setShowHelp(!showHelp)}
+            className="w-full flex items-center justify-between"
+          >
+            <h3 className="font-bold" style={{ color: "#666" }}>
+              What can Workflows do?
+            </h3>
+            <ChevronDown 
+              className={`w-5 h-5 transition-transform ${showHelp ? 'rotate-180' : ''}`}
+              style={{ color: "#666" }}
+            />
+          </button>
+          
+          {showHelp && (
+            <div className="grid md:grid-cols-2 gap-4 text-sm mt-4" style={{ color: "#888" }}>
+              <div>
+                <p className="font-medium mb-2" style={{ color: "#666" }}>✨ Send Emails</p>
+                <p>Automatically send personalized emails based on triggers</p>
+              </div>
+              <div>
+                <p className="font-medium mb-2" style={{ color: "#666" }}>✅ Create Tasks</p>
+                <p>Assign tasks to team members with due dates</p>
+              </div>
+              <div>
+                <p className="font-medium mb-2" style={{ color: "#666" }}>📝 Update Fields</p>
+                <p>Change property values automatically</p>
+              </div>
+              <div>
+                <p className="font-medium mb-2" style={{ color: "#666" }}>🔔 Send Notifications</p>
+                <p>Alert team members of important events</p>
+              </div>
+              <div>
+                <p className="font-medium mb-2" style={{ color: "#666" }}>⏱️ Add Delays</p>
+                <p>Wait specific time periods between actions</p>
+              </div>
+              <div>
+                <p className="font-medium mb-2" style={{ color: "#666" }}>🔀 Branching Logic</p>
+                <p>Create different paths based on conditions</p>
+              </div>
             </div>
-            <div>
-              <p className="font-medium mb-2" style={{ color: "#666" }}>✅ Create Tasks</p>
-              <p>Assign tasks to team members with due dates</p>
-            </div>
-            <div>
-              <p className="font-medium mb-2" style={{ color: "#666" }}>📝 Update Fields</p>
-              <p>Change property values automatically</p>
-            </div>
-            <div>
-              <p className="font-medium mb-2" style={{ color: "#666" }}>🔔 Send Notifications</p>
-              <p>Alert team members of important events</p>
-            </div>
-            <div>
-              <p className="font-medium mb-2" style={{ color: "#666" }}>⏱️ Add Delays</p>
-              <p>Wait specific time periods between actions</p>
-            </div>
-            <div>
-              <p className="font-medium mb-2" style={{ color: "#666" }}>🔀 Branching Logic</p>
-              <p>Create different paths based on conditions</p>
-            </div>
-          </div>
+          )}
         </NeuroCard>
       </div>
     </div>

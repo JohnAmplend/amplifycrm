@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Copy, RefreshCw, X, CheckCircle, Settings, Play, Plus, Edit2, Trash2 } from "lucide-react";
+import { Copy, RefreshCw, X, CheckCircle, Settings, Play, Plus, Edit2, Trash2, ChevronDown } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
@@ -27,6 +28,7 @@ export default function DuplicateManagement() {
     threshold: 0.7,
     active: true
   });
+  const [showHelp, setShowHelp] = useState(false); // New state variable
 
   const { data: duplicates = [], isLoading } = useQuery({
     queryKey: ['duplicates'],
@@ -590,18 +592,31 @@ export default function DuplicateManagement() {
                 </div>
               )}
 
+              {/* Collapsible Help Section */}
               <div className="mt-6 ampvibe-inset p-4 rounded-lg">
-                <h3 className="font-bold mb-2" style={{ color: "#666" }}>
-                  How Detection Works
-                </h3>
-                <ul className="text-sm space-y-1" style={{ color: "#888" }}>
-                  <li>• Each rule checks a specific field (e.g., email, name)</li>
-                  <li>• Exact match: Fields must be identical</li>
-                  <li>• Fuzzy match: Fields are similar (80%+ similarity)</li>
-                  <li>• Weights determine importance (0-1 scale)</li>
-                  <li>• Threshold sets minimum score to flag as duplicate</li>
-                  <li>• Only active rules are used during detection</li>
-                </ul>
+                <button 
+                  onClick={() => setShowHelp(!showHelp)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <h3 className="font-bold" style={{ color: "#666" }}>
+                    How Detection Works
+                  </h3>
+                  <ChevronDown 
+                    className={`w-5 h-5 transition-transform ${showHelp ? 'rotate-180' : ''}`}
+                    style={{ color: "#666" }}
+                  />
+                </button>
+                
+                {showHelp && (
+                  <ul className="text-sm space-y-1 mt-3" style={{ color: "#888" }}>
+                    <li>• Each rule checks a specific field (e.g., email, name)</li>
+                    <li>• Exact match: Fields must be identical</li>
+                    <li>• Fuzzy match: Fields are similar (80%+ similarity)</li>
+                    <li>• Weights determine importance (0-1 scale)</li>
+                    <li>• Threshold sets minimum score to flag as duplicate</li>
+                    <li>• Only active rules are used during detection</li>
+                  </ul>
+                )}
               </div>
             </div>
           </div>
