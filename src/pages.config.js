@@ -26,6 +26,7 @@ import EmailSequences from './pages/EmailSequences';
 import TicketsDashboard from './pages/TicketsDashboard';
 import AllTickets from './pages/AllTickets';
 import MyTickets from './pages/MyTickets';
+import CreateTicket from './pages/CreateTicket';
 import Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "TicketsDashboard": TicketsDashboard,
     "AllTickets": AllTickets,
     "MyTickets": MyTickets,
+    "CreateTicket": CreateTicket,
 }
 
 export const pagesConfig = {
