@@ -34,6 +34,10 @@ import Forms from './pages/Forms';
 import FormBuilder from './pages/FormBuilder';
 import Documents from './pages/Documents';
 import DuplicateManagement from './pages/DuplicateManagement';
+import CustomObjects from './pages/CustomObjects';
+import FormSubmissions from './pages/FormSubmissions';
+import WebsiteTracking from './pages/WebsiteTracking';
+import KnowledgeBase from './pages/KnowledgeBase';
 import Layout from './Layout.jsx';
 
 
@@ -74,6 +78,10 @@ export const PAGES = {
     "FormBuilder": FormBuilder,
     "Documents": Documents,
     "DuplicateManagement": DuplicateManagement,
+    "CustomObjects": CustomObjects,
+    "FormSubmissions": FormSubmissions,
+    "WebsiteTracking": WebsiteTracking,
+    "KnowledgeBase": KnowledgeBase,
 }
 
 export const pagesConfig = {
