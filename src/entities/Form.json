@@ -1,0 +1,70 @@
+{
+  "name": "Form",
+  "type": "object",
+  "properties": {
+    "form_name": {
+      "type": "string",
+      "description": "Form name"
+    },
+    "form_description": {
+      "type": "string",
+      "description": "Form description"
+    },
+    "form_type": {
+      "type": "string",
+      "enum": [
+        "Contact Form",
+        "Lead Form",
+        "Ticket Form",
+        "Newsletter",
+        "Custom"
+      ],
+      "default": "Contact Form",
+      "description": "Type of form"
+    },
+    "submit_action": {
+      "type": "string",
+      "enum": [
+        "Create Contact",
+        "Create Lead",
+        "Create Ticket",
+        "Add to List"
+      ],
+      "default": "Create Contact",
+      "description": "Action on form submission"
+    },
+    "thank_you_message": {
+      "type": "string",
+      "description": "Thank you message after submission"
+    },
+    "redirect_url": {
+      "type": "string",
+      "description": "URL to redirect after submission"
+    },
+    "notification_emails": {
+      "type": "string",
+      "description": "Comma-separated emails to notify"
+    },
+    "contact_list_id": {
+      "type": "string",
+      "description": "Contact list ID for Add to List action"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether form is active"
+    },
+    "embed_code": {
+      "type": "string",
+      "description": "Auto-generated embed code"
+    },
+    "submissions_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total submissions"
+    }
+  },
+  "required": [
+    "form_name"
+  ]
+}

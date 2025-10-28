@@ -1,0 +1,63 @@
+{
+  "name": "Knowledge_Base_Article",
+  "type": "object",
+  "properties": {
+    "article_title": {
+      "type": "string",
+      "description": "Article title"
+    },
+    "article_slug": {
+      "type": "string",
+      "description": "URL-friendly slug"
+    },
+    "article_content": {
+      "type": "string",
+      "description": "Article content (rich text)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Article category"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Article tags"
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether article is published"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether article is featured"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of views"
+    },
+    "helpful_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Helpful votes"
+    },
+    "not_helpful_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Not helpful votes"
+    },
+    "last_edited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last edit timestamp"
+    }
+  },
+  "required": [
+    "article_title",
+    "article_slug"
+  ]
+}

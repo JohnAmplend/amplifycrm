@@ -1,0 +1,35 @@
+{
+  "name": "Page_View",
+  "type": "object",
+  "properties": {
+    "visitor_id": {
+      "type": "string",
+      "description": "Associated visitor ID"
+    },
+    "page_url": {
+      "type": "string",
+      "description": "Viewed page URL"
+    },
+    "page_title": {
+      "type": "string",
+      "description": "Page title"
+    },
+    "referrer_url": {
+      "type": "string",
+      "description": "Referrer URL"
+    },
+    "time_on_page_seconds": {
+      "type": "number",
+      "description": "Time spent on page"
+    },
+    "viewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "View timestamp"
+    }
+  },
+  "required": [
+    "visitor_id",
+    "page_url"
+  ]
+}

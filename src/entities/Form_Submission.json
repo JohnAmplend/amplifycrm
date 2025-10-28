@@ -1,0 +1,46 @@
+{
+  "name": "Form_Submission",
+  "type": "object",
+  "properties": {
+    "form_id": {
+      "type": "string",
+      "description": "Associated form ID"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Linked contact ID"
+    },
+    "lead_id": {
+      "type": "string",
+      "description": "Linked lead ID"
+    },
+    "ticket_id": {
+      "type": "string",
+      "description": "Linked ticket ID"
+    },
+    "submission_data": {
+      "type": "object",
+      "description": "All submitted field values"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "Submitter IP address"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Browser user agent"
+    },
+    "referrer_url": {
+      "type": "string",
+      "description": "Referrer URL"
+    },
+    "page_url": {
+      "type": "string",
+      "description": "Page where form was submitted"
+    }
+  },
+  "required": [
+    "form_id",
+    "submission_data"
+  ]
+}

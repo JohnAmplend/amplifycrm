@@ -1,0 +1,72 @@
+{
+  "name": "Form_Field",
+  "type": "object",
+  "properties": {
+    "form_id": {
+      "type": "string",
+      "description": "Associated form ID"
+    },
+    "field_label": {
+      "type": "string",
+      "description": "Field label shown to user"
+    },
+    "field_name": {
+      "type": "string",
+      "description": "Internal field name"
+    },
+    "field_type": {
+      "type": "string",
+      "enum": [
+        "Text",
+        "Email",
+        "Phone",
+        "Textarea",
+        "Dropdown",
+        "Checkbox",
+        "Radio",
+        "File Upload",
+        "Hidden"
+      ],
+      "default": "Text",
+      "description": "Type of field"
+    },
+    "field_options": {
+      "type": "object",
+      "description": "Options for dropdown/radio fields"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether field is required"
+    },
+    "placeholder_text": {
+      "type": "string",
+      "description": "Placeholder text"
+    },
+    "default_value": {
+      "type": "string",
+      "description": "Default field value"
+    },
+    "validation_rule": {
+      "type": "string",
+      "enum": [
+        "None",
+        "Email",
+        "Phone",
+        "URL",
+        "Number"
+      ],
+      "default": "None",
+      "description": "Validation rule"
+    },
+    "field_order": {
+      "type": "number",
+      "description": "Display order"
+    }
+  },
+  "required": [
+    "form_id",
+    "field_label",
+    "field_name"
+  ]
+}

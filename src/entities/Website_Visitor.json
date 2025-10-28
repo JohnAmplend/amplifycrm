@@ -1,0 +1,57 @@
+{
+  "name": "Website_Visitor",
+  "type": "object",
+  "properties": {
+    "visitor_id": {
+      "type": "string",
+      "description": "Unique visitor identifier"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Linked contact ID when identified"
+    },
+    "first_visit_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "First visit timestamp"
+    },
+    "last_visit_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last visit timestamp"
+    },
+    "total_visits": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of visits"
+    },
+    "total_page_views": {
+      "type": "number",
+      "default": 0,
+      "description": "Total page views"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP address"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Browser user agent"
+    },
+    "referrer_source": {
+      "type": "string",
+      "description": "Traffic source"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country from IP"
+    },
+    "city": {
+      "type": "string",
+      "description": "City from IP"
+    }
+  },
+  "required": [
+    "visitor_id"
+  ]
+}
