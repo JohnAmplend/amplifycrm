@@ -20,6 +20,9 @@ import EmailTemplates from './pages/EmailTemplates';
 import TemplateBuilder from './pages/TemplateBuilder';
 import Campaigns from './pages/Campaigns';
 import CreateCampaign from './pages/CreateCampaign';
+import ContactLists from './pages/ContactLists';
+import CreateList from './pages/CreateList';
+import EmailSequences from './pages/EmailSequences';
 import Layout from './Layout.jsx';
 
 
@@ -46,6 +49,9 @@ export const PAGES = {
     "TemplateBuilder": TemplateBuilder,
     "Campaigns": Campaigns,
     "CreateCampaign": CreateCampaign,
+    "ContactLists": ContactLists,
+    "CreateList": CreateList,
+    "EmailSequences": EmailSequences,
 }
 
 export const pagesConfig = {
