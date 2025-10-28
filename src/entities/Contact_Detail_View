@@ -1,0 +1,47 @@
+{
+  "name": "Contact_Detail_View",
+  "type": "object",
+  "properties": {
+    "view_name": {
+      "type": "string",
+      "description": "Name of the view template"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is the default view"
+    },
+    "layout_configuration": {
+      "type": "object",
+      "description": "JSON configuration of the layout structure"
+    },
+    "custom_fields": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of custom field definitions"
+    },
+    "field_order": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Order of fields to display"
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Section groupings for fields"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created this view"
+    }
+  },
+  "required": [
+    "view_name"
+  ]
+}
