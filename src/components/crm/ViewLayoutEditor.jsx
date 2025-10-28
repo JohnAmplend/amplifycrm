@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, X, GripVertical, Save, Edit2, Trash2 } from "lucide-react";
+import { Plus, X, GripVertical, Save, Edit2, Trash2, ChevronDown } from "lucide-react";
 import NeuroButton from "./NeuroButton";
 import NeuroInput from "./NeuroInput";
 import NeuroSelect from "./NeuroSelect";
@@ -17,21 +17,12 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
         { name: "email", label: "Email", type: "email", required: false },
         { name: "phone", label: "Phone", type: "text", required: false }
       ]
-    },
-    {
-      id: "section-2",
-      title: "Additional Details",
-      fields: [
-        { name: "job_title", label: "Job Title", type: "text", required: false },
-        { name: "department", label: "Department", type: "text", required: false },
-        { name: "lifecycle_stage", label: "Lifecycle Stage", type: "select", required: false },
-        { name: "lead_status", label: "Lead Status", type: "select", required: false }
-      ]
     }
   ]);
   const [customFields, setCustomFields] = useState(currentView?.custom_fields || []);
   const [showAddField, setShowAddField] = useState(false);
-  const [showAddSection, setShowAddSection] = useState(false);
+  const [showAddStandardField, setShowAddStandardField] = useState(null);
+  const [showAddCustomField, setShowAddCustomField] = useState(null);
   const [newField, setNewField] = useState({
     name: "",
     label: "",
@@ -50,6 +41,25 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
     { value: "checkbox", label: "Checkbox" }
   ];
 
+  const standardFields = [
+    { name: "first_name", label: "First Name", type: "text" },
+    { name: "last_name", label: "Last Name", type: "text" },
+    { name: "email", label: "Email", type: "email" },
+    { name: "phone", label: "Phone", type: "text" },
+    { name: "mobile", label: "Mobile", type: "text" },
+    { name: "job_title", label: "Job Title", type: "text" },
+    { name: "department", label: "Department", type: "text" },
+    { name: "lifecycle_stage", label: "Lifecycle Stage", type: "select" },
+    { name: "lead_status", label: "Lead Status", type: "select" },
+    { name: "address", label: "Address", type: "text" },
+    { name: "city", label: "City", type: "text" },
+    { name: "state", label: "State", type: "text" },
+    { name: "zip", label: "Zip", type: "text" },
+    { name: "country", label: "Country", type: "text" },
+    { name: "linkedin_url", label: "LinkedIn URL", type: "text" },
+    { name: "twitter_handle", label: "Twitter Handle", type: "text" }
+  ];
+
   const handleAddCustomField = () => {
     if (!newField.name || !newField.label) {
       alert("Field name and label are required");
@@ -58,7 +68,7 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
 
     const fieldWithId = {
       ...newField,
-      name: newField.name.toLowerCase().replace(/\s+/g, '_'),
+      name: 'custom_' + newField.name.toLowerCase().replace(/\s+/g, '_'),
       id: `custom-${Date.now()}`
     };
 
@@ -74,10 +84,13 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
       fields: []
     };
     setSections([...sections, newSection]);
-    setShowAddSection(false);
   };
 
   const handleDeleteSection = (sectionId) => {
+    if (sections.length <= 1) {
+      alert("You must have at least one section");
+      return;
+    }
     setSections(sections.filter(s => s.id !== sectionId));
   };
 
@@ -96,14 +109,32 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
   };
 
   const handleAddFieldToSection = (sectionId, field) => {
+    // Check if field already exists in any section
+    const fieldExists = sections.some(s => 
+      s.fields.some(f => f.name === field.name)
+    );
+    
+    if (fieldExists) {
+      alert("This field is already added to a section");
+      return;
+    }
+
     setSections(sections.map(s => 
       s.id === sectionId 
         ? { ...s, fields: [...s.fields, field] }
         : s
     ));
+    
+    setShowAddStandardField(null);
+    setShowAddCustomField(null);
   };
 
   const handleSave = () => {
+    if (!viewName) {
+      alert("View name is required");
+      return;
+    }
+
     const viewConfig = {
       view_name: viewName,
       sections,
@@ -127,6 +158,7 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
           value={viewName}
           onChange={(e) => setViewName(e.target.value)}
           placeholder="Default View"
+          className="flex-1 max-w-md"
         />
         <div className="flex gap-2">
           <NeuroButton onClick={onCancel}>
@@ -141,41 +173,47 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
 
       {/* Sections */}
       <div className="space-y-4">
-        {sections.map((section, sIdx) => (
+        <h3 className="font-bold text-lg" style={{ color: "#666" }}>Sections & Fields</h3>
+        
+        {sections.map((section) => (
           <NeuroCard key={section.id}>
             <div className="flex items-center justify-between mb-4">
               <input
                 type="text"
                 value={section.title}
                 onChange={(e) => handleUpdateSectionTitle(section.id, e.target.value)}
-                className="ampvibe-input font-bold text-lg"
+                className="ampvibe-input font-bold text-lg flex-1 mr-4"
                 style={{ color: "#666" }}
+                placeholder="Section Title"
               />
               <button
                 onClick={() => handleDeleteSection(section.id)}
                 className="ampvibe-button p-2 text-red-600"
+                title="Delete Section"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
 
+            {/* Fields in this section */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               {section.fields.map((field) => (
                 <div key={field.name} className="ampvibe-inset p-3 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="w-4 h-4" style={{ color: "#aaa" }} />
-                    <div>
-                      <p className="font-medium text-sm" style={{ color: "#666" }}>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <GripVertical className="w-4 h-4 flex-shrink-0" style={{ color: "#aaa" }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate" style={{ color: "#666" }}>
                         {field.label}
                       </p>
-                      <p className="text-xs" style={{ color: "#aaa" }}>
+                      <p className="text-xs truncate" style={{ color: "#aaa" }}>
                         {field.type} {field.required && "• Required"}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => handleDeleteField(section.id, field.name)}
-                    className="ampvibe-button p-1"
+                    className="ampvibe-button p-1 flex-shrink-0"
+                    title="Remove Field"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -183,35 +221,60 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
               ))}
             </div>
 
-            {/* Add field to section */}
-            <div className="flex gap-2">
-              <NeuroButton
-                size="sm"
-                onClick={() => {
-                  const standardField = {
-                    name: "address",
-                    label: "Address",
-                    type: "text",
-                    required: false
-                  };
-                  handleAddFieldToSection(section.id, standardField);
-                }}
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Add Standard Field
-              </NeuroButton>
-              {customFields.length > 0 && (
+            {/* Add field buttons */}
+            <div className="flex gap-2 relative">
+              <div className="relative">
                 <NeuroButton
                   size="sm"
-                  onClick={() => {
-                    if (customFields.length > 0) {
-                      handleAddFieldToSection(section.id, customFields[0]);
-                    }
-                  }}
+                  onClick={() => setShowAddStandardField(showAddStandardField === section.id ? null : section.id)}
                 >
                   <Plus className="w-3 h-3 mr-1" />
-                  Add Custom Field
+                  Add Standard Field
+                  <ChevronDown className="w-3 h-3 ml-1" />
                 </NeuroButton>
+                
+                {showAddStandardField === section.id && (
+                  <div className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl z-50 w-64 max-h-64 overflow-y-auto">
+                    {standardFields.map((field) => (
+                      <button
+                        key={field.name}
+                        onClick={() => handleAddFieldToSection(section.id, field)}
+                        className="ampvibe-button w-full text-left px-3 py-2 mb-1 text-sm"
+                      >
+                        {field.label}
+                        <span className="text-xs ml-2" style={{ color: "#aaa" }}>({field.type})</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {customFields.length > 0 && (
+                <div className="relative">
+                  <NeuroButton
+                    size="sm"
+                    onClick={() => setShowAddCustomField(showAddCustomField === section.id ? null : section.id)}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Custom Field
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </NeuroButton>
+                  
+                  {showAddCustomField === section.id && (
+                    <div className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl z-50 w-64 max-h-64 overflow-y-auto">
+                      {customFields.map((field) => (
+                        <button
+                          key={field.id}
+                          onClick={() => handleAddFieldToSection(section.id, field)}
+                          className="ampvibe-button w-full text-left px-3 py-2 mb-1 text-sm"
+                        >
+                          {field.label}
+                          <span className="text-xs ml-2" style={{ color: "#aaa" }}>({field.type})</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </NeuroCard>
@@ -239,17 +302,26 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
           <div className="grid grid-cols-2 gap-3 mb-4">
             {customFields.map((field) => (
               <div key={field.id} className="ampvibe-inset p-3 rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-sm" style={{ color: "#666" }}>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate" style={{ color: "#666" }}>
                     {field.label}
                   </p>
-                  <p className="text-xs" style={{ color: "#aaa" }}>
+                  <p className="text-xs truncate" style={{ color: "#aaa" }}>
                     {field.type} • {field.name}
                   </p>
                 </div>
                 <button
-                  onClick={() => setCustomFields(customFields.filter(f => f.id !== field.id))}
-                  className="ampvibe-button p-1 text-red-600"
+                  onClick={() => {
+                    if (window.confirm(`Delete custom field "${field.label}"?`)) {
+                      setCustomFields(customFields.filter(f => f.id !== field.id));
+                      // Also remove from all sections
+                      setSections(sections.map(s => ({
+                        ...s,
+                        fields: s.fields.filter(f => f.name !== field.name)
+                      })));
+                    }
+                  }}
+                  className="ampvibe-button p-1 text-red-600 flex-shrink-0"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -260,23 +332,27 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
 
         {showAddField && (
           <div className="ampvibe-inset p-4 rounded-lg space-y-4">
+            <h4 className="font-bold" style={{ color: "#666" }}>Create New Custom Field</h4>
             <NeuroInput
-              label="Field Label"
+              label="Field Label (What users see)"
               value={newField.label}
               onChange={(e) => setNewField({ ...newField, label: e.target.value })}
               placeholder="Customer Lifetime Value"
+              required
             />
             <NeuroInput
-              label="Field Name (internal)"
+              label="Field Name (internal identifier, no spaces)"
               value={newField.name}
               onChange={(e) => setNewField({ ...newField, name: e.target.value })}
               placeholder="customer_lifetime_value"
+              required
             />
             <NeuroSelect
               label="Field Type"
               value={newField.type}
               onChange={(e) => setNewField({ ...newField, type: e.target.value })}
               options={availableFieldTypes}
+              required
             />
             <div className="flex items-center gap-2">
               <input
@@ -288,11 +364,15 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
               <label className="text-sm" style={{ color: "#666" }}>Required Field</label>
             </div>
             <div className="flex gap-2 justify-end">
-              <NeuroButton size="sm" onClick={() => setShowAddField(false)}>
+              <NeuroButton size="sm" onClick={() => {
+                setShowAddField(false);
+                setNewField({ name: "", label: "", type: "text", required: false });
+              }}>
                 Cancel
               </NeuroButton>
               <NeuroButton size="sm" variant="primary" onClick={handleAddCustomField}>
-                Add Field
+                <Plus className="w-4 h-4 mr-1" />
+                Create Field
               </NeuroButton>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Edit2, Trash2, Plus, Building2, DollarSign, Settings } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Plus, Building2, DollarSign, Settings, LayoutTemplate } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -19,6 +19,9 @@ export default function ContactDetail() {
   const [contactId, setContactId] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [layoutEditMode, setLayoutEditMode] = useState(false);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [editingTemplate, setEditingTemplate] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -59,63 +62,19 @@ export default function ContactDetail() {
     enabled: !!contactId
   });
 
-  // Fetch view templates
+  // Fetch ALL view templates
   const { data: viewTemplates = [] } = useQuery({
     queryKey: ['contact_view_templates'],
     queryFn: () => base44.entities.Contact_Detail_View.list()
   });
 
-  const { data: defaultView } = useQuery({
-    queryKey: ['default_contact_view'],
-    queryFn: async () => {
-      const views = await base44.entities.Contact_Detail_View.filter({ is_default: true });
-      if (views.length > 0) return views[0];
-      
-      // Create default view if it doesn't exist
-      const defaultTemplate = {
-        view_name: "Default View",
-        is_default: true,
-        sections: [
-          {
-            id: "section-1",
-            title: "Contact Information",
-            fields: [
-              { name: "first_name", label: "First Name", type: "text", required: true },
-              { name: "last_name", label: "Last Name", type: "text", required: true },
-              { name: "email", label: "Email", type: "email" },
-              { name: "phone", label: "Phone", type: "text" },
-              { name: "mobile", label: "Mobile", type: "text" },
-              { name: "job_title", label: "Job Title", type: "text" },
-              { name: "department", label: "Department", type: "text" }
-            ]
-          },
-          {
-            id: "section-2",
-            title: "Status & Lifecycle",
-            fields: [
-              { name: "lifecycle_stage", label: "Lifecycle Stage", type: "select" },
-              { name: "lead_status", label: "Lead Status", type: "select" }
-            ]
-          },
-          {
-            id: "section-3",
-            title: "Address",
-            fields: [
-              { name: "address", label: "Address", type: "text" },
-              { name: "city", label: "City", type: "text" },
-              { name: "state", label: "State", type: "text" },
-              { name: "zip", label: "Zip", type: "text" },
-              { name: "country", label: "Country", type: "text" }
-            ]
-          }
-        ],
-        custom_fields: [],
-        layout_configuration: {}
-      };
-      
-      return await base44.entities.Contact_Detail_View.create(defaultTemplate);
-    }
-  });
+  // Get default view
+  const defaultView = viewTemplates.find(v => v.is_default) || null;
+
+  // Get currently selected view (default if not specified)
+  const activeView = selectedTemplateId 
+    ? viewTemplates.find(v => v.id === selectedTemplateId) 
+    : defaultView;
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Contact.update(contactId, data),
@@ -163,19 +122,41 @@ export default function ContactDetail() {
 
   const saveViewMutation = useMutation({
     mutationFn: async (viewConfig) => {
-      if (defaultView?.id) {
-        return await base44.entities.Contact_Detail_View.update(defaultView.id, viewConfig);
+      if (editingTemplate?.id) {
+        return await base44.entities.Contact_Detail_View.update(editingTemplate.id, viewConfig);
       } else {
-        return await base44.entities.Contact_Detail_View.create({
-          ...viewConfig,
-          is_default: true
-        });
+        return await base44.entities.Contact_Detail_View.create(viewConfig);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['default_contact_view']);
       queryClient.invalidateQueries(['contact_view_templates']);
       setLayoutEditMode(false);
+      setEditingTemplate(null);
+    }
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (templateId) => base44.entities.Contact_Detail_View.delete(templateId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['contact_view_templates']);
+      setShowTemplateSelector(false);
+    }
+  });
+
+  const setDefaultMutation = useMutation({
+    mutationFn: async (templateId) => {
+      // First, unset all other defaults
+      const updates = viewTemplates
+        .filter(v => v.is_default && v.id !== templateId)
+        .map(v => base44.entities.Contact_Detail_View.update(v.id, { is_default: false }));
+      
+      await Promise.all(updates);
+      
+      // Then set the new default
+      return await base44.entities.Contact_Detail_View.update(templateId, { is_default: true });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['contact_view_templates']);
     }
   });
 
@@ -183,6 +164,52 @@ export default function ContactDetail() {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       deleteMutation.mutate();
     }
+  };
+
+  const handleCreateDefaultTemplate = async () => {
+    const defaultTemplate = {
+      view_name: "Default View",
+      is_default: true,
+      sections: [
+        {
+          id: "section-1",
+          title: "Contact Information",
+          fields: [
+            { name: "first_name", label: "First Name", type: "text", required: true },
+            { name: "last_name", label: "Last Name", type: "text", required: true },
+            { name: "email", label: "Email", type: "email" },
+            { name: "phone", label: "Phone", type: "text" },
+            { name: "mobile", label: "Mobile", type: "text" },
+            { name: "job_title", label: "Job Title", type: "text" },
+            { name: "department", label: "Department", type: "text" }
+          ]
+        },
+        {
+          id: "section-2",
+          title: "Status & Lifecycle",
+          fields: [
+            { name: "lifecycle_stage", label: "Lifecycle Stage", type: "select" },
+            { name: "lead_status", label: "Lead Status", type: "select" }
+          ]
+        },
+        {
+          id: "section-3",
+          title: "Address",
+          fields: [
+            { name: "address", label: "Address", type: "text" },
+            { name: "city", label: "City", type: "text" },
+            { name: "state", label: "State", type: "text" },
+            { name: "zip", label: "Zip", type: "text" },
+            { name: "country", label: "Country", type: "text" }
+          ]
+        }
+      ],
+      custom_fields: [],
+      layout_configuration: {}
+    };
+    
+    await base44.entities.Contact_Detail_View.create(defaultTemplate);
+    queryClient.invalidateQueries(['contact_view_templates']);
   };
 
   const renderFieldByType = (field, value, onChange, isEditing) => {
@@ -196,6 +223,9 @@ export default function ContactDetail() {
       }
       if (field.type === 'select' && field.name === 'lead_status') {
         return <span className="neuro-button px-2 py-1 text-sm">{fieldValue || '—'}</span>;
+      }
+      if (field.type === 'checkbox') {
+        return <span className="neuro-button px-2 py-1 text-sm">{fieldValue ? 'Yes' : 'No'}</span>;
       }
       return <p style={{ color: "#666" }}>{fieldValue || '—'}</p>;
     }
@@ -231,6 +261,17 @@ export default function ContactDetail() {
       );
     }
 
+    if (field.type === 'checkbox') {
+      return (
+        <input
+          type="checkbox"
+          checked={!!fieldValue}
+          onChange={onChange}
+          className="ampvibe-button"
+        />
+      );
+    }
+
     return (
       <input
         type={field.type || 'text'}
@@ -261,18 +302,108 @@ export default function ContactDetail() {
     );
   }
 
+  // Template selector modal
+  if (showTemplateSelector && currentUser?.role === 'admin') {
+    return (
+      <div className="p-8">
+        <div className="max-w-4xl mx-auto">
+          <NeuroCard>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold" style={{ color: "#666" }}>
+                Manage View Templates
+              </h2>
+              <div className="flex gap-2">
+                <NeuroButton variant="primary" onClick={() => {
+                  setEditingTemplate(null);
+                  setLayoutEditMode(true);
+                  setShowTemplateSelector(false);
+                }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Template
+                </NeuroButton>
+                <NeuroButton onClick={() => setShowTemplateSelector(false)}>
+                  Close
+                </NeuroButton>
+              </div>
+            </div>
+
+            {viewTemplates.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="mb-4" style={{ color: "#888" }}>No templates yet</p>
+                <NeuroButton variant="primary" onClick={handleCreateDefaultTemplate}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Default Template
+                </NeuroButton>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {viewTemplates.map((template) => (
+                  <div key={template.id} className="ampvibe-inset p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-bold" style={{ color: "#666" }}>
+                          {template.view_name}
+                        </p>
+                        <p className="text-sm" style={{ color: "#888" }}>
+                          {template.sections?.length || 0} sections • {template.custom_fields?.length || 0} custom fields
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {template.is_default && (
+                          <span className="neuro-button px-3 py-1 text-xs text-green-600">
+                            Default
+                          </span>
+                        )}
+                        {!template.is_default && (
+                          <NeuroButton size="sm" onClick={() => setDefaultMutation.mutate(template.id)}>
+                            Set as Default
+                          </NeuroButton>
+                        )}
+                        <NeuroButton size="sm" onClick={() => {
+                          setEditingTemplate(template);
+                          setLayoutEditMode(true);
+                          setShowTemplateSelector(false);
+                        }}>
+                          <Edit2 className="w-3 h-3 mr-1" />
+                          Edit
+                        </NeuroButton>
+                        {!template.is_default && (
+                          <NeuroButton size="sm" onClick={() => {
+                            if (window.confirm(`Delete template "${template.view_name}"?`)) {
+                              deleteTemplateMutation.mutate(template.id);
+                            }
+                          }}>
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Delete
+                          </NeuroButton>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </NeuroCard>
+        </div>
+      </div>
+    );
+  }
+
   if (layoutEditMode && currentUser?.role === 'admin') {
     return (
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
           <NeuroCard>
             <h2 className="text-2xl font-bold mb-6" style={{ color: "#666" }}>
-              Edit Contact Detail Layout
+              {editingTemplate ? `Edit Template: ${editingTemplate.view_name}` : 'Create New Template'}
             </h2>
             <ViewLayoutEditor
-              currentView={defaultView}
+              currentView={editingTemplate}
               onSave={(config) => saveViewMutation.mutate(config)}
-              onCancel={() => setLayoutEditMode(false)}
+              onCancel={() => {
+                setLayoutEditMode(false);
+                setEditingTemplate(null);
+              }}
             />
           </NeuroCard>
         </div>
@@ -320,9 +451,9 @@ export default function ContactDetail() {
           </div>
           <div className="flex gap-3">
             {currentUser?.role === 'admin' && (
-              <NeuroButton onClick={() => setLayoutEditMode(true)}>
-                <Settings className="w-4 h-4 mr-2" />
-                Edit Layout
+              <NeuroButton onClick={() => setShowTemplateSelector(true)}>
+                <LayoutTemplate className="w-4 h-4 mr-2" />
+                Manage Templates
               </NeuroButton>
             )}
             <NeuroButton onClick={() => setEditMode(true)}>
@@ -339,37 +470,53 @@ export default function ContactDetail() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Info - Dynamic Layout */}
           <div className="lg:col-span-2 space-y-6">
-            {defaultView?.sections?.map((section) => (
-              <NeuroCard key={section.id}>
-                <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
-                  {section.title}
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {section.fields.map((field) => (
-                    <div key={field.name}>
-                      <p className="text-sm mb-1" style={{ color: "#aaa" }}>{field.label}</p>
-                      {renderFieldByType(field, contact[field.name], null, false)}
-                    </div>
-                  ))}
-                </div>
-              </NeuroCard>
-            ))}
-
-            {/* Custom Fields Section */}
-            {defaultView?.custom_fields?.length > 0 && (
+            {!activeView ? (
               <NeuroCard>
-                <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
-                  Custom Information
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {defaultView.custom_fields.map((field) => (
-                    <div key={field.name}>
-                      <p className="text-sm mb-1" style={{ color: "#aaa" }}>{field.label}</p>
-                      {renderFieldByType(field, contact?.custom_data?.[field.name], null, false)}
-                    </div>
-                  ))}
+                <div className="text-center py-12">
+                  <p className="mb-4" style={{ color: "#888" }}>No view template found</p>
+                  {currentUser?.role === 'admin' && (
+                    <NeuroButton variant="primary" onClick={handleCreateDefaultTemplate}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Default Template
+                    </NeuroButton>
+                  )}
                 </div>
               </NeuroCard>
+            ) : (
+              <>
+                {activeView.sections?.map((section) => (
+                  <NeuroCard key={section.id}>
+                    <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
+                      {section.title}
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {section.fields.map((field) => (
+                        <div key={field.name}>
+                          <p className="text-sm mb-1" style={{ color: "#aaa" }}>{field.label}</p>
+                          {renderFieldByType(field, contact[field.name], null, false)}
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+                ))}
+
+                {/* Custom Fields Section */}
+                {activeView.custom_fields?.length > 0 && (
+                  <NeuroCard>
+                    <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
+                      Custom Information
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {activeView.custom_fields.map((field) => (
+                        <div key={field.name}>
+                          <p className="text-sm mb-1" style={{ color: "#aaa" }}>{field.label}</p>
+                          {renderFieldByType(field, contact?.custom_data?.[field.name], null, false)}
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+                )}
+              </>
             )}
 
             {/* Associated Company */}
