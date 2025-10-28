@@ -41,6 +41,8 @@ import KnowledgeBase from './pages/KnowledgeBase';
 import Reports from './pages/Reports';
 import Workflows from './pages/Workflows';
 import Goals from './pages/Goals';
+import Notifications from './pages/Notifications';
+import Dashboards from './pages/Dashboards';
 import Layout from './Layout.jsx';
 
 
@@ -88,6 +90,8 @@ export const PAGES = {
     "Reports": Reports,
     "Workflows": Workflows,
     "Goals": Goals,
+    "Notifications": Notifications,
+    "Dashboards": Dashboards,
 }
 
 export const pagesConfig = {
