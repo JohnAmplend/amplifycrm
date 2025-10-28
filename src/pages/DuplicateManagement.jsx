@@ -3,10 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Copy, RefreshCw, X, CheckCircle, Settings, Play } from "lucide-react";
+import { Copy, RefreshCw, X, CheckCircle, Settings, Play, Plus, Edit2, Trash2 } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import NeuroInput from "../components/crm/NeuroInput";
 
 export default function DuplicateManagement() {
   const navigate = useNavigate();
@@ -14,8 +15,18 @@ export default function DuplicateManagement() {
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("Pending");
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showRuleForm, setShowRuleForm] = useState(false);
+  const [editingRule, setEditingRule] = useState(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionResult, setDetectionResult] = useState(null);
+  const [ruleFormData, setRuleFormData] = useState({
+    entity_type: "Contact",
+    field_name: "",
+    match_type: "exact",
+    weight: 0.5,
+    threshold: 0.7,
+    active: true
+  });
 
   const { data: duplicates = [], isLoading } = useQuery({
     queryKey: ['duplicates'],
@@ -49,6 +60,45 @@ export default function DuplicateManagement() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['duplicates']);
+    }
+  });
+
+  const createRuleMutation = useMutation({
+    mutationFn: (data) => base44.entities.Duplicate_Rules.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['duplicate_rules']);
+      setShowRuleForm(false);
+      setRuleFormData({
+        entity_type: "Contact",
+        field_name: "",
+        match_type: "exact",
+        weight: 0.5,
+        threshold: 0.7,
+        active: true
+      });
+    }
+  });
+
+  const updateRuleMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Duplicate_Rules.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['duplicate_rules']);
+      setEditingRule(null);
+      setShowRuleForm(false);
+    }
+  });
+
+  const deleteRuleMutation = useMutation({
+    mutationFn: (id) => base44.entities.Duplicate_Rules.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['duplicate_rules']);
+    }
+  });
+
+  const toggleRuleActiveMutation = useMutation({
+    mutationFn: ({ id, active }) => base44.entities.Duplicate_Rules.update(id, { active }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['duplicate_rules']);
     }
   });
 
@@ -95,6 +145,33 @@ export default function DuplicateManagement() {
     }
   };
 
+  const handleEditRule = (rule) => {
+    setEditingRule(rule);
+    setRuleFormData({
+      entity_type: rule.entity_type,
+      field_name: rule.field_name,
+      match_type: rule.match_type,
+      weight: rule.weight,
+      threshold: rule.threshold,
+      active: rule.active
+    });
+    setShowRuleForm(true);
+  };
+
+  const handleSaveRule = () => {
+    if (editingRule) {
+      updateRuleMutation.mutate({ id: editingRule.id, data: ruleFormData });
+    } else {
+      createRuleMutation.mutate(ruleFormData);
+    }
+  };
+
+  const handleDeleteRule = (id) => {
+    if (window.confirm('Are you sure you want to delete this rule?')) {
+      deleteRuleMutation.mutate(id);
+    }
+  };
+
   const filteredDuplicates = duplicates.filter(d => {
     const typeMatch = !filterType || d.record_type === filterType;
     const statusMatch = !filterStatus || d.status === filterStatus;
@@ -103,6 +180,13 @@ export default function DuplicateManagement() {
 
   const pendingCount = duplicates.filter(d => d.status === 'Pending').length;
   const activeRulesCount = rules.filter(r => r.active).length;
+
+  // Common field names for different entity types
+  const commonFields = {
+    Contact: ['email', 'first_name', 'last_name', 'phone', 'mobile', 'company_id'],
+    Company: ['company_name', 'domain', 'phone', 'email'],
+    Lead: ['email', 'first_name', 'last_name', 'phone', 'company_name']
+  };
 
   return (
     <div className="p-8">
@@ -339,13 +423,114 @@ export default function DuplicateManagement() {
                 <h2 className="text-2xl font-bold" style={{ color: "#666" }}>
                   Duplicate Detection Rules
                 </h2>
-                <button
-                  onClick={() => setShowRulesModal(false)}
-                  className="ampvibe-button p-2"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex gap-2">
+                  <NeuroButton 
+                    variant="primary"
+                    onClick={() => {
+                      setEditingRule(null);
+                      setRuleFormData({
+                        entity_type: "Contact",
+                        field_name: "",
+                        match_type: "exact",
+                        weight: 0.5,
+                        threshold: 0.7,
+                        active: true
+                      });
+                      setShowRuleForm(true);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Rule
+                  </NeuroButton>
+                  <button
+                    onClick={() => setShowRulesModal(false)}
+                    className="ampvibe-button p-2"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
+
+              {showRuleForm && (
+                <div className="mb-6 ampvibe-inset p-4 rounded-lg">
+                  <h3 className="font-bold mb-4" style={{ color: "#666" }}>
+                    {editingRule ? 'Edit Rule' : 'New Rule'}
+                  </h3>
+                  <div className="space-y-4">
+                    <NeuroSelect
+                      label="Entity Type"
+                      value={ruleFormData.entity_type}
+                      onChange={(e) => setRuleFormData({ ...ruleFormData, entity_type: e.target.value, field_name: "" })}
+                      options={[
+                        { value: 'Contact', label: 'Contact' },
+                        { value: 'Company', label: 'Company' },
+                        { value: 'Lead', label: 'Lead' }
+                      ]}
+                      required
+                    />
+                    <NeuroSelect
+                      label="Field Name"
+                      value={ruleFormData.field_name}
+                      onChange={(e) => setRuleFormData({ ...ruleFormData, field_name: e.target.value })}
+                      options={commonFields[ruleFormData.entity_type]?.map(field => ({
+                        value: field,
+                        label: field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                      })) || []}
+                      required
+                    />
+                    <NeuroSelect
+                      label="Match Type"
+                      value={ruleFormData.match_type}
+                      onChange={(e) => setRuleFormData({ ...ruleFormData, match_type: e.target.value })}
+                      options={[
+                        { value: 'exact', label: 'Exact Match' },
+                        { value: 'fuzzy', label: 'Fuzzy Match (80% similarity)' }
+                      ]}
+                      required
+                    />
+                    <NeuroInput
+                      label="Weight (0-1)"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="1"
+                      value={ruleFormData.weight}
+                      onChange={(e) => setRuleFormData({ ...ruleFormData, weight: parseFloat(e.target.value) })}
+                      required
+                    />
+                    <NeuroInput
+                      label="Threshold (0-1)"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="1"
+                      value={ruleFormData.threshold}
+                      onChange={(e) => setRuleFormData({ ...ruleFormData, threshold: parseFloat(e.target.value) })}
+                      required
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={ruleFormData.active}
+                        onChange={(e) => setRuleFormData({ ...ruleFormData, active: e.target.checked })}
+                        className="ampvibe-button"
+                      />
+                      <label style={{ color: "#666" }}>Active</label>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <NeuroButton onClick={() => {
+                        setShowRuleForm(false);
+                        setEditingRule(null);
+                      }}>
+                        Cancel
+                      </NeuroButton>
+                      <NeuroButton variant="primary" onClick={handleSaveRule}>
+                        {editingRule ? 'Update' : 'Create'} Rule
+                      </NeuroButton>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {rules.length === 0 ? (
                 <div className="text-center py-8">
@@ -361,7 +546,7 @@ export default function DuplicateManagement() {
                   {rules.map((rule) => (
                     <div key={rule.id} className="ampvibe-inset p-4 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-bold" style={{ color: "#666" }}>
                             {rule.entity_type} - {rule.field_name}
                           </p>
@@ -377,11 +562,28 @@ export default function DuplicateManagement() {
                             </span>
                           </div>
                         </div>
-                        <span className={`ampvibe-button px-3 py-1 text-xs ${
-                          rule.active ? 'text-green-600' : 'text-gray-600'
-                        }`}>
-                          {rule.active ? 'Active' : 'Inactive'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleRuleActiveMutation.mutate({ id: rule.id, active: !rule.active })}
+                            className={`ampvibe-button px-3 py-1 text-xs ${
+                              rule.active ? 'text-green-600' : 'text-gray-600'
+                            }`}
+                          >
+                            {rule.active ? 'Active' : 'Inactive'}
+                          </button>
+                          <button
+                            onClick={() => handleEditRule(rule)}
+                            className="ampvibe-button p-2"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRule(rule.id)}
+                            className="ampvibe-button p-2 text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -398,6 +600,7 @@ export default function DuplicateManagement() {
                   <li>• Fuzzy match: Fields are similar (80%+ similarity)</li>
                   <li>• Weights determine importance (0-1 scale)</li>
                   <li>• Threshold sets minimum score to flag as duplicate</li>
+                  <li>• Only active rules are used during detection</li>
                 </ul>
               </div>
             </div>
