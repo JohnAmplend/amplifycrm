@@ -7,8 +7,8 @@ import { ArrowLeft, Edit2, Trash2, Plus, Building2, DollarSign } from "lucide-re
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import ContactForm from "../components/crm/ContactForm";
-import ActivityTimeline from "../components/crm/ActivityTimeline";
-import TaskList from "../components/crm/TaskList";
+import ActivityTimeline from "../components/crm/ActivityTimeline.jsx";
+import TaskList from "../components/crm/TaskList.jsx";
 
 export default function ContactDetail() {
   const navigate = useNavigate();

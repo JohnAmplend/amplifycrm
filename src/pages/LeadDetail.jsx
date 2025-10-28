@@ -9,7 +9,7 @@ import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import LeadForm from "../components/crm/LeadForm";
-import ActivityTimeline from "../components/crm/ActivityTimeline";
+import ActivityTimeline from "../components/crm/ActivityTimeline.jsx";
 
 export default function LeadDetail() {
   const navigate = useNavigate();
