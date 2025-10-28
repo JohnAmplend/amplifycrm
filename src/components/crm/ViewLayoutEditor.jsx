@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Plus, X, GripVertical, Save, Edit2, Trash2, ChevronDown } from "lucide-react";
 import NeuroButton from "./NeuroButton";
@@ -234,7 +235,15 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
                 </NeuroButton>
                 
                 {showAddStandardField === section.id && (
-                  <div className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl z-50 w-64 max-h-64 overflow-y-auto">
+                  <div 
+                    className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl w-64 max-h-64 overflow-y-auto"
+                    style={{ 
+                      zIndex: 9999,
+                      background: 'rgba(255, 255, 255, 0.98)',
+                      backdropFilter: 'blur(30px)',
+                      WebkitBackdropFilter: 'blur(30px)'
+                    }}
+                  >
                     {standardFields.map((field) => (
                       <button
                         key={field.name}
@@ -261,7 +270,15 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
                   </NeuroButton>
                   
                   {showAddCustomField === section.id && (
-                    <div className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl z-50 w-64 max-h-64 overflow-y-auto">
+                    <div 
+                      className="absolute top-full left-0 mt-2 ampvibe-card p-2 shadow-2xl w-64 max-h-64 overflow-y-auto"
+                      style={{ 
+                        zIndex: 9999,
+                        background: 'rgba(255, 255, 255, 0.98)',
+                        backdropFilter: 'blur(30px)',
+                        WebkitBackdropFilter: 'blur(30px)'
+                      }}
+                    >
                       {customFields.map((field) => (
                         <button
                           key={field.id}
