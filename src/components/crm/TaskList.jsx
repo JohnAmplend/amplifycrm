@@ -1,6 +1,6 @@
 import React from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tantml:react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, CheckSquare, Square } from "lucide-react";
 import NeuroCard from "./NeuroCard";
 import NeuroButton from "./NeuroButton";
