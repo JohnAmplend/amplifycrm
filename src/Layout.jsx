@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -23,16 +24,35 @@ import {
   BarChart3,
   FileText,
   Copy,
-  Box
+  Box,
+  BarChart, // New import
+  Target,   // New import
+  Zap,      // New import
+  Bell      // New import
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [user, setUser] = React.useState(null);
+  const [unreadNotifications, setUnreadNotifications] = React.useState(0); // New state
 
   React.useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(async (u) => {
+      setUser(u);
+      // Load unread notification count
+      try {
+        // Ensure that `u.email` is correctly used as user_id for filtering
+        const notifications = await base44.entities.Notifications.filter({ user_id: u.email, is_read: false });
+        setUnreadNotifications(notifications.length);
+      } catch (e) {
+        console.error("Failed to fetch unread notifications:", e);
+        // Optionally, set unreadNotifications to 0 or handle error display
+        setUnreadNotifications(0); 
+      }
+    }).catch((err) => {
+      console.error("Failed to fetch user data:", err);
+    });
   }, []);
 
   const navigation = [
@@ -62,15 +82,25 @@ export default function Layout({ children, currentPageName }) {
     { name: "Knowledge Base", icon: MessageSquare, page: "KnowledgeBase" },
   ];
 
-  const integrations = [
-    { name: "RingCentral", icon: Phone, page: "RingCentral" },
-  ];
-
   const marketing = [
     { name: "Campaigns", icon: Send, page: "Campaigns" },
     { name: "Email Templates", icon: Mail, page: "EmailTemplates" },
     { name: "Sequences", icon: Layers, page: "EmailSequences" },
     { name: "Contact Lists", icon: List, page: "ContactLists" },
+  ];
+
+  const analytics = [ // New section
+    { name: "Dashboards", icon: LayoutDashboard, page: "Dashboards" },
+    { name: "Reports", icon: BarChart, page: "Reports" },
+    { name: "Goals", icon: Target, page: "Goals" },
+  ];
+
+  const automation = [ // New section
+    { name: "Workflows", icon: Zap, page: "Workflows" },
+  ];
+
+  const integrations = [
+    { name: "RingCentral", icon: Phone, page: "RingCentral" },
   ];
 
   const advanced = [
@@ -343,6 +373,50 @@ export default function Layout({ children, currentPageName }) {
               </div>
             </div>
 
+            {/* New Analytics Section */}
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
+                ANALYTICS
+              </p>
+              <div className="space-y-1">
+                {analytics.map((item) => {
+                  const active = isActive(item.page);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      className={`ampvibe-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* New Automation Section */}
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
+                AUTOMATION
+              </p>
+              <div className="space-y-1">
+                {automation.map((item) => {
+                  const active = isActive(item.page);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      className={`ampvibe-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
             <div>
               <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
                 INTEGRATIONS
@@ -441,8 +515,30 @@ export default function Layout({ children, currentPageName }) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {children}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
+        <div className="ampvibe-card m-4 mb-0 p-4 flex items-center justify-between">
+          <div className="flex-1">
+            {/* Placeholder for search or other top-bar elements */}
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to={createPageUrl("Notifications")} className="relative">
+              <button className="ampvibe-button p-3 relative">
+                <Bell className="w-5 h-5" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Page Content */}
+        <div className="flex-1 overflow-auto">
+          {children}
+        </div>
       </div>
     </div>
   );
