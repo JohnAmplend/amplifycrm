@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Plus, Trash2, Save, Zap } from "lucide-react";
+import { ArrowLeft, Plus, X, Trash2, Save, Settings } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -12,9 +12,10 @@ import NeuroSelect from "../components/crm/NeuroSelect";
 export default function WorkflowBuilder() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [workflowId, setWorkflowId] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [formData, setFormData] = useState({
+  const urlParams = new URLSearchParams(window.location.search);
+  const workflowId = urlParams.get('id');
+
+  const [workflowData, setWorkflowData] = useState({
     workflow_name: "",
     workflow_description: "",
     trigger_type: "Record Created",
@@ -22,183 +23,461 @@ export default function WorkflowBuilder() {
     trigger_conditions: {},
     is_active: false
   });
-  const [actions, setActions] = useState([]);
 
-  useEffect(() => {
-    base44.auth.me().then(setCurrentUser).catch(() => {});
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-    if (id) setWorkflowId(id);
-  }, []);
+  const [actions, setActions] = useState([]);
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [currentAction, setCurrentAction] = useState(null);
+  const [newActionType, setNewActionType] = useState("Send Email");
 
   const { data: workflow } = useQuery({
     queryKey: ['workflow', workflowId],
-    queryFn: () => base44.entities.Workflows.filter({ id: workflowId }),
-    enabled: !!workflowId,
-    select: (data) => data[0]
+    queryFn: () => workflowId ? base44.entities.Workflows.filter({ id: workflowId }).then(r => r[0]) : null,
+    enabled: !!workflowId
   });
 
   const { data: workflowActions = [] } = useQuery({
     queryKey: ['workflow_actions', workflowId],
-    queryFn: () => base44.entities.Workflow_Actions.filter({ workflow_id: workflowId }, 'action_order'),
+    queryFn: () => workflowId ? base44.entities.Workflow_Actions.filter({ workflow_id: workflowId }, 'action_order') : [],
     enabled: !!workflowId
+  });
+
+  const { data: emailTemplates = [] } = useQuery({
+    queryKey: ['email_templates'],
+    queryFn: () => base44.entities.Email_Template.filter({ is_active: true })
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list()
   });
 
   useEffect(() => {
     if (workflow) {
-      setFormData({
-        workflow_name: workflow.workflow_name,
-        workflow_description: workflow.workflow_description || "",
-        trigger_type: workflow.trigger_type,
-        trigger_object: workflow.trigger_object,
-        trigger_conditions: workflow.trigger_conditions || {},
-        is_active: workflow.is_active
-      });
+      setWorkflowData(workflow);
     }
+  }, [workflow]);
+
+  useEffect(() => {
     if (workflowActions.length > 0) {
-      setActions(workflowActions.map(a => ({
-        id: a.id,
-        action_type: a.action_type,
-        action_configuration: a.action_configuration || {},
-        delay_minutes: a.delay_minutes || 0
-      })));
+      setActions(workflowActions);
     }
-  }, [workflow, workflowActions]);
+  }, [workflowActions]);
 
-  const saveMutation = useMutation({
+  const saveWorkflowMutation = useMutation({
     mutationFn: async (data) => {
-      let wfId = workflowId;
-      
       if (workflowId) {
-        await base44.entities.Workflows.update(workflowId, data);
+        return base44.entities.Workflows.update(workflowId, data);
       } else {
-        const newWorkflow = await base44.entities.Workflows.create({
-          ...data,
-          created_by: currentUser?.email,
-          execution_count: 0
-        });
-        wfId = newWorkflow.id;
-        setWorkflowId(wfId);
+        return base44.entities.Workflows.create(data);
       }
-
-      // Delete existing actions
-      if (workflowId) {
-        const existingActions = await base44.entities.Workflow_Actions.filter({ workflow_id: workflowId });
-        await Promise.all(existingActions.map(a => base44.entities.Workflow_Actions.delete(a.id)));
-      }
-
-      // Create new actions
-      await Promise.all(actions.map((action, index) => 
-        base44.entities.Workflow_Actions.create({
-          workflow_id: wfId,
-          action_order: index + 1,
-          action_type: action.action_type,
-          action_configuration: action.action_configuration,
-          delay_minutes: action.delay_minutes || 0
-        })
-      ));
-
-      return wfId;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries(['workflows']);
-      queryClient.invalidateQueries(['workflow_actions']);
-      navigate(createPageUrl("Workflows"));
+      if (!workflowId) {
+        navigate(createPageUrl("WorkflowBuilder") + `?id=${result.id}`);
+      }
     }
   });
 
+  const saveActionMutation = useMutation({
+    mutationFn: (action) => {
+      if (action.id) {
+        return base44.entities.Workflow_Actions.update(action.id, action);
+      } else {
+        return base44.entities.Workflow_Actions.create({
+          ...action,
+          workflow_id: workflowId
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['workflow_actions']);
+      setShowConfigModal(false);
+      setCurrentAction(null);
+    }
+  });
+
+  const deleteActionMutation = useMutation({
+    mutationFn: (id) => base44.entities.Workflow_Actions.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['workflow_actions']);
+    }
+  });
+
+  const handleSaveWorkflow = () => {
+    saveWorkflowMutation.mutate(workflowData);
+  };
+
   const handleAddAction = () => {
-    setActions([...actions, {
-      action_type: "Send Email",
-      action_configuration: {},
+    const newAction = {
+      action_type: newActionType,
+      action_order: actions.length + 1,
+      action_configuration: getDefaultConfig(newActionType),
       delay_minutes: 0
-    }]);
+    };
+    setCurrentAction(newAction);
+    setShowActionModal(false);
+    setShowConfigModal(true);
   };
 
-  const handleRemoveAction = (index) => {
-    setActions(actions.filter((_, i) => i !== index));
+  const handleEditAction = (action) => {
+    setCurrentAction(action);
+    setShowConfigModal(true);
   };
 
-  const handleActionChange = (index, field, value) => {
-    const newActions = [...actions];
-    newActions[index] = { ...newActions[index], [field]: value };
-    setActions(newActions);
+  const handleSaveAction = () => {
+    if (currentAction) {
+      saveActionMutation.mutate(currentAction);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    saveMutation.mutate(formData);
+  const handleDeleteAction = (id) => {
+    if (window.confirm('Are you sure you want to delete this action?')) {
+      deleteActionMutation.mutate(id);
+    }
   };
 
-  return (
-    <div className="p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <NeuroButton onClick={() => navigate(createPageUrl("Workflows"))}>
-            <ArrowLeft className="w-4 h-4" />
-          </NeuroButton>
-          <div>
-            <h1 className="text-3xl font-bold" style={{ color: "#555" }}>
-              {workflowId ? 'Edit Workflow' : 'Create Workflow'}
-            </h1>
-            <p style={{ color: "#888" }}>Build your automation workflow</p>
+  const getDefaultConfig = (actionType) => {
+    const defaults = {
+      "Send Email": { template_id: "", recipient_type: "Record Owner", email: "" },
+      "Create Task": { title: "", assigned_to: "", priority: "Medium", due_days: 3 },
+      "Assign Owner": { method: "Specific User", user_id: "", team_id: "", conditions: {} },
+      "Update Field": { entity_type: "Contact", field_name: "", value: "" },
+      "Create Record": { entity_type: "Contact", field_map: {} },
+      "Add to List": { list_id: "" },
+      "Send Notification": { title: "", message: "", user_id: "" },
+      "Add Tag": { tag: "" },
+      "Remove Tag": { tag: "" }
+    };
+    return defaults[actionType] || {};
+  };
+
+  const renderConfigForm = () => {
+    if (!currentAction) return null;
+
+    const config = currentAction.action_configuration || {};
+    const updateConfig = (key, value) => {
+      setCurrentAction({
+        ...currentAction,
+        action_configuration: { ...config, [key]: value }
+      });
+    };
+
+    switch (currentAction.action_type) {
+      case "Send Email":
+        return (
+          <div className="space-y-4">
+            <NeuroSelect
+              label="Email Template"
+              value={config.template_id || ""}
+              onChange={(e) => updateConfig('template_id', e.target.value)}
+              options={emailTemplates.map(t => ({ value: t.id, label: t.template_name }))}
+              required
+            />
+            <NeuroSelect
+              label="Recipient Type"
+              value={config.recipient_type || "Record Owner"}
+              onChange={(e) => updateConfig('recipient_type', e.target.value)}
+              options={[
+                { value: 'Record Owner', label: 'Record Owner' },
+                { value: 'Static Email', label: 'Static Email' },
+                { value: 'Contact Email', label: 'Contact Email Field' }
+              ]}
+              required
+            />
+            {config.recipient_type === 'Static Email' && (
+              <NeuroInput
+                label="Email Address"
+                type="email"
+                value={config.email || ""}
+                onChange={(e) => updateConfig('email', e.target.value)}
+                placeholder="user@example.com"
+                required
+              />
+            )}
           </div>
-        </div>
+        );
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
+      case "Create Task":
+        return (
+          <div className="space-y-4">
+            <NeuroInput
+              label="Task Title"
+              value={config.title || ""}
+              onChange={(e) => updateConfig('title', e.target.value)}
+              placeholder="Follow up with {{first_name}}"
+              required
+            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium" style={{ color: "#666" }}>
+                Description
+              </label>
+              <textarea
+                value={config.description || ""}
+                onChange={(e) => updateConfig('description', e.target.value)}
+                className="ampvibe-input w-full min-h-[80px]"
+                placeholder="Task details..."
+              />
+            </div>
+            <NeuroSelect
+              label="Assign To"
+              value={config.assigned_to || ""}
+              onChange={(e) => updateConfig('assigned_to', e.target.value)}
+              options={[
+                { value: 'Record Owner', label: 'Record Owner' },
+                ...users.map(u => ({ value: u.email, label: u.full_name || u.email }))
+              ]}
+              required
+            />
+            <NeuroSelect
+              label="Priority"
+              value={config.priority || "Medium"}
+              onChange={(e) => updateConfig('priority', e.target.value)}
+              options={[
+                { value: 'Low', label: 'Low' },
+                { value: 'Medium', label: 'Medium' },
+                { value: 'High', label: 'High' }
+              ]}
+            />
+            <NeuroInput
+              label="Due in (Days)"
+              type="number"
+              min="0"
+              value={config.due_days || 3}
+              onChange={(e) => updateConfig('due_days', parseInt(e.target.value))}
+            />
+          </div>
+        );
+
+      case "Assign Owner":
+        return (
+          <div className="space-y-4">
+            <NeuroSelect
+              label="Assignment Method"
+              value={config.method || "Specific User"}
+              onChange={(e) => updateConfig('method', e.target.value)}
+              options={[
+                { value: 'Specific User', label: 'Specific User' },
+                { value: 'Round Robin', label: 'Round Robin (Team)' },
+                { value: 'From Related Record', label: 'From Related Record' }
+              ]}
+              required
+            />
+            {config.method === 'Specific User' && (
+              <NeuroSelect
+                label="User"
+                value={config.user_id || ""}
+                onChange={(e) => updateConfig('user_id', e.target.value)}
+                options={users.map(u => ({ value: u.email, label: u.full_name || u.email }))}
+                required
+              />
+            )}
+            {config.method === 'Round Robin' && (
+              <NeuroInput
+                label="Team Name"
+                value={config.team_id || ""}
+                onChange={(e) => updateConfig('team_id', e.target.value)}
+                placeholder="Sales Team"
+              />
+            )}
+            {config.method === 'From Related Record' && (
+              <NeuroSelect
+                label="Related Record Type"
+                value={config.related_type || "Company"}
+                onChange={(e) => updateConfig('related_type', e.target.value)}
+                options={[
+                  { value: 'Company', label: 'Company Owner' },
+                  { value: 'Contact', label: 'Contact Owner' }
+                ]}
+              />
+            )}
+          </div>
+        );
+
+      case "Update Field":
+        return (
+          <div className="space-y-4">
+            <NeuroSelect
+              label="Entity Type"
+              value={config.entity_type || "Contact"}
+              onChange={(e) => updateConfig('entity_type', e.target.value)}
+              options={[
+                { value: 'Contact', label: 'Contact' },
+                { value: 'Company', label: 'Company' },
+                { value: 'Deal', label: 'Deal' },
+                { value: 'Lead', label: 'Lead' }
+              ]}
+              required
+            />
+            <NeuroInput
+              label="Field Name"
+              value={config.field_name || ""}
+              onChange={(e) => updateConfig('field_name', e.target.value)}
+              placeholder="lifecycle_stage"
+              required
+            />
+            <NeuroInput
+              label="New Value"
+              value={config.value || ""}
+              onChange={(e) => updateConfig('value', e.target.value)}
+              placeholder="Customer"
+              required
+            />
+          </div>
+        );
+
+      case "Create Record":
+        return (
+          <div className="space-y-4">
+            <NeuroSelect
+              label="Entity Type"
+              value={config.entity_type || "Contact"}
+              onChange={(e) => updateConfig('entity_type', e.target.value)}
+              options={[
+                { value: 'Contact', label: 'Contact' },
+                { value: 'Deal', label: 'Deal' },
+                { value: 'Task', label: 'Task' },
+                { value: 'Activity', label: 'Activity' }
+              ]}
+              required
+            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium" style={{ color: "#666" }}>
+                Field Mapping (JSON)
+              </label>
+              <textarea
+                value={JSON.stringify(config.field_map || {}, null, 2)}
+                onChange={(e) => {
+                  try {
+                    updateConfig('field_map', JSON.parse(e.target.value));
+                  } catch (err) {
+                    // Invalid JSON, don't update
+                  }
+                }}
+                className="ampvibe-input w-full min-h-[120px] font-mono text-sm"
+                placeholder='{\n  "first_name": "{{first_name}}",\n  "email": "{{email}}"\n}'
+              />
+              <p className="text-xs" style={{ color: "#888" }}>
+                Use {`{{field_name}}`} to reference trigger record fields
+              </p>
+            </div>
+          </div>
+        );
+
+      case "Send Notification":
+        return (
+          <div className="space-y-4">
+            <NeuroInput
+              label="Notification Title"
+              value={config.title || ""}
+              onChange={(e) => updateConfig('title', e.target.value)}
+              placeholder="New lead assigned"
+              required
+            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium" style={{ color: "#666" }}>
+                Message
+              </label>
+              <textarea
+                value={config.message || ""}
+                onChange={(e) => updateConfig('message', e.target.value)}
+                className="ampvibe-input w-full min-h-[80px]"
+                placeholder="You have been assigned a new lead: {{first_name}} {{last_name}}"
+              />
+            </div>
+            <NeuroSelect
+              label="Notify"
+              value={config.user_id || "Record Owner"}
+              onChange={(e) => updateConfig('user_id', e.target.value)}
+              options={[
+                { value: 'Record Owner', label: 'Record Owner' },
+                ...users.map(u => ({ value: u.email, label: u.full_name || u.email }))
+              ]}
+            />
+          </div>
+        );
+
+      case "Add Tag":
+      case "Remove Tag":
+        return (
+          <div className="space-y-4">
+            <NeuroInput
+              label="Tag Name"
+              value={config.tag || ""}
+              onChange={(e) => updateConfig('tag', e.target.value)}
+              placeholder="VIP Customer"
+              required
+            />
+          </div>
+        );
+
+      case "Add to List":
+        return (
+          <div className="space-y-4">
+            <NeuroInput
+              label="Contact List ID"
+              value={config.list_id || ""}
+              onChange={(e) => updateConfig('list_id', e.target.value)}
+              placeholder="List ID"
+              required
+            />
+          </div>
+        );
+
+      default:
+        return (
+          <div className="text-center py-8">
+            <p style={{ color: "#888" }}>Configuration form for {currentAction.action_type} coming soon.</p>
+          </div>
+        );
+    }
+  };
+
+  if (!workflowId && workflow === undefined) {
+    return (
+      <div className="p-8">
+        <div className="max-w-4xl mx-auto">
           <NeuroCard>
-            <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
-              1. Workflow Details
+            <h2 className="text-2xl font-bold mb-6" style={{ color: "#666" }}>
+              Create New Workflow
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <NeuroInput
                 label="Workflow Name"
-                value={formData.workflow_name}
-                onChange={(e) => setFormData({ ...formData, workflow_name: e.target.value })}
-                placeholder="e.g., New Lead Follow-Up Sequence"
+                value={workflowData.workflow_name}
+                onChange={(e) => setWorkflowData({ ...workflowData, workflow_name: e.target.value })}
+                placeholder="New Lead Follow-up"
                 required
               />
               <div className="space-y-2">
-                <label className="block text-sm font-medium" style={{ color: "#333" }}>
+                <label className="block text-sm font-medium" style={{ color: "#666" }}>
                   Description
                 </label>
                 <textarea
-                  value={formData.workflow_description}
-                  onChange={(e) => setFormData({ ...formData, workflow_description: e.target.value })}
-                  className="ampvibe-input w-full min-h-[80px]"
+                  value={workflowData.workflow_description}
+                  onChange={(e) => setWorkflowData({ ...workflowData, workflow_description: e.target.value })}
+                  className="ampvibe-input w-full min-h-[100px]"
                   placeholder="Describe what this workflow does..."
                 />
               </div>
-            </div>
-          </NeuroCard>
-
-          {/* Trigger */}
-          <NeuroCard>
-            <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
-              2. When should this workflow run?
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
               <NeuroSelect
                 label="Trigger Type"
-                value={formData.trigger_type}
-                onChange={(e) => setFormData({ ...formData, trigger_type: e.target.value })}
+                value={workflowData.trigger_type}
+                onChange={(e) => setWorkflowData({ ...workflowData, trigger_type: e.target.value })}
                 options={[
                   { value: 'Record Created', label: 'Record Created' },
                   { value: 'Record Updated', label: 'Record Updated' },
                   { value: 'Form Submitted', label: 'Form Submitted' },
                   { value: 'Email Opened', label: 'Email Opened' },
-                  { value: 'Deal Stage Changed', label: 'Deal Stage Changed' },
-                  { value: 'Time-Based', label: 'Time-Based' },
-                  { value: 'Manual', label: 'Manual' },
-                  { value: 'Lead Score Reached', label: 'Lead Score Reached' }
+                  { value: 'Deal Stage Changed', label: 'Deal Stage Changed' }
                 ]}
                 required
               />
               <NeuroSelect
-                label="Object Type"
-                value={formData.trigger_object}
-                onChange={(e) => setFormData({ ...formData, trigger_object: e.target.value })}
+                label="Trigger Object"
+                value={workflowData.trigger_object}
+                onChange={(e) => setWorkflowData({ ...workflowData, trigger_object: e.target.value })}
                 options={[
                   { value: 'Contact', label: 'Contact' },
                   { value: 'Company', label: 'Company' },
@@ -208,138 +487,242 @@ export default function WorkflowBuilder() {
                 ]}
                 required
               />
-            </div>
-          </NeuroCard>
-
-          {/* Actions */}
-          <NeuroCard>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold" style={{ color: "#666" }}>
-                3. What should happen?
-              </h2>
-              <NeuroButton type="button" onClick={handleAddAction}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Action
-              </NeuroButton>
-            </div>
-
-            {actions.length === 0 ? (
-              <div className="text-center py-8 ampvibe-inset rounded-lg">
-                <p className="mb-4" style={{ color: "#888" }}>
-                  No actions yet. Add your first action to get started.
-                </p>
-                <NeuroButton type="button" onClick={handleAddAction}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Action
+              <div className="flex justify-end gap-3">
+                <NeuroButton onClick={() => navigate(createPageUrl("Workflows"))}>
+                  Cancel
+                </NeuroButton>
+                <NeuroButton variant="primary" onClick={handleSaveWorkflow}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Create & Continue
                 </NeuroButton>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {actions.map((action, index) => (
-                  <div key={index} className="ampvibe-inset p-4 rounded-lg">
-                    <div className="flex items-start gap-4">
-                      <div className="ampvibe-button px-3 py-2 font-bold">
-                        {index + 1}
+            </div>
+          </NeuroCard>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => navigate(createPageUrl("Workflows"))}
+            className="ampvibe-button p-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold" style={{ color: "#555" }}>
+              {workflowData.workflow_name || "Workflow Builder"}
+            </h1>
+            <p className="text-sm" style={{ color: "#888" }}>
+              {workflowData.workflow_description}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <NeuroButton onClick={handleSaveWorkflow}>
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </NeuroButton>
+            <button
+              onClick={() => setWorkflowData({ ...workflowData, is_active: !workflowData.is_active })}
+              className={`ampvibe-button px-4 py-2 ${workflowData.is_active ? 'text-green-600' : 'text-gray-600'}`}
+            >
+              {workflowData.is_active ? 'Active' : 'Inactive'}
+            </button>
+          </div>
+        </div>
+
+        {/* Trigger Section */}
+        <NeuroCard className="mb-6">
+          <h3 className="font-bold mb-4" style={{ color: "#666" }}>
+            Workflow Trigger
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <NeuroSelect
+              label="Trigger Type"
+              value={workflowData.trigger_type}
+              onChange={(e) => setWorkflowData({ ...workflowData, trigger_type: e.target.value })}
+              options={[
+                { value: 'Record Created', label: 'Record Created' },
+                { value: 'Record Updated', label: 'Record Updated' },
+                { value: 'Form Submitted', label: 'Form Submitted' },
+                { value: 'Email Opened', label: 'Email Opened' },
+                { value: 'Deal Stage Changed', label: 'Deal Stage Changed' }
+              ]}
+            />
+            <NeuroSelect
+              label="Trigger Object"
+              value={workflowData.trigger_object}
+              onChange={(e) => setWorkflowData({ ...workflowData, trigger_object: e.target.value })}
+              options={[
+                { value: 'Contact', label: 'Contact' },
+                { value: 'Company', label: 'Company' },
+                { value: 'Deal', label: 'Deal' },
+                { value: 'Lead', label: 'Lead' },
+                { value: 'Ticket', label: 'Ticket' }
+              ]}
+            />
+          </div>
+        </NeuroCard>
+
+        {/* Actions Section */}
+        <NeuroCard>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold" style={{ color: "#666" }}>
+              Workflow Actions ({actions.length})
+            </h3>
+            <NeuroButton variant="primary" onClick={() => setShowActionModal(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Action
+            </NeuroButton>
+          </div>
+
+          {actions.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="mb-4" style={{ color: "#aaa" }}>
+                No actions added yet. Click "Add Action" to get started.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {actions.map((action, index) => (
+                <div key={action.id} className="ampvibe-inset p-4 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="ampvibe-button px-3 py-1 text-xs font-bold">
+                          Step {index + 1}
+                        </span>
+                        <span className="ampvibe-button px-3 py-1 text-xs">
+                          {action.action_type}
+                        </span>
                       </div>
-                      <div className="flex-1 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <NeuroSelect
-                            label="Action Type"
-                            value={action.action_type}
-                            onChange={(e) => handleActionChange(index, 'action_type', e.target.value)}
-                            options={[
-                              { value: 'Send Email', label: 'Send Email' },
-                              { value: 'Create Task', label: 'Create Task' },
-                              { value: 'Update Field', label: 'Update Field' },
-                              { value: 'Add to List', label: 'Add to List' },
-                              { value: 'Remove from List', label: 'Remove from List' },
-                              { value: 'Create Record', label: 'Create Record' },
-                              { value: 'Assign Owner', label: 'Assign Owner' },
-                              { value: 'Add Tag', label: 'Add Tag' },
-                              { value: 'Remove Tag', label: 'Remove Tag' },
-                              { value: 'Send Notification', label: 'Send Notification' },
-                              { value: 'Wait', label: 'Wait / Delay' }
-                            ]}
-                          />
-                          <NeuroInput
-                            label="Delay Before Action (minutes)"
-                            type="number"
-                            value={action.delay_minutes}
-                            onChange={(e) => handleActionChange(index, 'delay_minutes', e.target.value)}
-                            placeholder="0"
-                          />
-                        </div>
-                        <div className="ampvibe-inset p-3 rounded-lg">
-                          <p className="text-xs mb-2" style={{ color: "#888" }}>
-                            Action Configuration
+                      <div className="text-sm" style={{ color: "#888" }}>
+                        {action.delay_minutes > 0 && (
+                          <p className="mb-1">⏱ Delay: {action.delay_minutes} minutes</p>
+                        )}
+                        {action.action_configuration && Object.keys(action.action_configuration).length > 0 && (
+                          <p className="font-mono text-xs">
+                            {JSON.stringify(action.action_configuration, null, 2)}
                           </p>
-                          <p className="text-sm" style={{ color: "#666" }}>
-                            {action.action_type} - Configure in advanced settings
-                          </p>
-                        </div>
+                        )}
                       </div>
+                    </div>
+                    <div className="flex gap-2">
                       <button
-                        type="button"
-                        onClick={() => handleRemoveAction(index)}
+                        onClick={() => handleEditAction(action)}
                         className="ampvibe-button p-2"
                       >
-                        <Trash2 className="w-4 h-4" style={{ color: "#f5222d" }} />
+                        <Settings className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAction(action.id)}
+                        className="ampvibe-button p-2 text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </NeuroCard>
-
-          {/* Activation */}
-          <NeuroCard>
-            <div className="ampvibe-inset p-4 rounded-lg">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="ampvibe-button w-5 h-5"
-                />
-                <div>
-                  <span className="font-medium" style={{ color: "#666" }}>Activate Workflow</span>
-                  <p className="text-xs" style={{ color: "#888" }}>
-                    Start running this workflow automatically when triggers occur
-                  </p>
                 </div>
-              </label>
+              ))}
             </div>
-          </NeuroCard>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
-            <NeuroButton 
-              type="button" 
-              onClick={() => navigate(createPageUrl("Workflows"))}
-            >
-              Cancel
-            </NeuroButton>
-            <NeuroButton type="submit" variant="primary" disabled={saveMutation.isLoading}>
-              <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isLoading ? 'Saving...' : 'Save Workflow'}
-            </NeuroButton>
-          </div>
-        </form>
-
-        {/* Help Card */}
-        <NeuroCard className="mt-6">
-          <h3 className="font-bold mb-3" style={{ color: "#666" }}>
-            💡 Workflow Tips
-          </h3>
-          <ul className="space-y-2 text-sm" style={{ color: "#888" }}>
-            <li>• Start with simple workflows and add complexity gradually</li>
-            <li>• Use delays between actions to avoid overwhelming contacts</li>
-            <li>• Test workflows with sample data before activating</li>
-            <li>• Monitor execution logs to identify issues</li>
-            <li>• Use clear, descriptive names for easy management</li>
-          </ul>
+          )}
         </NeuroCard>
+
+        {/* Add Action Modal */}
+        {showActionModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="ampvibe-card max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold" style={{ color: "#666" }}>
+                  Add Action
+                </h3>
+                <button
+                  onClick={() => setShowActionModal(false)}
+                  className="ampvibe-button p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <NeuroSelect
+                  label="Action Type"
+                  value={newActionType}
+                  onChange={(e) => setNewActionType(e.target.value)}
+                  options={[
+                    { value: 'Send Email', label: 'Send Email' },
+                    { value: 'Create Task', label: 'Create Task' },
+                    { value: 'Assign Owner', label: 'Assign Owner' },
+                    { value: 'Update Field', label: 'Update Field' },
+                    { value: 'Create Record', label: 'Create Record' },
+                    { value: 'Add to List', label: 'Add to List' },
+                    { value: 'Send Notification', label: 'Send Notification' },
+                    { value: 'Add Tag', label: 'Add Tag' },
+                    { value: 'Remove Tag', label: 'Remove Tag' }
+                  ]}
+                />
+                <div className="flex justify-end gap-3">
+                  <NeuroButton onClick={() => setShowActionModal(false)}>
+                    Cancel
+                  </NeuroButton>
+                  <NeuroButton variant="primary" onClick={handleAddAction}>
+                    Continue
+                  </NeuroButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Configure Action Modal */}
+        {showConfigModal && currentAction && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="ampvibe-card max-w-2xl w-full max-h-[80vh] overflow-auto p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold" style={{ color: "#666" }}>
+                  Configure: {currentAction.action_type}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowConfigModal(false);
+                    setCurrentAction(null);
+                  }}
+                  className="ampvibe-button p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {renderConfigForm()}
+
+                <NeuroInput
+                  label="Delay Before Executing (Minutes)"
+                  type="number"
+                  min="0"
+                  value={currentAction.delay_minutes || 0}
+                  onChange={(e) => setCurrentAction({ ...currentAction, delay_minutes: parseInt(e.target.value) || 0 })}
+                />
+
+                <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                  <NeuroButton onClick={() => {
+                    setShowConfigModal(false);
+                    setCurrentAction(null);
+                  }}>
+                    Cancel
+                  </NeuroButton>
+                  <NeuroButton variant="primary" onClick={handleSaveAction}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Action
+                  </NeuroButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
