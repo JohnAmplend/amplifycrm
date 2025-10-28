@@ -32,6 +32,8 @@ import CannedResponses from './pages/CannedResponses';
 import SLAPolicies from './pages/SLAPolicies';
 import Forms from './pages/Forms';
 import FormBuilder from './pages/FormBuilder';
+import Documents from './pages/Documents';
+import DuplicateManagement from './pages/DuplicateManagement';
 import Layout from './Layout.jsx';
 
 
@@ -70,6 +72,8 @@ export const PAGES = {
     "SLAPolicies": SLAPolicies,
     "Forms": Forms,
     "FormBuilder": FormBuilder,
+    "Documents": Documents,
+    "DuplicateManagement": DuplicateManagement,
 }
 
 export const pagesConfig = {
