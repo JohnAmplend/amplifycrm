@@ -13,7 +13,7 @@ export default function NeuroInput({
   return (
     <div className={`space-y-2 ${className}`}>
       {label && (
-        <label className="block text-sm font-medium" style={{ color: "#666" }}>
+        <label className="block text-sm font-medium" style={{ color: "#333" }}>
           {label} {required && <span style={{ color: "#f5222d" }}>*</span>}
         </label>
       )}
@@ -23,7 +23,7 @@ export default function NeuroInput({
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="neuro-input w-full"
+        className="ampvibe-input w-full"
         {...props}
       />
     </div>

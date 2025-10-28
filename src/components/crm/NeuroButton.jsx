@@ -7,6 +7,7 @@ export default function NeuroButton({
   size = "md",
   className = "",
   disabled = false,
+  type = "button",
   ...props 
 }) {
   const sizeClasses = {
@@ -15,20 +16,20 @@ export default function NeuroButton({
     lg: "px-6 py-4 text-lg"
   };
 
-  const variantStyles = {
-    default: { color: "#666" },
-    primary: { color: "#4a90e2" },
-    success: { color: "#52c41a" },
-    danger: { color: "#f5222d" }
+  const getClassName = () => {
+    if (variant === "primary") {
+      return `ampvibe-button-primary ${sizeClasses[size]} font-medium ${className}`;
+    }
+    return `ampvibe-button ${sizeClasses[size]} font-medium ${className}`;
   };
 
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`neuro-button ${sizeClasses[size]} font-medium ${className}`}
+      className={getClassName()}
       style={{
-        ...variantStyles[variant],
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? "not-allowed" : "pointer"
       }}
