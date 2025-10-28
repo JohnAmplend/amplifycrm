@@ -7,6 +7,9 @@ import Deals from './pages/Deals';
 import DealDetail from './pages/DealDetail';
 import Leads from './pages/Leads';
 import LeadDetail from './pages/LeadDetail';
+import Activities from './pages/Activities';
+import Tasks from './pages/Tasks';
+import Import from './pages/Import';
 import Layout from './Layout.jsx';
 
 
@@ -20,6 +23,9 @@ export const PAGES = {
     "DealDetail": DealDetail,
     "Leads": Leads,
     "LeadDetail": LeadDetail,
+    "Activities": Activities,
+    "Tasks": Tasks,
+    "Import": Import,
 }
 
 export const pagesConfig = {
