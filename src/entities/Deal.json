@@ -1,0 +1,83 @@
+{
+  "name": "Deal",
+  "type": "object",
+  "properties": {
+    "deal_name": {
+      "type": "string",
+      "description": "Deal name"
+    },
+    "deal_amount": {
+      "type": "number",
+      "description": "Deal amount in USD"
+    },
+    "close_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected close date"
+    },
+    "deal_stage": {
+      "type": "string",
+      "enum": [
+        "Appointment Scheduled",
+        "Qualified",
+        "Presentation Scheduled",
+        "Decision Maker Bought-In",
+        "Contract Sent",
+        "Closed Won",
+        "Closed Lost"
+      ],
+      "default": "Appointment Scheduled",
+      "description": "Current deal stage"
+    },
+    "pipeline": {
+      "type": "string",
+      "default": "Sales Pipeline",
+      "description": "Sales pipeline"
+    },
+    "probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Win probability percentage"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Associated contact ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Associated company ID"
+    },
+    "deal_owner": {
+      "type": "string",
+      "description": "User email who owns this deal"
+    },
+    "deal_type": {
+      "type": "string",
+      "enum": [
+        "New Business",
+        "Existing Business",
+        "Renewal"
+      ],
+      "default": "New Business",
+      "description": "Type of deal"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ],
+      "default": "Medium",
+      "description": "Deal priority"
+    },
+    "next_step": {
+      "type": "string",
+      "description": "Next step to move deal forward"
+    }
+  },
+  "required": [
+    "deal_name"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "name": "Activity",
+  "type": "object",
+  "properties": {
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "Call",
+        "Email",
+        "Meeting",
+        "Note",
+        "Task"
+      ],
+      "default": "Note",
+      "description": "Type of activity"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Activity subject"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "activity_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time of activity"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Duration in minutes"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Associated contact ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Associated company ID"
+    },
+    "deal_id": {
+      "type": "string",
+      "description": "Associated deal ID"
+    },
+    "lead_id": {
+      "type": "string",
+      "description": "Associated lead ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Completed",
+        "Scheduled",
+        "Cancelled"
+      ],
+      "default": "Completed",
+      "description": "Activity status"
+    }
+  },
+  "required": [
+    "activity_type",
+    "subject"
+  ]
+}

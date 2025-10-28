@@ -1,0 +1,80 @@
+{
+  "name": "Lead",
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string",
+      "description": "Lead first name"
+    },
+    "last_name": {
+      "type": "string",
+      "description": "Lead last name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "job_title": {
+      "type": "string",
+      "description": "Job title"
+    },
+    "lead_source": {
+      "type": "string",
+      "enum": [
+        "Website",
+        "Referral",
+        "Social Media",
+        "Cold Call",
+        "Event",
+        "Form"
+      ],
+      "default": "Website",
+      "description": "Source of the lead"
+    },
+    "lead_status": {
+      "type": "string",
+      "enum": [
+        "New",
+        "Attempting Contact",
+        "Connected",
+        "Qualified",
+        "Converted",
+        "Unqualified"
+      ],
+      "default": "New",
+      "description": "Current lead status"
+    },
+    "lead_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Lead score"
+    },
+    "lead_owner": {
+      "type": "string",
+      "description": "User email who owns this lead"
+    },
+    "converted_contact_id": {
+      "type": "string",
+      "description": "Contact ID after conversion"
+    },
+    "converted_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date when lead was converted"
+    }
+  },
+  "required": [
+    "first_name",
+    "last_name"
+  ]
+}

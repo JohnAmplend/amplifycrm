@@ -1,0 +1,64 @@
+{
+  "name": "Import_Job",
+  "type": "object",
+  "properties": {
+    "file_name": {
+      "type": "string",
+      "description": "Name of uploaded file"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL of uploaded file"
+    },
+    "import_type": {
+      "type": "string",
+      "enum": [
+        "Contacts",
+        "Companies",
+        "Deals",
+        "Leads"
+      ],
+      "description": "Type of data being imported"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Processing",
+        "Completed",
+        "Failed"
+      ],
+      "default": "Pending",
+      "description": "Import job status"
+    },
+    "total_records": {
+      "type": "number",
+      "description": "Total number of records"
+    },
+    "successful_records": {
+      "type": "number",
+      "description": "Number of successfully imported records"
+    },
+    "failed_records": {
+      "type": "number",
+      "description": "Number of failed records"
+    },
+    "error_log": {
+      "type": "string",
+      "description": "Error details"
+    },
+    "field_mapping": {
+      "type": "object",
+      "description": "Field mapping configuration"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Completion timestamp"
+    }
+  },
+  "required": [
+    "file_name",
+    "import_type"
+  ]
+}
