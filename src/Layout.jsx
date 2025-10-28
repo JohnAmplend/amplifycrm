@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -49,6 +50,13 @@ export default function Layout({ children, currentPageName }) {
     { name: "My Tickets", icon: Ticket, page: "MyTickets" },
     { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
     { name: "SLA Policies", icon: Clock, page: "SLAPolicies" },
+  ];
+
+  const website = [
+    { name: "Forms", icon: Layers, page: "Forms" },
+    { name: "Form Submissions", icon: Send, page: "FormSubmissions" },
+    { name: "Website Tracking", icon: BarChart3, page: "WebsiteTracking" },
+    { name: "Knowledge Base", icon: MessageSquare, page: "KnowledgeBase" },
   ];
 
   const integrations = [
@@ -270,6 +278,27 @@ export default function Layout({ children, currentPageName }) {
               </p>
               <div className="space-y-1">
                 {service.map((item) => {
+                  const active = isActive(item.page);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      className={`ampvibe-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
+                WEBSITE
+              </p>
+              <div className="space-y-1">
+                {website.map((item) => {
                   const active = isActive(item.page);
                   return (
                     <Link
