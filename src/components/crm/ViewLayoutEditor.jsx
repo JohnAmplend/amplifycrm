@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Plus, X, GripVertical, Save, Edit2, Trash2, ChevronDown } from "lucide-react";
 import NeuroButton from "./NeuroButton";
 import NeuroInput from "./NeuroInput";
@@ -22,17 +21,16 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
   ]);
   const [customFields, setCustomFields] = useState(currentView?.custom_fields || []);
   const [showAddField, setShowAddField] = useState(false);
-  // These now store the ID of the section whose dropdown is currently open, or null if none.
   const [showAddStandardField, setShowAddStandardField] = useState(null);
   const [showAddCustomField, setShowAddCustomField] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const buttonRefs = useRef({});
   const [newField, setNewField] = useState({
     name: "",
     label: "",
     type: "text",
     required: false
   });
-  // Removed dropdownPosition state and associated refs (standardFieldButtonRef, customFieldButtonRef)
-  // as positioning is now relative via CSS and direct state toggles.
 
   const availableFieldTypes = [
     { value: "text", label: "Text" },
@@ -113,7 +111,6 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
   };
 
   const handleAddFieldToSection = (sectionId, field) => {
-    // Check if field already exists in any section
     const fieldExists = sections.some(s => 
       s.fields.some(f => f.name === field.name)
     );
@@ -129,7 +126,6 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
         : s
     ));
     
-    // Close dropdowns after adding a field
     setShowAddStandardField(null);
     setShowAddCustomField(null);
   };
@@ -154,8 +150,41 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
     onSave(viewConfig);
   };
 
-  // handleStandardFieldButtonClick and handleCustomFieldButtonClick functions have been removed
-  // as their logic for positioning is now handled directly by CSS and state toggling in JSX.
+  const handleOpenStandardFieldDropdown = (sectionId) => {
+    if (showAddStandardField === sectionId) {
+      setShowAddStandardField(null);
+      return;
+    }
+
+    const buttonElement = buttonRefs.current[`standard-${sectionId}`];
+    if (buttonElement) {
+      const rect = buttonElement.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX
+      });
+    }
+    setShowAddStandardField(sectionId);
+    setShowAddCustomField(null);
+  };
+
+  const handleOpenCustomFieldDropdown = (sectionId) => {
+    if (showAddCustomField === sectionId) {
+      setShowAddCustomField(null);
+      return;
+    }
+
+    const buttonElement = buttonRefs.current[`custom-${sectionId}`];
+    if (buttonElement) {
+      const rect = buttonElement.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX
+      });
+    }
+    setShowAddCustomField(sectionId);
+    setShowAddStandardField(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -230,93 +259,27 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
             </div>
 
             {/* Add field buttons */}
-            <div className="flex gap-2 relative"> {/* Added relative to contain absolute dropdowns */}
-              <div className="relative"> {/* Wrapper for Standard Field Button and its dropdown */}
-                <NeuroButton
-                  size="sm"
-                  onClick={() => {
-                    // Toggle the current section's standard field dropdown
-                    setShowAddStandardField(showAddStandardField === section.id ? null : section.id);
-                    // Close custom field dropdown if open for any section
-                    setShowAddCustomField(null); // Ensure only one dropdown type is open globally
-                  }}
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Standard Field
-                  <ChevronDown className="w-3 h-3 ml-1" />
-                </NeuroButton>
-                
-                {showAddStandardField === section.id && ( // Render only if this section's dropdown is active
-                  <div 
-                    className="absolute top-full left-0 mt-2 p-2 shadow-2xl w-64 max-h-64 overflow-y-auto rounded-xl border"
-                    style={{ 
-                      zIndex: 99999,
-                      background: 'white',
-                      borderColor: 'rgba(0, 168, 107, 0.2)',
-                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
-                    }}
-                  >
-                    {standardFields.map((field) => (
-                      <button
-                        key={field.name}
-                        onClick={() => handleAddFieldToSection(section.id, field)}
-                        className="w-full text-left px-3 py-2 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-                        style={{ 
-                          color: '#333',
-                          fontWeight: '500'
-                        }}
-                      >
-                        <span style={{ color: '#333' }}>{field.label}</span>
-                        <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className="flex gap-2">
+              <NeuroButton
+                size="sm"
+                onClick={() => handleOpenStandardFieldDropdown(section.id)}
+                ref={(el) => buttonRefs.current[`standard-${section.id}`] = el}
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Standard Field
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </NeuroButton>
 
               {customFields.length > 0 && (
-                <div className="relative"> {/* Wrapper for Custom Field Button and its dropdown */}
-                  <NeuroButton
-                    size="sm"
-                    onClick={() => {
-                      // Toggle the current section's custom field dropdown
-                      setShowAddCustomField(showAddCustomField === section.id ? null : section.id);
-                      // Close standard field dropdown if open for any section
-                      setShowAddStandardField(null); // Ensure only one dropdown type is open globally
-                    }}
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add Custom Field
-                    <ChevronDown className="w-3 h-3 ml-1" />
-                  </NeuroButton>
-                  
-                  {showAddCustomField === section.id && ( // Render only if this section's dropdown is active
-                    <div 
-                      className="absolute top-full left-0 mt-2 p-2 shadow-2xl w-64 max-h-64 overflow-y-auto rounded-xl border"
-                      style={{ 
-                        zIndex: 99999,
-                        background: 'white',
-                        borderColor: 'rgba(0, 168, 107, 0.2)',
-                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
-                      }}
-                    >
-                      {customFields.map((field) => (
-                        <button
-                          key={field.id}
-                          onClick={() => handleAddFieldToSection(section.id, field)}
-                          className="w-full text-left px-3 py-2 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-                          style={{ 
-                            color: '#333',
-                            fontWeight: '500'
-                          }}
-                        >
-                          <span style={{ color: '#333' }}>{field.label}</span>
-                          <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <NeuroButton
+                  size="sm"
+                  onClick={() => handleOpenCustomFieldDropdown(section.id)}
+                  ref={(el) => buttonRefs.current[`custom-${section.id}`] = el}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Custom Field
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </NeuroButton>
               )}
             </div>
           </NeuroCard>
@@ -328,8 +291,78 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
         </NeuroButton>
       </div>
 
-      {/* Removed global dropdowns and the click-outside-to-close overlay.
-          Dropdowns are now rendered inline within each section and positioned relatively. */}
+      {/* Fixed position dropdowns */}
+      {showAddStandardField && (
+        <>
+          <div 
+            className="fixed inset-0"
+            style={{ zIndex: 99998 }}
+            onClick={() => setShowAddStandardField(null)}
+          />
+          <div 
+            className="fixed p-3 shadow-2xl w-72 max-h-80 overflow-y-auto rounded-xl border"
+            style={{ 
+              zIndex: 99999,
+              background: 'white',
+              borderColor: 'rgba(0, 168, 107, 0.2)',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`
+            }}
+          >
+            {standardFields.map((field) => (
+              <button
+                key={field.name}
+                onClick={() => handleAddFieldToSection(showAddStandardField, field)}
+                className="w-full text-left px-4 py-3 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                style={{ 
+                  color: '#333',
+                  fontWeight: '500'
+                }}
+              >
+                <span style={{ color: '#333', fontSize: '14px' }}>{field.label}</span>
+                <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {showAddCustomField && (
+        <>
+          <div 
+            className="fixed inset-0"
+            style={{ zIndex: 99998 }}
+            onClick={() => setShowAddCustomField(null)}
+          />
+          <div 
+            className="fixed p-3 shadow-2xl w-72 max-h-80 overflow-y-auto rounded-xl border"
+            style={{ 
+              zIndex: 99999,
+              background: 'white',
+              borderColor: 'rgba(0, 168, 107, 0.2)',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`
+            }}
+          >
+            {customFields.map((field) => (
+              <button
+                key={field.id}
+                onClick={() => handleAddFieldToSection(showAddCustomField, field)}
+                className="w-full text-left px-4 py-3 mb-1 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                style={{ 
+                  color: '#333',
+                  fontWeight: '500'
+                }}
+              >
+                <span style={{ color: '#333', fontSize: '14px' }}>{field.label}</span>
+                <span className="text-xs ml-2" style={{ color: "#888" }}>({field.type})</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Custom Fields Management */}
       <NeuroCard>
@@ -359,7 +392,6 @@ export default function ViewLayoutEditor({ currentView, onSave, onCancel }) {
                   onClick={() => {
                     if (window.confirm(`Delete custom field "${field.label}"?`)) {
                       setCustomFields(customFields.filter(f => f.id !== field.id));
-                      // Also remove from all sections
                       setSections(sections.map(s => ({
                         ...s,
                         fields: s.fields.filter(f => f.name !== field.name)
