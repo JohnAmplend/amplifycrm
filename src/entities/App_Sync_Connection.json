@@ -1,0 +1,69 @@
+{
+  "name": "App_Sync_Connection",
+  "type": "object",
+  "properties": {
+    "connection_name": {
+      "type": "string",
+      "description": "Name for this connection"
+    },
+    "source_app_url": {
+      "type": "string",
+      "description": "URL of the source Base44 app"
+    },
+    "api_key": {
+      "type": "string",
+      "description": "API key for authentication"
+    },
+    "sync_type": {
+      "type": "string",
+      "enum": [
+        "One-Way Import",
+        "Two-Way Sync"
+      ],
+      "default": "One-Way Import",
+      "description": "Type of synchronization"
+    },
+    "sync_objects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Contacts",
+          "Companies",
+          "Deals",
+          "Leads"
+        ]
+      },
+      "description": "Objects to sync"
+    },
+    "last_sync_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last successful sync timestamp"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Paused",
+        "Error"
+      ],
+      "default": "Active",
+      "description": "Current sync status"
+    },
+    "conflict_resolution": {
+      "type": "string",
+      "enum": [
+        "Source Wins",
+        "Newest Wins",
+        "Manual Review"
+      ],
+      "default": "Newest Wins",
+      "description": "How to resolve conflicts"
+    }
+  },
+  "required": [
+    "connection_name",
+    "source_app_url"
+  ]
+}

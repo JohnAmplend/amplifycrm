@@ -1,0 +1,74 @@
+{
+  "name": "RingCentral_Call",
+  "type": "object",
+  "properties": {
+    "call_id": {
+      "type": "string",
+      "description": "Unique call ID from RingCentral"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "Inbound",
+        "Outbound"
+      ],
+      "description": "Call direction"
+    },
+    "from_number": {
+      "type": "string",
+      "description": "Caller phone number"
+    },
+    "to_number": {
+      "type": "string",
+      "description": "Recipient phone number"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Call duration in seconds"
+    },
+    "call_status": {
+      "type": "string",
+      "enum": [
+        "Completed",
+        "Missed",
+        "Voicemail",
+        "Busy"
+      ],
+      "default": "Completed",
+      "description": "Call completion status"
+    },
+    "recording_url": {
+      "type": "string",
+      "description": "URL to call recording"
+    },
+    "transcript": {
+      "type": "string",
+      "description": "Call transcript text"
+    },
+    "transcript_status": {
+      "type": "string",
+      "enum": [
+        "Processing",
+        "Completed",
+        "Failed"
+      ],
+      "description": "Transcript processing status"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Associated contact ID"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Associated company ID"
+    },
+    "call_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the call occurred"
+    }
+  },
+  "required": [
+    "call_id"
+  ]
+}

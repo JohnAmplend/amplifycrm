@@ -10,6 +10,9 @@ import LeadDetail from './pages/LeadDetail';
 import Activities from './pages/Activities';
 import Tasks from './pages/Tasks';
 import Import from './pages/Import';
+import RingCentral from './pages/RingCentral';
+import CallDetail from './pages/CallDetail';
+import AppSync from './pages/AppSync';
 import Layout from './Layout.jsx';
 
 
@@ -26,6 +29,9 @@ export const PAGES = {
     "Activities": Activities,
     "Tasks": Tasks,
     "Import": Import,
+    "RingCentral": RingCentral,
+    "CallDetail": CallDetail,
+    "AppSync": AppSync,
 }
 
 export const pagesConfig = {

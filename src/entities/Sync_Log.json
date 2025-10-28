@@ -1,0 +1,50 @@
+{
+  "name": "Sync_Log",
+  "type": "object",
+  "properties": {
+    "connection_id": {
+      "type": "string",
+      "description": "Associated connection ID"
+    },
+    "sync_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When sync started"
+    },
+    "sync_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When sync completed"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "In Progress",
+        "Completed",
+        "Failed",
+        "Partial"
+      ],
+      "default": "In Progress",
+      "description": "Sync job status"
+    },
+    "records_synced": {
+      "type": "number",
+      "description": "Number of records successfully synced"
+    },
+    "records_failed": {
+      "type": "number",
+      "description": "Number of records that failed"
+    },
+    "error_details": {
+      "type": "string",
+      "description": "Error messages and details"
+    },
+    "sync_summary": {
+      "type": "object",
+      "description": "Detailed sync results"
+    }
+  },
+  "required": [
+    "connection_id"
+  ]
+}

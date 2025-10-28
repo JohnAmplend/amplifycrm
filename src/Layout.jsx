@@ -10,7 +10,10 @@ import {
   Activity,
   CheckSquare,
   Upload,
-  LogOut
+  LogOut,
+  Phone,
+  RefreshCw,
+  Settings
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -31,6 +34,12 @@ export default function Layout({ children, currentPageName }) {
     { name: "Activities", icon: Activity, page: "Activities" },
     { name: "Tasks", icon: CheckSquare, page: "Tasks" },
     { name: "Import", icon: Upload, page: "Import" },
+  ];
+
+  const integrations = [
+    { name: "RingCentral", icon: Phone, page: "RingCentral" },
+    { name: "App Sync", icon: RefreshCw, page: "AppSync" },
+    { name: "API Settings", icon: Settings, page: "APISettings" },
   ];
 
   const isActive = (page) => {
@@ -115,26 +124,55 @@ export default function Layout({ children, currentPageName }) {
               AmplifyCRM
             </h1>
             <p className="text-sm mt-1" style={{ color: "#999" }}>
-              Phase 1: Core CRM
+              Phase 2: Integrations
             </p>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-2">
-            {navigation.map((item) => {
-              const active = isActive(item.page);
-              return (
-                <Link
-                  key={item.name}
-                  to={createPageUrl(item.page)}
-                  className={`neuro-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
-                  style={{ color: active ? "#555" : "#888" }}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
-                </Link>
-              );
-            })}
+          <nav className="flex-1 space-y-6">
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#aaa" }}>
+                MAIN
+              </p>
+              <div className="space-y-1">
+                {navigation.map((item) => {
+                  const active = isActive(item.page);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      className={`neuro-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                      style={{ color: active ? "#555" : "#888" }}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#aaa" }}>
+                INTEGRATIONS
+              </p>
+              <div className="space-y-1">
+                {integrations.map((item) => {
+                  const active = isActive(item.page);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      className={`neuro-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                      style={{ color: active ? "#555" : "#888" }}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </nav>
 
           {/* User Info */}
