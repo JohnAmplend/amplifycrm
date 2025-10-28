@@ -5,6 +5,8 @@ import Companies from './pages/Companies';
 import CompanyDetail from './pages/CompanyDetail';
 import Deals from './pages/Deals';
 import DealDetail from './pages/DealDetail';
+import Leads from './pages/Leads';
+import LeadDetail from './pages/LeadDetail';
 import Layout from './Layout.jsx';
 
 
@@ -16,6 +18,8 @@ export const PAGES = {
     "CompanyDetail": CompanyDetail,
     "Deals": Deals,
     "DealDetail": DealDetail,
+    "Leads": Leads,
+    "LeadDetail": LeadDetail,
 }
 
 export const pagesConfig = {
