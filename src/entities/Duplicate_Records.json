@@ -1,0 +1,63 @@
+{
+  "name": "Duplicate_Records",
+  "type": "object",
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Lead"
+      ],
+      "description": "Type of record"
+    },
+    "primary_record_id": {
+      "type": "string",
+      "description": "Primary record ID"
+    },
+    "duplicate_record_id": {
+      "type": "string",
+      "description": "Duplicate record ID"
+    },
+    "similarity_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Similarity score percentage"
+    },
+    "matching_fields": {
+      "type": "object",
+      "description": "Which fields matched"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending Review",
+        "Merged",
+        "Dismissed",
+        "False Positive"
+      ],
+      "default": "Pending Review",
+      "description": "Duplicate status"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "User who reviewed"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Review timestamp"
+    },
+    "merged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Merge timestamp"
+    }
+  },
+  "required": [
+    "record_type",
+    "primary_record_id",
+    "duplicate_record_id"
+  ]
+}

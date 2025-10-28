@@ -1,0 +1,46 @@
+{
+  "name": "Merge_History",
+  "type": "object",
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Lead"
+      ],
+      "description": "Type of record"
+    },
+    "primary_record_id": {
+      "type": "string",
+      "description": "Record that was kept"
+    },
+    "merged_record_id": {
+      "type": "string",
+      "description": "Record that was deleted"
+    },
+    "merged_data": {
+      "type": "object",
+      "description": "Data from deleted record"
+    },
+    "merged_by": {
+      "type": "string",
+      "description": "User who merged"
+    },
+    "merged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Merge timestamp"
+    },
+    "can_undo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether merge can be undone"
+    }
+  },
+  "required": [
+    "record_type",
+    "primary_record_id",
+    "merged_record_id"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Custom_Object_Records",
+  "type": "object",
+  "properties": {
+    "object_id": {
+      "type": "string",
+      "description": "Custom object ID"
+    },
+    "record_name": {
+      "type": "string",
+      "description": "Primary identifier"
+    },
+    "record_data": {
+      "type": "object",
+      "description": "All custom property values"
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "Record owner user email"
+    },
+    "pipeline_stage": {
+      "type": "string",
+      "description": "Pipeline stage if has_pipeline is true"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Record tags"
+    }
+  },
+  "required": [
+    "object_id",
+    "record_name"
+  ]
+}

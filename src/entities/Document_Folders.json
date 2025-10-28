@@ -1,0 +1,25 @@
+{
+  "name": "Document_Folders",
+  "type": "object",
+  "properties": {
+    "folder_name": {
+      "type": "string",
+      "description": "Folder name"
+    },
+    "parent_folder_id": {
+      "type": "string",
+      "description": "Parent folder ID for nested folders"
+    },
+    "description": {
+      "type": "string",
+      "description": "Folder description"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created"
+    }
+  },
+  "required": [
+    "folder_name"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Document_Associations",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "description": "Associated document ID"
+    },
+    "associated_object_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Deal",
+        "Ticket",
+        "Lead",
+        "Custom Object"
+      ],
+      "description": "Type of associated object"
+    },
+    "associated_object_id": {
+      "type": "string",
+      "description": "Associated object ID"
+    },
+    "associated_by": {
+      "type": "string",
+      "description": "User who created association"
+    }
+  },
+  "required": [
+    "document_id",
+    "associated_object_type",
+    "associated_object_id"
+  ]
+}

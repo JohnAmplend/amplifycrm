@@ -1,0 +1,52 @@
+{
+  "name": "Custom_Objects",
+  "type": "object",
+  "properties": {
+    "object_name": {
+      "type": "string",
+      "description": "Object name (e.g., Projects, Products)"
+    },
+    "object_label_singular": {
+      "type": "string",
+      "description": "Singular label (e.g., Project)"
+    },
+    "object_label_plural": {
+      "type": "string",
+      "description": "Plural label (e.g., Projects)"
+    },
+    "object_icon": {
+      "type": "string",
+      "description": "Icon name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Object description"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether object is active"
+    },
+    "has_pipeline": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can have stages like deals"
+    },
+    "pipeline_stages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pipeline stages if has_pipeline is true"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created"
+    }
+  },
+  "required": [
+    "object_name",
+    "object_label_singular",
+    "object_label_plural"
+  ]
+}

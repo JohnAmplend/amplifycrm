@@ -1,0 +1,52 @@
+{
+  "name": "Object_Associations",
+  "type": "object",
+  "properties": {
+    "primary_object_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Deal",
+        "Ticket",
+        "Lead",
+        "Custom Object"
+      ],
+      "description": "Type of primary object"
+    },
+    "primary_object_id": {
+      "type": "string",
+      "description": "Primary object ID"
+    },
+    "associated_object_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Deal",
+        "Ticket",
+        "Lead",
+        "Custom Object"
+      ],
+      "description": "Type of associated object"
+    },
+    "associated_object_id": {
+      "type": "string",
+      "description": "Associated object ID"
+    },
+    "association_type": {
+      "type": "string",
+      "description": "Type of association (e.g., Primary Contact, Related Deal)"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created association"
+    }
+  },
+  "required": [
+    "primary_object_type",
+    "primary_object_id",
+    "associated_object_type",
+    "associated_object_id"
+  ]
+}

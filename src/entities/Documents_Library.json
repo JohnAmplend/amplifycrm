@@ -1,0 +1,68 @@
+{
+  "name": "Documents_Library",
+  "type": "object",
+  "properties": {
+    "document_name": {
+      "type": "string",
+      "description": "Document name"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "File URL"
+    },
+    "file_type": {
+      "type": "string",
+      "description": "File type (PDF, DOC, XLS, IMG, etc.)"
+    },
+    "file_size": {
+      "type": "number",
+      "description": "File size in MB"
+    },
+    "folder_id": {
+      "type": "string",
+      "description": "Parent folder ID"
+    },
+    "description": {
+      "type": "string",
+      "description": "Document description"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Document tags"
+    },
+    "version_number": {
+      "type": "number",
+      "default": 1,
+      "description": "Version number"
+    },
+    "parent_document_id": {
+      "type": "string",
+      "description": "Parent document ID for version history"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "User who uploaded"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can be shared via public link"
+    },
+    "public_link": {
+      "type": "string",
+      "description": "Public shareable link"
+    },
+    "download_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of downloads"
+    }
+  },
+  "required": [
+    "document_name",
+    "file_url"
+  ]
+}

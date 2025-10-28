@@ -1,0 +1,80 @@
+{
+  "name": "Custom_Properties",
+  "type": "object",
+  "properties": {
+    "object_id": {
+      "type": "string",
+      "description": "Custom object ID or NULL for standard objects"
+    },
+    "object_type": {
+      "type": "string",
+      "description": "Standard object type (Contact, Company, etc.) if object_id is NULL"
+    },
+    "property_name": {
+      "type": "string",
+      "description": "Internal property name"
+    },
+    "property_label": {
+      "type": "string",
+      "description": "Display label"
+    },
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "Text",
+        "Number",
+        "Currency",
+        "Date",
+        "Dropdown",
+        "Multi-Select",
+        "Checkbox",
+        "URL",
+        "Email",
+        "Phone",
+        "Textarea",
+        "File"
+      ],
+      "description": "Property type"
+    },
+    "property_options": {
+      "type": "object",
+      "description": "Options for dropdown/multi-select"
+    },
+    "default_value": {
+      "type": "string",
+      "description": "Default value"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether property is required"
+    },
+    "is_searchable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether property is searchable"
+    },
+    "is_displayed_on_list": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show in table views"
+    },
+    "validation_rules": {
+      "type": "object",
+      "description": "Validation rules"
+    },
+    "field_order": {
+      "type": "number",
+      "description": "Display order"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created"
+    }
+  },
+  "required": [
+    "property_name",
+    "property_label",
+    "property_type"
+  ]
+}
