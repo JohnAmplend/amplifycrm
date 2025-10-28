@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -21,7 +20,10 @@ import {
   Ticket,
   MessageSquare,
   Clock,
-  BarChart3
+  BarChart3,
+  FileText,
+  Copy,
+  Box
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -41,6 +43,7 @@ export default function Layout({ children, currentPageName }) {
     { name: "Leads", icon: UserPlus, page: "Leads" },
     { name: "Activities", icon: Activity, page: "Activities" },
     { name: "Tasks", icon: CheckSquare, page: "Tasks" },
+    { name: "Documents", icon: FileText, page: "Documents" },
     { name: "Import", icon: Upload, page: "Import" },
   ];
 
@@ -68,6 +71,11 @@ export default function Layout({ children, currentPageName }) {
     { name: "Email Templates", icon: Mail, page: "EmailTemplates" },
     { name: "Sequences", icon: Layers, page: "EmailSequences" },
     { name: "Contact Lists", icon: List, page: "ContactLists" },
+  ];
+
+  const advanced = [
+    { name: "Duplicate Management", icon: Copy, page: "DuplicateManagement" },
+    { name: "Custom Objects", icon: Box, page: "CustomObjects" },
   ];
 
   const settings = [
@@ -341,6 +349,27 @@ export default function Layout({ children, currentPageName }) {
               </p>
               <div className="space-y-1">
                 {integrations.map((item) => {
+                  const active = isActive(item.page);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={createPageUrl(item.page)}
+                      className={`ampvibe-button ${active ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
+                ADVANCED
+              </p>
+              <div className="space-y-1">
+                {advanced.map((item) => {
                   const active = isActive(item.page);
                   return (
                     <Link
