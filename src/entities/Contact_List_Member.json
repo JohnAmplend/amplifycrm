@@ -1,0 +1,37 @@
+{
+  "name": "Contact_List_Member",
+  "type": "object",
+  "properties": {
+    "list_id": {
+      "type": "string",
+      "description": "Associated list ID"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Associated contact ID"
+    },
+    "added_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When contact was added"
+    },
+    "added_by": {
+      "type": "string",
+      "description": "User who added contact"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Unsubscribed",
+        "Bounced"
+      ],
+      "default": "Active",
+      "description": "Member status"
+    }
+  },
+  "required": [
+    "list_id",
+    "contact_id"
+  ]
+}

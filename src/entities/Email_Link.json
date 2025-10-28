@@ -1,0 +1,27 @@
+{
+  "name": "Email_Link",
+  "type": "object",
+  "properties": {
+    "tracking_id": {
+      "type": "string",
+      "description": "Associated tracking ID"
+    },
+    "link_url": {
+      "type": "string",
+      "description": "Clicked link URL"
+    },
+    "clicked_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When link was clicked"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP address of clicker"
+    }
+  },
+  "required": [
+    "tracking_id",
+    "link_url"
+  ]
+}

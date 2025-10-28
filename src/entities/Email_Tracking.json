@@ -1,0 +1,83 @@
+{
+  "name": "Email_Tracking",
+  "type": "object",
+  "properties": {
+    "email_id": {
+      "type": "string",
+      "description": "Unique email identifier"
+    },
+    "campaign_id": {
+      "type": "string",
+      "description": "Associated campaign ID"
+    },
+    "sequence_id": {
+      "type": "string",
+      "description": "Associated sequence ID"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Contact who received email"
+    },
+    "subject_line": {
+      "type": "string",
+      "description": "Email subject line"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When email was sent"
+    },
+    "delivered_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When email was delivered"
+    },
+    "opened_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When email was opened"
+    },
+    "clicked_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When link was clicked"
+    },
+    "bounced": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether email bounced"
+    },
+    "bounce_reason": {
+      "type": "string",
+      "description": "Reason for bounce"
+    },
+    "unsubscribed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether contact unsubscribed"
+    },
+    "unsubscribed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When contact unsubscribed"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Queued",
+        "Sent",
+        "Delivered",
+        "Opened",
+        "Clicked",
+        "Bounced",
+        "Failed"
+      ],
+      "default": "Queued",
+      "description": "Email status"
+    }
+  },
+  "required": [
+    "email_id",
+    "contact_id"
+  ]
+}

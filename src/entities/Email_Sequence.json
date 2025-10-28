@@ -1,0 +1,33 @@
+{
+  "name": "Email_Sequence",
+  "type": "object",
+  "properties": {
+    "sequence_name": {
+      "type": "string",
+      "description": "Sequence name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Sequence description"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether sequence is active"
+    },
+    "enrollment_trigger": {
+      "type": "string",
+      "enum": [
+        "Manual",
+        "Form Submit",
+        "Lead Score",
+        "Lifecycle Stage Change"
+      ],
+      "default": "Manual",
+      "description": "What triggers enrollment"
+    }
+  },
+  "required": [
+    "sequence_name"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Email_Template",
+  "type": "object",
+  "properties": {
+    "template_name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "subject_line": {
+      "type": "string",
+      "description": "Email subject line with token support"
+    },
+    "email_body": {
+      "type": "string",
+      "description": "Rich text/HTML email body"
+    },
+    "template_type": {
+      "type": "string",
+      "enum": [
+        "Marketing",
+        "Sales",
+        "Support",
+        "Automated"
+      ],
+      "default": "Marketing",
+      "description": "Type of template"
+    },
+    "category": {
+      "type": "string",
+      "description": "Template category"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether template is active"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "Preview image URL"
+    }
+  },
+  "required": [
+    "template_name"
+  ]
+}

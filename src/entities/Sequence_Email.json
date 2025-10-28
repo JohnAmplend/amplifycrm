@@ -1,0 +1,38 @@
+{
+  "name": "Sequence_Email",
+  "type": "object",
+  "properties": {
+    "sequence_id": {
+      "type": "string",
+      "description": "Associated sequence ID"
+    },
+    "step_number": {
+      "type": "number",
+      "description": "Step number in sequence"
+    },
+    "delay_days": {
+      "type": "number",
+      "description": "Days after previous email"
+    },
+    "delay_hours": {
+      "type": "number",
+      "description": "Additional hours delay"
+    },
+    "subject_line": {
+      "type": "string",
+      "description": "Email subject line with token support"
+    },
+    "email_body": {
+      "type": "string",
+      "description": "Rich text/HTML email body"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Template used for this email"
+    }
+  },
+  "required": [
+    "sequence_id",
+    "step_number"
+  ]
+}

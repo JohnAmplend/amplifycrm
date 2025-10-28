@@ -1,0 +1,34 @@
+{
+  "name": "Contact_List",
+  "type": "object",
+  "properties": {
+    "list_name": {
+      "type": "string",
+      "description": "List name"
+    },
+    "description": {
+      "type": "string",
+      "description": "List description"
+    },
+    "list_type": {
+      "type": "string",
+      "enum": [
+        "Static",
+        "Dynamic"
+      ],
+      "default": "Static",
+      "description": "Type of list"
+    },
+    "filter_criteria": {
+      "type": "object",
+      "description": "Filter rules for dynamic lists"
+    },
+    "total_contacts": {
+      "type": "number",
+      "description": "Number of contacts in list"
+    }
+  },
+  "required": [
+    "list_name"
+  ]
+}
