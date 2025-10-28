@@ -23,6 +23,9 @@ import CreateCampaign from './pages/CreateCampaign';
 import ContactLists from './pages/ContactLists';
 import CreateList from './pages/CreateList';
 import EmailSequences from './pages/EmailSequences';
+import TicketsDashboard from './pages/TicketsDashboard';
+import AllTickets from './pages/AllTickets';
+import MyTickets from './pages/MyTickets';
 import Layout from './Layout.jsx';
 
 
@@ -52,6 +55,9 @@ export const PAGES = {
     "ContactLists": ContactLists,
     "CreateList": CreateList,
     "EmailSequences": EmailSequences,
+    "TicketsDashboard": TicketsDashboard,
+    "AllTickets": AllTickets,
+    "MyTickets": MyTickets,
 }
 
 export const pagesConfig = {
