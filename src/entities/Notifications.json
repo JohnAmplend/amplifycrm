@@ -1,0 +1,45 @@
+{
+  "name": "Notifications",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User email"
+    },
+    "notification_type": {
+      "type": "string",
+      "enum": [
+        "Task Due",
+        "Deal Won",
+        "Ticket Assigned",
+        "Email Replied",
+        "Mention",
+        "Workflow",
+        "System"
+      ],
+      "description": "Notification type"
+    },
+    "notification_title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "notification_message": {
+      "type": "string",
+      "description": "Notification message"
+    },
+    "action_url": {
+      "type": "string",
+      "description": "Link to relevant record"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether notification is read"
+    }
+  },
+  "required": [
+    "user_id",
+    "notification_type",
+    "notification_title"
+  ]
+}

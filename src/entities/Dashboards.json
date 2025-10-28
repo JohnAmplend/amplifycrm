@@ -1,0 +1,35 @@
+{
+  "name": "Dashboards",
+  "type": "object",
+  "properties": {
+    "dashboard_name": {
+      "type": "string",
+      "description": "Dashboard name"
+    },
+    "dashboard_description": {
+      "type": "string",
+      "description": "Dashboard description"
+    },
+    "layout": {
+      "type": "object",
+      "description": "Widget positions and sizes"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Default dashboard for users"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Shared with all users"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created"
+    }
+  },
+  "required": [
+    "dashboard_name"
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "name": "Goals",
+  "type": "object",
+  "properties": {
+    "goal_name": {
+      "type": "string",
+      "description": "Goal name"
+    },
+    "goal_type": {
+      "type": "string",
+      "enum": [
+        "Revenue",
+        "Deals Closed",
+        "Contacts Created",
+        "Calls Made",
+        "Emails Sent",
+        "Tickets Resolved",
+        "Custom Metric"
+      ],
+      "description": "Type of goal"
+    },
+    "target_value": {
+      "type": "number",
+      "description": "Target value"
+    },
+    "current_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Current value (auto-calculated)"
+    },
+    "time_period": {
+      "type": "string",
+      "enum": [
+        "Daily",
+        "Weekly",
+        "Monthly",
+        "Quarterly",
+        "Yearly"
+      ],
+      "description": "Time period"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "User email (null for team-wide)"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether goal is active"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created"
+    }
+  },
+  "required": [
+    "goal_name",
+    "goal_type",
+    "target_value",
+    "time_period"
+  ]
+}

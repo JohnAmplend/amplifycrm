@@ -1,0 +1,55 @@
+{
+  "name": "Workflow_Executions",
+  "type": "object",
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "description": "Associated workflow ID"
+    },
+    "triggered_by_record_id": {
+      "type": "string",
+      "description": "Record that triggered workflow"
+    },
+    "triggered_by_record_type": {
+      "type": "string",
+      "description": "Type of record"
+    },
+    "execution_status": {
+      "type": "string",
+      "enum": [
+        "Running",
+        "Completed",
+        "Failed",
+        "Stopped"
+      ],
+      "default": "Running",
+      "description": "Execution status"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start timestamp"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Completion timestamp"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error message if failed"
+    },
+    "actions_completed": {
+      "type": "number",
+      "default": 0,
+      "description": "Actions completed"
+    },
+    "total_actions": {
+      "type": "number",
+      "description": "Total actions"
+    }
+  },
+  "required": [
+    "workflow_id"
+  ]
+}

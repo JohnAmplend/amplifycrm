@@ -1,0 +1,44 @@
+{
+  "name": "Workflow_Actions",
+  "type": "object",
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "description": "Associated workflow ID"
+    },
+    "action_order": {
+      "type": "number",
+      "description": "Order of execution"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "Send Email",
+        "Create Task",
+        "Update Field",
+        "Add to List",
+        "Create Record",
+        "Send Notification",
+        "Assign Owner",
+        "Add Tag",
+        "Remove Tag",
+        "Wait"
+      ],
+      "description": "Type of action"
+    },
+    "action_configuration": {
+      "type": "object",
+      "description": "Action-specific settings"
+    },
+    "delay_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Delay before executing"
+    }
+  },
+  "required": [
+    "workflow_id",
+    "action_order",
+    "action_type"
+  ]
+}

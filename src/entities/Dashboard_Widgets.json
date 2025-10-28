@@ -1,0 +1,55 @@
+{
+  "name": "Dashboard_Widgets",
+  "type": "object",
+  "properties": {
+    "dashboard_id": {
+      "type": "string",
+      "description": "Associated dashboard ID"
+    },
+    "widget_type": {
+      "type": "string",
+      "enum": [
+        "Report",
+        "KPI",
+        "Chart",
+        "Recent Activity",
+        "Tasks",
+        "Goals"
+      ],
+      "description": "Type of widget"
+    },
+    "widget_title": {
+      "type": "string",
+      "description": "Widget title"
+    },
+    "report_id": {
+      "type": "string",
+      "description": "Associated report ID"
+    },
+    "configuration": {
+      "type": "object",
+      "description": "Widget-specific settings"
+    },
+    "position_x": {
+      "type": "number",
+      "description": "X position"
+    },
+    "position_y": {
+      "type": "number",
+      "description": "Y position"
+    },
+    "width": {
+      "type": "number",
+      "description": "Widget width"
+    },
+    "height": {
+      "type": "number",
+      "description": "Widget height"
+    }
+  },
+  "required": [
+    "dashboard_id",
+    "widget_type",
+    "widget_title"
+  ]
+}

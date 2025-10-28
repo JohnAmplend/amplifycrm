@@ -1,0 +1,44 @@
+{
+  "name": "Audit_Log",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User email"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "Created",
+        "Updated",
+        "Deleted",
+        "Viewed",
+        "Exported",
+        "Imported",
+        "Merged"
+      ],
+      "description": "Type of action"
+    },
+    "object_type": {
+      "type": "string",
+      "description": "Type of object (Contact, Deal, etc.)"
+    },
+    "object_id": {
+      "type": "string",
+      "description": "Object ID"
+    },
+    "changes_made": {
+      "type": "object",
+      "description": "Before/after values"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP address"
+    }
+  },
+  "required": [
+    "user_id",
+    "action_type",
+    "object_type"
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "name": "Reports",
+  "type": "object",
+  "properties": {
+    "report_name": {
+      "type": "string",
+      "description": "Report name"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "Contacts",
+        "Companies",
+        "Deals",
+        "Activities",
+        "Tickets",
+        "Email Performance",
+        "Custom Object"
+      ],
+      "description": "Type of report"
+    },
+    "report_description": {
+      "type": "string",
+      "description": "Report description"
+    },
+    "chart_type": {
+      "type": "string",
+      "enum": [
+        "Table",
+        "Bar Chart",
+        "Line Chart",
+        "Pie Chart",
+        "Funnel",
+        "KPI Cards"
+      ],
+      "default": "Table",
+      "description": "Visualization type"
+    },
+    "filters": {
+      "type": "object",
+      "description": "Saved filter criteria"
+    },
+    "columns_to_show": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Which fields to display"
+    },
+    "group_by": {
+      "type": "string",
+      "description": "Field to group by"
+    },
+    "aggregation_type": {
+      "type": "string",
+      "enum": [
+        "Count",
+        "Sum",
+        "Average",
+        "Min",
+        "Max"
+      ],
+      "description": "Aggregation type"
+    },
+    "sort_by": {
+      "type": "string",
+      "description": "Sort field"
+    },
+    "date_range": {
+      "type": "string",
+      "enum": [
+        "Today",
+        "This Week",
+        "This Month",
+        "This Quarter",
+        "This Year",
+        "Custom"
+      ],
+      "default": "This Month",
+      "description": "Date range"
+    },
+    "custom_date_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Custom start date"
+    },
+    "custom_date_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Custom end date"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false,
+      "description": "Favorite report"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Shared with all users"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "User who created"
+    }
+  },
+  "required": [
+    "report_name",
+    "report_type"
+  ]
+}
