@@ -13,6 +13,9 @@ import Import from './pages/Import';
 import RingCentral from './pages/RingCentral';
 import CallDetail from './pages/CallDetail';
 import AppSync from './pages/AppSync';
+import AddConnection from './pages/AddConnection';
+import SyncLogs from './pages/SyncLogs';
+import APISettings from './pages/APISettings';
 import Layout from './Layout.jsx';
 
 
@@ -32,6 +35,9 @@ export const PAGES = {
     "RingCentral": RingCentral,
     "CallDetail": CallDetail,
     "AppSync": AppSync,
+    "AddConnection": AddConnection,
+    "SyncLogs": SyncLogs,
+    "APISettings": APISettings,
 }
 
 export const pagesConfig = {
