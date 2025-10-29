@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search, Plus, Download, Upload, X, RefreshCw } from "lucide-react";
+import { Search, Plus, Download, Upload, X, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -20,6 +19,11 @@ export default function Leads() {
   const [filterSource, setFilterSource] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [customPage, setCustomPage] = useState('');
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -49,12 +53,12 @@ export default function Leads() {
       queryClient.setQueryData(['leads'], (old) => {
         const optimisticLead = {
           ...newLead,
-          id: 'temp-' + Date.now(), // Temporary ID for optimistic rendering
+          id: 'temp-' + Date.now(),
           created_date: new Date().toISOString(),
           created_by: currentUser?.email,
-          lead_owner: newLead.lead_owner || currentUser?.email, // Ensure owner is set
-          lead_status: newLead.lead_status || 'New', // Default status
-          lead_score: newLead.lead_score || 0, // Default score
+          lead_owner: newLead.lead_owner || currentUser?.email,
+          lead_status: newLead.lead_status || 'New',
+          lead_score: newLead.lead_score || 0,
         };
         return [optimisticLead, ...(old || [])];
       });
@@ -81,17 +85,17 @@ export default function Leads() {
         l.lead_source, l.lead_status, l.lead_score, l.lead_owner,
         new Date(l.created_date).toLocaleDateString()
       ])
-    ].map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n'); // Ensure proper CSV escaping
+    ].map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a); // Required for Firefox
+    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a); // Clean up
-    URL.revokeObjectURL(url); // Release object URL
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const filteredLeads = leads.filter(lead => {
@@ -106,6 +110,66 @@ export default function Leads() {
     
     return matchesSearch && matchesOwner && matchesStatus && matchesSource;
   });
+
+  // Pagination calculations
+  const totalItems = filteredLeads.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedLeads = filteredLeads.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 300, behavior: 'smooth' });
+    }
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const handleCustomPageSubmit = (e) => {
+    e.preventDefault();
+    const page = parseInt(customPage);
+    if (page && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setCustomPage('');
+      window.scrollTo({ top: 300, behavior: 'smooth' });
+    }
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterOwner, filterStatus, filterSource]);
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage < maxVisible - 1) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`ampvibe-button px-4 py-2 ${currentPage === i ? 'active' : ''}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return pages;
+  };
 
   if (showForm) {
     return (
@@ -211,6 +275,64 @@ export default function Leads() {
           </div>
         </NeuroCard>
 
+        {/* Pagination Controls - Top */}
+        {totalPages > 1 && (
+          <NeuroCard className="mb-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm" style={{ color: "#666" }}>Show:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  className="ampvibe-input px-3 py-2"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={40}>40</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="text-sm" style={{ color: "#888" }}>
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </NeuroButton>
+
+                {renderPageNumbers()}
+
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </NeuroButton>
+
+                <form onSubmit={handleCustomPageSubmit} className="flex items-center gap-2 ml-4">
+                  <span className="text-sm" style={{ color: "#888" }}>Go to:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={customPage}
+                    onChange={(e) => setCustomPage(e.target.value)}
+                    placeholder="#"
+                    className="ampvibe-input w-16 px-2 py-1 text-center"
+                  />
+                  <NeuroButton type="submit" size="sm">Go</NeuroButton>
+                </form>
+              </div>
+            </div>
+          </NeuroCard>
+        )}
+
         <NeuroCard>
           {isLoading ? (
             <div className="text-center py-12" style={{ color: "#aaa" }}>
@@ -240,7 +362,7 @@ export default function Leads() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredLeads.map((lead) => (
+                  {paginatedLeads.map((lead) => (
                     <tr
                       key={lead.id}
                       className="border-b hover:bg-gray-100 transition-colors"
@@ -297,6 +419,39 @@ export default function Leads() {
             </div>
           )}
         </NeuroCard>
+
+        {/* Pagination Controls - Bottom */}
+        {totalPages > 1 && (
+          <NeuroCard className="mt-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <span className="text-sm" style={{ color: "#888" }}>
+                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </NeuroButton>
+
+                <span className="text-sm px-4" style={{ color: "#666" }}>
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </NeuroButton>
+              </div>
+            </div>
+          </NeuroCard>
+        )}
       </div>
     </div>
   );
