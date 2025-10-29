@@ -44,6 +44,7 @@ import Goals from './pages/Goals';
 import Notifications from './pages/Notifications';
 import Dashboards from './pages/Dashboards';
 import WorkflowBuilder from './pages/WorkflowBuilder';
+import ReportBuilder from './pages/ReportBuilder';
 import Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "Notifications": Notifications,
     "Dashboards": Dashboards,
     "WorkflowBuilder": WorkflowBuilder,
+    "ReportBuilder": ReportBuilder,
 }
 
 export const pagesConfig = {
