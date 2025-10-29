@@ -6,6 +6,8 @@
       "type": "string",
       "enum": [
         "HubSpot Contacts",
+        "HubSpot Companies",
+        "HubSpot Deals",
         "Salesforce Contacts",
         "Google Contacts",
         "App Sync"

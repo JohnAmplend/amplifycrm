@@ -1,0 +1,84 @@
+{
+  "name": "Company",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Company website domain"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Industry sector"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Company phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Street address"
+    },
+    "city": {
+      "type": "string",
+      "description": "City"
+    },
+    "state": {
+      "type": "string",
+      "description": "State/Province"
+    },
+    "zip": {
+      "type": "string",
+      "description": "Zip/Postal code"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country"
+    },
+    "number_of_employees": {
+      "type": "number",
+      "description": "Number of employees"
+    },
+    "annual_revenue": {
+      "type": "number",
+      "description": "Annual revenue in USD"
+    },
+    "company_owner": {
+      "type": "string",
+      "description": "User email who owns this company"
+    },
+    "lifecycle_stage": {
+      "type": "string",
+      "enum": [
+        "Lead",
+        "Opportunity",
+        "Customer",
+        "Evangelist"
+      ],
+      "default": "Lead",
+      "description": "Current lifecycle stage"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorization"
+    },
+    "last_activity_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date of last activity"
+    },
+    "custom_data": {
+      "type": "object",
+      "description": "Custom field values stored as JSON"
+    }
+  },
+  "required": [
+    "company_name"
+  ]
+}

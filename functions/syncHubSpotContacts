@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
       sync_status: 'In Progress'
     });
 
-    // HubSpot API endpoint for contacts with expanded properties
+    // HubSpot API properties to fetch
     const properties = [
       'firstname', 'lastname', 'email', 'phone', 'mobilephone', 'jobtitle', 'company',
       'lifecyclestage', 'hs_lead_status', 'address', 'city', 'state', 'zip', 'country',
@@ -37,35 +37,51 @@ Deno.serve(async (req) => {
       'next_activity_date', 'closedate', 'amount', 'dealstage'
     ].join(',');
 
-    const hubspotUrl = `https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=${properties}`;
+    // Fetch all contacts with pagination
+    let allContacts = [];
+    let hasMore = true;
+    let after = null;
 
-    const response = await fetch(hubspotUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    while (hasMore) {
+      const url = after 
+        ? `https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=${properties}&after=${after}`
+        : `https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=${properties}`;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      
-      // Update sync log with failure
-      await base44.asServiceRole.entities.Sync_Log.update(syncLog.id, {
-        sync_status: 'Failed',
-        sync_completed_at: new Date().toISOString(),
-        error_details: `Failed to fetch from HubSpot: ${errorText}`
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
       });
-      
-      return Response.json({ 
-        error: 'Failed to fetch from HubSpot', 
-        details: errorText,
-        status: response.status
-      }, { status: response.status });
-    }
 
-    const hubspotData = await response.json();
-    const hubspotContacts = hubspotData.results || [];
+      if (!response.ok) {
+        const errorText = await response.text();
+        
+        // Update sync log with failure
+        await base44.asServiceRole.entities.Sync_Log.update(syncLog.id, {
+          sync_status: 'Failed',
+          sync_completed_at: new Date().toISOString(),
+          error_details: `Failed to fetch from HubSpot: ${errorText}`
+        });
+        
+        return Response.json({ 
+          error: 'Failed to fetch from HubSpot', 
+          details: errorText,
+          status: response.status
+        }, { status: response.status });
+      }
+
+      const hubspotData = await response.json();
+      allContacts = allContacts.concat(hubspotData.results || []);
+      
+      // Check if there are more pages
+      if (hubspotData.paging?.next?.after) {
+        after = hubspotData.paging.next.after;
+      } else {
+        hasMore = false;
+      }
+    }
 
     let createdCount = 0;
     let updatedCount = 0;
@@ -75,7 +91,7 @@ Deno.serve(async (req) => {
     // Get existing contacts to check for duplicates
     const existingContacts = await base44.asServiceRole.entities.Contact.list();
 
-    for (const hsContact of hubspotContacts) {
+    for (const hsContact of allContacts) {
       try {
         const props = hsContact.properties;
         
@@ -159,7 +175,7 @@ Deno.serve(async (req) => {
 
     const syncCompleteTime = new Date().toISOString();
     const summary = {
-      total_hubspot_contacts: hubspotContacts.length,
+      total_hubspot_contacts: allContacts.length,
       created: createdCount,
       updated: updatedCount,
       errors: errorCount,
