@@ -473,14 +473,15 @@ export default function Contacts() {
         {/* Filters */}
         <NeuroCard className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: "#aaa" }} />
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 w-5 h-5 pointer-events-none" style={{ color: "#aaa" }} />
               <input
                 type="text"
                 placeholder="Search contacts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="neuro-input w-full pl-12"
+                className="ampvibe-input w-full pl-10"
+                style={{ paddingLeft: '2.5rem' }}
               />
             </div>
             <NeuroSelect
