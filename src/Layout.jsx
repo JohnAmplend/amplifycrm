@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -66,7 +65,6 @@ export default function Layout({ children, currentPageName }) {
         {
           title: 'Core CRM',
           items: [
-            { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
             { name: "Contacts", icon: Users, page: "Contacts" },
             { name: "Companies", icon: Building2, page: "Companies" },
             { name: "Deals", icon: DollarSign, page: "Deals" },
@@ -209,14 +207,16 @@ export default function Layout({ children, currentPageName }) {
         <div className="flex items-center justify-between px-6 py-4">
           {/* Logo & Brand */}
           <div className="flex items-center gap-6">
-            <h1 className="text-xl font-bold" style={{ 
-              background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              AmplifyCRM
-            </h1>
+            <Link to={createPageUrl("Dashboard")}>
+              <h1 className="text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" style={{ 
+                background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
+                AmplifyCRM
+              </h1>
+            </Link>
 
             {/* Desktop Mega Menu */}
             <nav className="hidden lg:flex items-center gap-1">
@@ -319,6 +319,15 @@ export default function Layout({ children, currentPageName }) {
         {/* Mobile Menu */}
         {showMobileMenu && (
           <div className="lg:hidden border-t px-4 py-4" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+            <Link
+              to={createPageUrl("Dashboard")}
+              className={`ampvibe-button ${isActive("Dashboard") ? 'active' : ''} flex items-center gap-3 px-4 py-3 w-full text-left text-sm mb-4`}
+              onClick={() => setShowMobileMenu(false)}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="font-semibold">Dashboard</span>
+            </Link>
+
             {Object.entries(megaMenuData).map(([category, data]) => (
               <div key={category} className="mb-4">
                 <p className="text-xs font-semibold mb-2 px-2" style={{ color: "#1E3A8A" }}>
