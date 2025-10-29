@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search, Plus, Download, Upload, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Download, Upload, X, ChevronLeft, ChevronRight, Users, TrendingUp, DollarSign, UserPlus } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -20,6 +19,7 @@ export default function Contacts() {
   const [filterStatus, setFilterStatus] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [activeStatFilter, setActiveStatFilter] = useState(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,8 +45,12 @@ export default function Contacts() {
     queryFn: () => base44.entities.User.list()
   });
 
+  const { data: leads = [] } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => base44.entities.Lead.list()
+  });
+
   // Calculate stats
-  const hubspotContacts = contacts.filter(c => c.custom_data?.hubspot_id);
   const newThisWeek = contacts.filter(c => {
     const created = new Date(c.created_date);
     const weekAgo = new Date();
@@ -64,7 +68,7 @@ export default function Contacts() {
           last_name: data.last_name,
           email: data.email,
           phone: data.phone,
-          company_name: data.company_id, // Use company name for leads
+          company_name: data.company_id,
           job_title: data.job_title,
           lead_source: data.lead_source || 'Website',
           lead_status: data.lead_status || 'New',
@@ -73,14 +77,12 @@ export default function Contacts() {
         });
       }
       
-      // Otherwise create as Contact
       return await base44.entities.Contact.create(data);
     },
     onMutate: async (newContact) => {
       await queryClient.cancelQueries(['contacts']);
       const previousContacts = queryClient.getQueryData(['contacts']);
 
-      // Don't add to contacts list if it's a lead
       if (newContact.lifecycle_stage === 'Lead') {
         return { previousContacts, isLead: true };
       }
@@ -108,7 +110,6 @@ export default function Contacts() {
     },
     onSuccess: (data, variables, context) => {
       if (context?.isLead) {
-        // Invalidate leads query and redirect to leads page
         queryClient.invalidateQueries(['leads']);
         alert('Contact created as Lead because lifecycle stage is "Lead". Redirecting to Leads page...');
         setTimeout(() => {
@@ -140,7 +141,36 @@ export default function Contacts() {
     URL.revokeObjectURL(url);
   };
 
+  const handleStatCardClick = (filterType) => {
+    // Clear other filters
+    setSearchTerm("");
+    setFilterOwner("");
+    setFilterStage("");
+    setFilterStatus("");
+    
+    // Set the active stat filter
+    if (activeStatFilter === filterType) {
+      setActiveStatFilter(null); // Toggle off if clicking the same card
+    } else {
+      setActiveStatFilter(filterType);
+    }
+    
+    // Reset to page 1
+    setCurrentPage(1);
+  };
+
   const filteredContacts = contacts.filter(contact => {
+    // Apply stat card filter first
+    if (activeStatFilter === 'new-week') {
+      const created = new Date(contact.created_date);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      if (created <= weekAgo) return false;
+    } else if (activeStatFilter === 'customers') {
+      if (contact.lifecycle_stage !== 'Customer') return false;
+    }
+    
+    // Then apply regular filters
     const matchesSearch = 
       contact.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,7 +214,7 @@ export default function Contacts() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterOwner, filterStage, filterStatus]);
+  }, [searchTerm, filterOwner, filterStage, filterStatus, activeStatFilter]);
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -248,7 +278,9 @@ export default function Contacts() {
             <h1 className="text-3xl font-bold mb-2" style={{ color: "#555" }}>
               Contacts
             </h1>
-            <p style={{ color: "#888" }}>{filteredContacts.length} total contacts</p>
+            <p style={{ color: "#888" }}>
+              {filteredContacts.length} {activeStatFilter ? 'filtered' : 'total'} contacts
+            </p>
           </div>
           <div className="flex gap-3">
             <NeuroButton onClick={handleExport}>
@@ -268,41 +300,104 @@ export default function Contacts() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Now Clickable */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <NeuroCard>
-            <div className="text-center">
-              <p className="text-sm mb-1" style={{ color: "#888" }}>Total Contacts</p>
-              <p className="text-3xl font-bold" style={{ color: "#4a90e2" }}>
-                {contacts.length}
-              </p>
+          <button
+            onClick={() => handleStatCardClick('all')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'all' ? 'ring-2 ring-blue-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Total Contacts</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#4a90e2" }}>
+                  {contacts.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to show all</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <Users className="w-6 h-6" style={{ color: "#4a90e2" }} />
+              </div>
             </div>
-          </NeuroCard>
-          <NeuroCard>
-            <div className="text-center">
-              <p className="text-sm mb-1" style={{ color: "#888" }}>From HubSpot</p>
-              <p className="text-3xl font-bold" style={{ color: "#00A86B" }}>
-                {hubspotContacts.length}
-              </p>
+          </button>
+
+          <button
+            onClick={() => navigate(createPageUrl("Leads"))}
+            className="ampvibe-card p-6 text-left transition-all hover:scale-105"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Leads</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#00A86B" }}>
+                  {leads.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to view leads</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <UserPlus className="w-6 h-6" style={{ color: "#00A86B" }} />
+              </div>
             </div>
-          </NeuroCard>
-          <NeuroCard>
-            <div className="text-center">
-              <p className="text-sm mb-1" style={{ color: "#888" }}>New This Week</p>
-              <p className="text-3xl font-bold" style={{ color: "#fa8c16" }}>
-                {newThisWeek.length}
-              </p>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('new-week')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'new-week' ? 'ring-2 ring-orange-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>New This Week</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#fa8c16" }}>
+                  {newThisWeek.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <TrendingUp className="w-6 h-6" style={{ color: "#fa8c16" }} />
+              </div>
             </div>
-          </NeuroCard>
-          <NeuroCard>
-            <div className="text-center">
-              <p className="text-sm mb-1" style={{ color: "#888" }}>Customers</p>
-              <p className="text-3xl font-bold" style={{ color: "#52c41a" }}>
-                {customers.length}
-              </p>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('customers')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'customers' ? 'ring-2 ring-green-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Customers</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#52c41a" }}>
+                  {customers.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <DollarSign className="w-6 h-6" style={{ color: "#52c41a" }} />
+              </div>
             </div>
-          </NeuroCard>
+          </button>
         </div>
+
+        {/* Active Filter Indicator */}
+        {activeStatFilter && (
+          <NeuroCard className="mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="ampvibe-button px-3 py-2 active">
+                  Active Filter: {
+                    activeStatFilter === 'all' ? 'All Contacts' :
+                    activeStatFilter === 'new-week' ? 'New This Week' :
+                    activeStatFilter === 'customers' ? 'Customers Only' : ''
+                  }
+                </span>
+                <span style={{ color: "#888" }}>
+                  Showing {filteredContacts.length} contacts
+                </span>
+              </div>
+              <NeuroButton onClick={() => setActiveStatFilter(null)}>
+                <X className="w-4 h-4 mr-2" />
+                Clear Filter
+              </NeuroButton>
+            </div>
+          </NeuroCard>
+        )}
 
         {/* Filters */}
         <NeuroCard className="mb-6">
@@ -417,11 +512,20 @@ export default function Contacts() {
             </div>
           ) : filteredContacts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="mb-4" style={{ color: "#aaa" }}>No contacts found</p>
-              <NeuroButton onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Contact
-              </NeuroButton>
+              <p className="mb-4" style={{ color: "#aaa" }}>
+                {activeStatFilter ? 'No contacts match this filter' : 'No contacts found'}
+              </p>
+              {activeStatFilter && (
+                <NeuroButton onClick={() => setActiveStatFilter(null)}>
+                  Clear Filter
+                </NeuroButton>
+              )}
+              {!activeStatFilter && (
+                <NeuroButton onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Contact
+                </NeuroButton>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
