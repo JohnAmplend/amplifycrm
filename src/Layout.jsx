@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -30,7 +31,8 @@ import {
   Bell,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  RefreshCw // Added RefreshCw icon
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -147,7 +149,8 @@ export default function Layout({ children, currentPageName }) {
         {
           title: 'Integrations',
           items: [
-            { name: "RingCentral", icon: Phone, page: "RingCentral" }
+            { name: "RingCentral", icon: Phone, page: "RingCentral" },
+            { name: "HubSpot Sync", icon: RefreshCw, page: "HubSpotSync" } // New item added
           ]
         }
       ]
