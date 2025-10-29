@@ -83,85 +83,129 @@ Deno.serve(async (req) => {
       }
     }
 
-    let createdCount = 0;
-    let updatedCount = 0;
+    let contactsCreated = 0;
+    let contactsUpdated = 0;
+    let leadsCreated = 0;
+    let leadsUpdated = 0;
     let errorCount = 0;
     const errors = [];
 
-    // Get existing contacts to check for duplicates
+    // Get existing contacts and leads to check for duplicates
     const existingContacts = await base44.asServiceRole.entities.Contact.list();
+    const existingLeads = await base44.asServiceRole.entities.Lead.list();
 
     for (const hsContact of allContacts) {
       try {
         const props = hsContact.properties;
+        const lifecycleStage = mapLifecycleStage(props.lifecyclestage);
         
-        // Map HubSpot fields to Base44 fields
-        const contactData = {
-          first_name: props.firstname || '',
-          last_name: props.lastname || '',
-          email: props.email || '',
-          phone: props.phone || '',
-          mobile: props.mobilephone || '',
-          job_title: props.jobtitle || '',
-          company_id: '',
-          contact_owner: user.email,
-          lifecycle_stage: mapLifecycleStage(props.lifecyclestage),
-          lead_status: mapLeadStatus(props.hs_lead_status),
-          address: props.address || '',
-          city: props.city || '',
-          state: props.state || '',
-          zip: props.zip || '',
-          country: props.country || '',
-          linkedin_url: props.linkedinbio || '',
-          twitter_handle: props.twitterhandle || '',
-          facebook_url: props.facebook || '',
-          time_zone: props.hs_timezone || '',
-          
-          // Marketing & Source
-          lead_source: props.hs_lead_source || '',
-          original_source: props.hs_analytics_source || '',
-          latest_source: props.hs_latest_source || '',
-          first_conversion_date: props.first_conversion_date || null,
-          recent_conversion_date: props.recent_conversion_date || null,
-          
-          // Engagement
-          marketing_emails_opened: parseInt(props.hs_email_open) || 0,
-          marketing_emails_clicked: parseInt(props.hs_email_click) || 0,
-          last_contacted: props.notes_last_contacted || null,
-          next_activity_date: props.next_activity_date || null,
-          
-          // Company Info
-          industry: props.industry || '',
-          number_of_employees: parseInt(props.numemployees) || null,
-          annual_revenue: parseFloat(props.annualrevenue) || null,
-          company_website: props.website || '',
-          company_domain: props.domain || '',
-          
-          // Sales
-          close_date: props.closedate || null,
-          deal_amount: parseFloat(props.amount) || null,
-          deal_stage_name: props.dealstage || '',
-          
-          custom_data: {
-            hubspot_id: hsContact.id,
-            hubspot_created_date: props.createdate,
-            hubspot_modified_date: props.lastmodifieddate,
-            hubspot_company_name: props.company
+        // Determine if this should be a Lead or Contact
+        const isLead = lifecycleStage === 'Lead' || props.lifecyclestage?.toLowerCase() === 'lead';
+
+        if (isLead) {
+          // Create/Update as Lead
+          const leadData = {
+            first_name: props.firstname || '',
+            last_name: props.lastname || '',
+            email: props.email || '',
+            phone: props.phone || '',
+            company_name: props.company || '',
+            job_title: props.jobtitle || '',
+            lead_source: props.hs_lead_source || 'Website',
+            lead_status: mapLeadStatus(props.hs_lead_status),
+            lead_score: 0,
+            lead_owner: user.email,
+            custom_data: {
+              hubspot_id: hsContact.id,
+              hubspot_created_date: props.createdate,
+              hubspot_modified_date: props.lastmodifieddate,
+              hubspot_lifecycle_stage: props.lifecyclestage,
+              original_source: props.hs_analytics_source,
+              latest_source: props.hs_latest_source
+            }
+          };
+
+          const existingLead = existingLeads.find(l => 
+            l.email === leadData.email || 
+            l.custom_data?.hubspot_id === hsContact.id
+          );
+
+          if (existingLead) {
+            await base44.asServiceRole.entities.Lead.update(existingLead.id, leadData);
+            leadsUpdated++;
+          } else {
+            await base44.asServiceRole.entities.Lead.create(leadData);
+            leadsCreated++;
           }
-        };
 
-        // Check if contact already exists by email or HubSpot ID
-        const existingContact = existingContacts.find(c => 
-          c.email === contactData.email || 
-          c.custom_data?.hubspot_id === hsContact.id
-        );
-
-        if (existingContact) {
-          await base44.asServiceRole.entities.Contact.update(existingContact.id, contactData);
-          updatedCount++;
         } else {
-          await base44.asServiceRole.entities.Contact.create(contactData);
-          createdCount++;
+          // Create/Update as Contact
+          const contactData = {
+            first_name: props.firstname || '',
+            last_name: props.lastname || '',
+            email: props.email || '',
+            phone: props.phone || '',
+            mobile: props.mobilephone || '',
+            job_title: props.jobtitle || '',
+            company_id: '',
+            contact_owner: user.email,
+            lifecycle_stage: lifecycleStage,
+            lead_status: mapLeadStatus(props.hs_lead_status),
+            address: props.address || '',
+            city: props.city || '',
+            state: props.state || '',
+            zip: props.zip || '',
+            country: props.country || '',
+            linkedin_url: props.linkedinbio || '',
+            twitter_handle: props.twitterhandle || '',
+            facebook_url: props.facebook || '',
+            time_zone: props.hs_timezone || '',
+            
+            // Marketing & Source
+            lead_source: props.hs_lead_source || '',
+            original_source: props.hs_analytics_source || '',
+            latest_source: props.hs_latest_source || '',
+            first_conversion_date: props.first_conversion_date || null,
+            recent_conversion_date: props.recent_conversion_date || null,
+            
+            // Engagement
+            marketing_emails_opened: parseInt(props.hs_email_open) || 0,
+            marketing_emails_clicked: parseInt(props.hs_email_click) || 0,
+            last_contacted: props.notes_last_contacted || null,
+            next_activity_date: props.next_activity_date || null,
+            
+            // Company Info
+            industry: props.industry || '',
+            number_of_employees: parseInt(props.numemployees) || null,
+            annual_revenue: parseFloat(props.annualrevenue) || null,
+            company_website: props.website || '',
+            company_domain: props.domain || '',
+            
+            // Sales
+            close_date: props.closedate || null,
+            deal_amount: parseFloat(props.amount) || null,
+            deal_stage_name: props.dealstage || '',
+            
+            custom_data: {
+              hubspot_id: hsContact.id,
+              hubspot_created_date: props.createdate,
+              hubspot_modified_date: props.lastmodifieddate,
+              hubspot_company_name: props.company
+            }
+          };
+
+          const existingContact = existingContacts.find(c => 
+            c.email === contactData.email || 
+            c.custom_data?.hubspot_id === hsContact.id
+          );
+
+          if (existingContact) {
+            await base44.asServiceRole.entities.Contact.update(existingContact.id, contactData);
+            contactsUpdated++;
+          } else {
+            await base44.asServiceRole.entities.Contact.create(contactData);
+            contactsCreated++;
+          }
         }
 
       } catch (error) {
@@ -176,8 +220,12 @@ Deno.serve(async (req) => {
     const syncCompleteTime = new Date().toISOString();
     const summary = {
       total_hubspot_contacts: allContacts.length,
-      created: createdCount,
-      updated: updatedCount,
+      contacts_created: contactsCreated,
+      contacts_updated: contactsUpdated,
+      leads_created: leadsCreated,
+      leads_updated: leadsUpdated,
+      total_created: contactsCreated + leadsCreated,
+      total_updated: contactsUpdated + leadsUpdated,
       errors: errorCount,
       fields_synced: 37
     };
@@ -186,9 +234,9 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.Sync_Log.update(syncLog.id, {
       sync_status: errorCount > 0 ? 'Partial' : 'Completed',
       sync_completed_at: syncCompleteTime,
-      records_synced: createdCount + updatedCount,
-      records_created: createdCount,
-      records_updated: updatedCount,
+      records_synced: contactsCreated + contactsUpdated + leadsCreated + leadsUpdated,
+      records_created: contactsCreated + leadsCreated,
+      records_updated: contactsUpdated + leadsUpdated,
       records_failed: errorCount,
       sync_summary: summary,
       error_details: errors.length > 0 ? JSON.stringify(errors) : null
@@ -232,7 +280,9 @@ function mapLeadStatus(hsStatus) {
     'unqualified': 'Unqualified',
     'attempted to contact': 'Attempting',
     'connected': 'Connected',
-    'bad timing': 'Unqualified'
+    'bad timing': 'Unqualified',
+    'attempting contact': 'Attempting Contact',
+    'qualified': 'Qualified'
   };
   return statusMap[hsStatus?.toLowerCase()] || 'New';
 }

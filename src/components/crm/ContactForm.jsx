@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
 import NeuroInput from "./NeuroInput";
 import NeuroSelect from "./NeuroSelect";
 import NeuroButton from "./NeuroButton";
@@ -43,8 +44,23 @@ export default function ContactForm({ contact, onSubmit, onCancel, currentUser }
     onSubmit(formData);
   };
 
+  // Show warning if lifecycle stage is Lead
+  const isLeadStage = formData.lifecycle_stage === 'Lead';
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {isLeadStage && !contact && (
+        <div className="ampvibe-inset p-4 rounded-lg flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-orange-600 mb-1">Creating as Lead</p>
+            <p className="text-sm" style={{ color: "#666" }}>
+              Since the lifecycle stage is "Lead", this record will be created in the Leads section instead of Contacts. You'll be redirected to the Leads page after creation.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <NeuroInput
           label="First Name"
@@ -102,7 +118,7 @@ export default function ContactForm({ contact, onSubmit, onCancel, currentUser }
           onChange={(e) => setFormData({ ...formData, lifecycle_stage: e.target.value })}
           options={[
             { value: 'Subscriber', label: 'Subscriber' },
-            { value: 'Lead', label: 'Lead' },
+            { value: 'Lead', label: 'Lead (will create as Lead record)' },
             { value: 'MQL', label: 'MQL' },
             { value: 'SQL', label: 'SQL' },
             { value: 'Opportunity', label: 'Opportunity' },
@@ -158,7 +174,7 @@ export default function ContactForm({ contact, onSubmit, onCancel, currentUser }
           Cancel
         </NeuroButton>
         <NeuroButton type="submit" variant="primary">
-          {contact ? 'Update' : 'Create'} Contact
+          {contact ? 'Update' : isLeadStage ? 'Create as Lead' : 'Create'} Contact
         </NeuroButton>
       </div>
     </form>

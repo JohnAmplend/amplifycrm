@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,10 +56,34 @@ export default function Contacts() {
   const customers = contacts.filter(c => c.lifecycle_stage === 'Customer');
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Contact.create(data),
+    mutationFn: async (data) => {
+      // If lifecycle_stage is "Lead", create as Lead instead
+      if (data.lifecycle_stage === 'Lead') {
+        return await base44.entities.Lead.create({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone: data.phone,
+          company_name: data.company_id, // Use company name for leads
+          job_title: data.job_title,
+          lead_source: data.lead_source || 'Website',
+          lead_status: data.lead_status || 'New',
+          lead_score: 0,
+          lead_owner: data.contact_owner
+        });
+      }
+      
+      // Otherwise create as Contact
+      return await base44.entities.Contact.create(data);
+    },
     onMutate: async (newContact) => {
       await queryClient.cancelQueries(['contacts']);
       const previousContacts = queryClient.getQueryData(['contacts']);
+
+      // Don't add to contacts list if it's a lead
+      if (newContact.lifecycle_stage === 'Lead') {
+        return { previousContacts, isLead: true };
+      }
 
       queryClient.setQueryData(['contacts'], (old) => {
         const optimisticContact = {
@@ -73,17 +98,26 @@ export default function Contacts() {
         return [optimisticContact, ...(old || [])];
       });
 
-      return { previousContacts };
+      return { previousContacts, isLead: false };
     },
     onError: (err, newContact, context) => {
-      if (context?.previousContacts) {
+      if (context?.previousContacts && !context?.isLead) {
         queryClient.setQueryData(['contacts'], context.previousContacts);
       }
       alert('Failed to create contact: ' + err.message);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['contacts']);
-      setShowForm(false);
+    onSuccess: (data, variables, context) => {
+      if (context?.isLead) {
+        // Invalidate leads query and redirect to leads page
+        queryClient.invalidateQueries(['leads']);
+        alert('Contact created as Lead because lifecycle stage is "Lead". Redirecting to Leads page...');
+        setTimeout(() => {
+          navigate(createPageUrl("Leads"));
+        }, 1000);
+      } else {
+        queryClient.invalidateQueries(['contacts']);
+        setShowForm(false);
+      }
     }
   });
 
