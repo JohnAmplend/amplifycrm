@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Users, Building2, DollarSign, Ticket, Mail, FileText, Activity, CheckSquare, Eye, TrendingUp } from "lucide-react";
+import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Users, Building2, DollarSign, Ticket, Mail, FileText, Activity, CheckSquare, Eye, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
+import NeuroSelect from "../components/crm/NeuroSelect";
 import StatCard from "../components/crm/StatCard";
 
 export default function HubSpotSync() {
@@ -14,6 +15,11 @@ export default function HubSpotSync() {
   const [syncResults, setSyncResults] = useState({});
   const [hubspotCounts, setHubspotCounts] = useState(null);
   const [loadingCounts, setLoadingCounts] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [customPage, setCustomPage] = useState('');
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['contacts'],
@@ -93,7 +99,6 @@ export default function HubSpotSync() {
         setSyncResults(prev => ({ ...prev, [key]: data }));
         queryKeys.forEach(qk => queryClient.invalidateQueries([qk]));
         queryClient.invalidateQueries(['sync_logs']);
-        // Reload counts after sync
         loadHubSpotCounts();
       },
       onError: (error) => {
@@ -214,6 +219,61 @@ export default function HubSpotSync() {
     }
   ];
 
+  // Pagination calculations
+  const totalItems = syncItems.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = syncItems.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const handleCustomPageSubmit = (e) => {
+    e.preventDefault();
+    const page = parseInt(customPage);
+    if (page && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setCustomPage('');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage < maxVisible - 1) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`ampvibe-button px-4 py-2 ${currentPage === i ? 'active' : ''}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return pages;
+  };
+
   const renderSyncResult = (result, title) => {
     if (!result) return null;
 
@@ -327,39 +387,6 @@ export default function HubSpotSync() {
           </div>
         )}
 
-        {/* Stats Grid with HubSpot Counts */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {syncItems.map(item => (
-            <NeuroCard key={item.name}>
-              <div className="flex items-start justify-between mb-3">
-                <item.icon className="w-6 h-6" style={{ color: item.color }} />
-                {hubspotCounts && (
-                  <span className="ampvibe-button px-2 py-1 text-xs font-bold" style={{ color: item.color }}>
-                    {item.hubspotCount} in HubSpot
-                  </span>
-                )}
-              </div>
-              <h3 className="font-bold mb-2" style={{ color: "#666" }}>{item.name}</h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span style={{ color: "#888" }}>Current:</span>
-                  <span className="font-bold" style={{ color: "#666" }}>{item.current}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: "#888" }}>From HubSpot:</span>
-                  <span className="font-bold text-green-600">{item.synced}</span>
-                </div>
-                {hubspotCounts && (
-                  <div className="flex justify-between pt-1 border-t" style={{ borderColor: "#e0e0e0" }}>
-                    <span style={{ color: "#888" }}>Will Sync:</span>
-                    <span className="font-bold" style={{ color: item.color }}>{item.hubspotCount}</span>
-                  </div>
-                )}
-              </div>
-            </NeuroCard>
-          ))}
-        </div>
-
         {/* Sync All Button */}
         <NeuroCard className="mb-6">
           <div className="flex items-center justify-between">
@@ -397,13 +424,95 @@ export default function HubSpotSync() {
           </div>
         </NeuroCard>
 
-        {/* Individual Sync Grid */}
+        {/* Pagination Controls - Top */}
+        <NeuroCard className="mb-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Items per page */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm" style={{ color: "#666" }}>Show:</span>
+              <select
+                value={itemsPerPage}
+                onChange={handleItemsPerPageChange}
+                className="ampvibe-input px-3 py-2"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={30}>30</option>
+                <option value={40}>40</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span className="text-sm" style={{ color: "#888" }}>
+                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+              </span>
+            </div>
+
+            {/* Page navigation */}
+            <div className="flex items-center gap-2">
+              <NeuroButton
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </NeuroButton>
+
+              {renderPageNumbers()}
+
+              <NeuroButton
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </NeuroButton>
+
+              {/* Custom page input */}
+              <form onSubmit={handleCustomPageSubmit} className="flex items-center gap-2 ml-4">
+                <span className="text-sm" style={{ color: "#888" }}>Go to:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  value={customPage}
+                  onChange={(e) => setCustomPage(e.target.value)}
+                  placeholder="#"
+                  className="ampvibe-input w-16 px-2 py-1 text-center"
+                />
+                <NeuroButton type="submit" size="sm">Go</NeuroButton>
+              </form>
+            </div>
+          </div>
+        </NeuroCard>
+
+        {/* Paginated Sync Items Grid */}
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          {syncItems.map(item => (
+          {paginatedItems.map(item => (
             <NeuroCard key={item.name}>
+              <div className="flex items-start justify-between mb-3">
+                <item.icon className="w-6 h-6" style={{ color: item.color }} />
+                {hubspotCounts && (
+                  <span className="ampvibe-button px-2 py-1 text-xs font-bold" style={{ color: item.color }}>
+                    {item.hubspotCount} in HubSpot
+                  </span>
+                )}
+              </div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>{item.name}</h3>
+              <div className="space-y-1 text-sm mb-4">
+                <div className="flex justify-between">
+                  <span style={{ color: "#888" }}>Current:</span>
+                  <span className="font-bold" style={{ color: "#666" }}>{item.current}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: "#888" }}>From HubSpot:</span>
+                  <span className="font-bold text-green-600">{item.synced}</span>
+                </div>
+                {hubspotCounts && (
+                  <div className="flex justify-between pt-1 border-t" style={{ borderColor: "#e0e0e0" }}>
+                    <span style={{ color: "#888" }}>Will Sync:</span>
+                    <span className="font-bold" style={{ color: item.color }}>{item.hubspotCount}</span>
+                  </div>
+                )}
+              </div>
               <div className="text-center">
-                <item.icon className="w-8 h-8 mx-auto mb-3" style={{ color: item.color }} />
-                <h3 className="font-bold mb-2" style={{ color: "#666" }}>{item.name}</h3>
                 <p className="text-sm mb-2" style={{ color: "#888" }}>{item.fields} fields</p>
                 {hubspotCounts && (
                   <p className="text-lg font-bold mb-4" style={{ color: item.color }}>
@@ -424,6 +533,39 @@ export default function HubSpotSync() {
             </NeuroCard>
           ))}
         </div>
+
+        {/* Pagination Controls - Bottom */}
+        <NeuroCard className="mb-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Items info */}
+            <span className="text-sm" style={{ color: "#888" }}>
+              Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+            </span>
+
+            {/* Page navigation */}
+            <div className="flex items-center gap-2">
+              <NeuroButton
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </NeuroButton>
+
+              <span className="text-sm px-4" style={{ color: "#666" }}>
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <NeuroButton
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </NeuroButton>
+            </div>
+          </div>
+        </NeuroCard>
 
         {/* Sync Results */}
         {Object.entries(syncResults).map(([key, result]) => 
