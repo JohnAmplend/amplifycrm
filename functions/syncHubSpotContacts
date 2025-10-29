@@ -17,8 +17,18 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // HubSpot API endpoint for contacts
-    const hubspotUrl = 'https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=firstname,lastname,email,phone,mobilephone,jobtitle,company,lifecyclestage,hs_lead_status,address,city,state,zip,country,website,linkedinbio,twitterhandle,createdate,lastmodifieddate,hs_object_id';
+    // HubSpot API endpoint for contacts with expanded properties
+    const properties = [
+      'firstname', 'lastname', 'email', 'phone', 'mobilephone', 'jobtitle', 'company',
+      'lifecyclestage', 'hs_lead_status', 'address', 'city', 'state', 'zip', 'country',
+      'website', 'linkedinbio', 'twitterhandle', 'facebook', 'createdate', 'lastmodifieddate',
+      'hs_object_id', 'industry', 'numemployees', 'annualrevenue', 'domain', 'hs_timezone',
+      'hs_lead_source', 'hs_analytics_source', 'hs_latest_source', 'first_conversion_date',
+      'recent_conversion_date', 'hs_email_open', 'hs_email_click', 'notes_last_contacted',
+      'next_activity_date', 'closedate', 'amount', 'dealstage'
+    ].join(',');
+
+    const hubspotUrl = `https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=${properties}`;
 
     const response = await fetch(hubspotUrl, {
       method: 'GET',
@@ -44,6 +54,7 @@ Deno.serve(async (req) => {
     let updatedCount = 0;
     let errorCount = 0;
     const errors = [];
+    const missingFields = [];
 
     // Get existing contacts to check for duplicates
     const existingContacts = await base44.asServiceRole.entities.Contact.list();
@@ -71,12 +82,39 @@ Deno.serve(async (req) => {
           country: props.country || '',
           linkedin_url: props.linkedinbio || '',
           twitter_handle: props.twitterhandle || '',
+          facebook_url: props.facebook || '',
+          time_zone: props.hs_timezone || '',
+          
+          // Marketing & Source
+          lead_source: props.hs_lead_source || '',
+          original_source: props.hs_analytics_source || '',
+          latest_source: props.hs_latest_source || '',
+          first_conversion_date: props.first_conversion_date || null,
+          recent_conversion_date: props.recent_conversion_date || null,
+          
+          // Engagement
+          marketing_emails_opened: parseInt(props.hs_email_open) || 0,
+          marketing_emails_clicked: parseInt(props.hs_email_click) || 0,
+          last_contacted: props.notes_last_contacted || null,
+          next_activity_date: props.next_activity_date || null,
+          
+          // Company Info
+          industry: props.industry || '',
+          number_of_employees: parseInt(props.numemployees) || null,
+          annual_revenue: parseFloat(props.annualrevenue) || null,
+          company_website: props.website || '',
+          company_domain: props.domain || '',
+          
+          // Sales
+          close_date: props.closedate || null,
+          deal_amount: parseFloat(props.amount) || null,
+          deal_stage_name: props.dealstage || '',
+          
           custom_data: {
             hubspot_id: hsContact.id,
             hubspot_created_date: props.createdate,
             hubspot_modified_date: props.lastmodifieddate,
-            hubspot_company_name: props.company,
-            hubspot_website: props.website
+            hubspot_company_name: props.company
           }
         };
 
@@ -111,7 +149,8 @@ Deno.serve(async (req) => {
         total_hubspot_contacts: hubspotContacts.length,
         created: createdCount,
         updated: updatedCount,
-        errors: errorCount
+        errors: errorCount,
+        fields_synced: 37
       },
       errors: errors.length > 0 ? errors : undefined
     });

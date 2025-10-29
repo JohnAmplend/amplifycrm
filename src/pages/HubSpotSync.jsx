@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation } from "@tanstack/react-query";
-import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import NeuroCard from "../components/crm/NeuroCard";
@@ -61,53 +61,123 @@ export default function HubSpotSync() {
           </h2>
           <div className="space-y-3" style={{ color: "#888" }}>
             <p>✅ Fetches up to 100 contacts from HubSpot</p>
-            <p>✅ Maps HubSpot fields to AmplifyCRM fields</p>
+            <p>✅ Syncs 37+ fields including marketing, sales, and engagement data</p>
             <p>✅ Creates new contacts or updates existing ones</p>
             <p>✅ Matches contacts by email or HubSpot ID</p>
             <p>✅ Preserves HubSpot IDs for future syncs</p>
           </div>
         </NeuroCard>
 
-        {/* Field Mapping */}
+        {/* Field Categories */}
         <NeuroCard className="mb-6">
           <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
-            Field Mapping
+            Synced Fields (37 Total)
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b" style={{ borderColor: "#d0d0d0" }}>
-                  <th className="text-left py-2 px-3 font-semibold" style={{ color: "#666" }}>HubSpot Field</th>
-                  <th className="text-left py-2 px-3 font-semibold" style={{ color: "#666" }}>AmplifyCRM Field</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ['firstname', 'first_name'],
-                  ['lastname', 'last_name'],
-                  ['email', 'email'],
-                  ['phone', 'phone'],
-                  ['mobilephone', 'mobile'],
-                  ['jobtitle', 'job_title'],
-                  ['company', 'custom_data.hubspot_company_name'],
-                  ['lifecyclestage', 'lifecycle_stage'],
-                  ['hs_lead_status', 'lead_status'],
-                  ['address', 'address'],
-                  ['city', 'city'],
-                  ['state', 'state'],
-                  ['zip', 'zip'],
-                  ['country', 'country'],
-                  ['linkedinbio', 'linkedin_url'],
-                  ['twitterhandle', 'twitter_handle'],
-                  ['hs_object_id', 'custom_data.hubspot_id']
-                ].map(([hsField, b44Field]) => (
-                  <tr key={hsField} className="border-b" style={{ borderColor: "#e0e0e0" }}>
-                    <td className="py-2 px-3" style={{ color: "#888" }}>{hsField}</td>
-                    <td className="py-2 px-3" style={{ color: "#666" }}>{b44Field}</td>
-                  </tr>
+          
+          <div className="space-y-4">
+            {/* Basic Info */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>📇 Basic Information (7)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['First Name', 'Last Name', 'Email', 'Phone', 'Mobile', 'Job Title', 'Department'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>📍 Address (5)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['Address', 'City', 'State', 'Zip', 'Country'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Social */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>🌐 Social & Web (4)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['LinkedIn URL', 'Twitter Handle', 'Facebook URL', 'Company Website'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Marketing & Source */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>📊 Marketing & Source (5)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['Lead Source', 'Original Source', 'Latest Source', 'First Conversion Date', 'Recent Conversion Date'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Engagement */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>📧 Engagement (4)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['Emails Opened', 'Emails Clicked', 'Last Contacted', 'Next Activity Date'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Company Info */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>🏢 Company Info (5)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['Industry', 'Number of Employees', 'Annual Revenue', 'Company Domain', 'Time Zone'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sales */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>💰 Sales (3)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['Close Date', 'Deal Amount', 'Deal Stage'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>🎯 Status (2)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {['Lifecycle Stage', 'Lead Status'].map(f => (
+                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
+                    <Check className="w-3 h-3 text-green-600" />
+                    <span style={{ color: "#666" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </NeuroCard>
 
@@ -119,7 +189,7 @@ export default function HubSpotSync() {
                 Ready to Sync?
               </h3>
               <p className="text-sm" style={{ color: "#888" }}>
-                This will sync contacts from HubSpot to AmplifyCRM
+                This will sync up to 100 contacts with 37 fields from HubSpot
               </p>
             </div>
             <NeuroButton 
@@ -165,6 +235,12 @@ export default function HubSpotSync() {
                       </p>
                     </div>
                     <div className="ampvibe-inset p-4 rounded-lg">
+                      <p className="text-sm" style={{ color: "#888" }}>Fields Synced</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {syncResult.summary.fields_synced || 37}
+                      </p>
+                    </div>
+                    <div className="ampvibe-inset p-4 rounded-lg">
                       <p className="text-sm" style={{ color: "#888" }}>Created</p>
                       <p className="text-2xl font-bold text-green-600">
                         {syncResult.summary.created}
@@ -176,12 +252,14 @@ export default function HubSpotSync() {
                         {syncResult.summary.updated}
                       </p>
                     </div>
-                    <div className="ampvibe-inset p-4 rounded-lg">
-                      <p className="text-sm" style={{ color: "#888" }}>Errors</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {syncResult.summary.errors}
-                      </p>
-                    </div>
+                    {syncResult.summary.errors > 0 && (
+                      <div className="ampvibe-inset p-4 rounded-lg col-span-2">
+                        <p className="text-sm" style={{ color: "#888" }}>Errors</p>
+                        <p className="text-2xl font-bold text-red-600">
+                          {syncResult.summary.errors}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -205,45 +283,6 @@ export default function HubSpotSync() {
             </div>
           </NeuroCard>
         )}
-
-        {/* Missing Fields Notice */}
-        <NeuroCard className="mt-6">
-          <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
-            📋 Recommended Fields to Add
-          </h2>
-          <p className="mb-4" style={{ color: "#888" }}>
-            HubSpot has many fields that aren't currently mapped. Consider adding these to your Contact entity:
-          </p>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            {[
-              'Industry',
-              'Number of Employees',
-              'Annual Revenue',
-              'Time Zone',
-              'Facebook URL',
-              'Company Website',
-              'Lead Source',
-              'Original Source',
-              'Latest Source',
-              'First Conversion Date',
-              'Recent Conversion Date',
-              'Marketing Emails Opened',
-              'Marketing Emails Clicked',
-              'Last Contacted',
-              'Last Activity Date',
-              'Next Activity Date',
-              'Number of Employees (Company)',
-              'Company Domain',
-              'Close Date',
-              'Deal Amount',
-              'Deal Stage'
-            ].map((field) => (
-              <div key={field} className="ampvibe-inset px-3 py-2 rounded" style={{ color: "#666" }}>
-                • {field}
-              </div>
-            ))}
-          </div>
-        </NeuroCard>
       </div>
     </div>
   );

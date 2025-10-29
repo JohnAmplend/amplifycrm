@@ -92,6 +92,87 @@
       "type": "string",
       "description": "Twitter handle"
     },
+    "facebook_url": {
+      "type": "string",
+      "description": "Facebook profile URL"
+    },
+    "time_zone": {
+      "type": "string",
+      "description": "Contact's time zone"
+    },
+    "lead_source": {
+      "type": "string",
+      "description": "How the contact was acquired"
+    },
+    "original_source": {
+      "type": "string",
+      "description": "Original source of the contact"
+    },
+    "latest_source": {
+      "type": "string",
+      "description": "Most recent source"
+    },
+    "first_conversion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date of first conversion"
+    },
+    "recent_conversion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date of most recent conversion"
+    },
+    "marketing_emails_opened": {
+      "type": "number",
+      "description": "Number of marketing emails opened"
+    },
+    "marketing_emails_clicked": {
+      "type": "number",
+      "description": "Number of marketing emails clicked"
+    },
+    "last_contacted": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date last contacted"
+    },
+    "next_activity_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date of next scheduled activity"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Industry sector"
+    },
+    "number_of_employees": {
+      "type": "number",
+      "description": "Number of employees at contact's company"
+    },
+    "annual_revenue": {
+      "type": "number",
+      "description": "Annual revenue of contact's company"
+    },
+    "company_website": {
+      "type": "string",
+      "description": "Company website URL"
+    },
+    "company_domain": {
+      "type": "string",
+      "description": "Company domain name"
+    },
+    "close_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected close date"
+    },
+    "deal_amount": {
+      "type": "number",
+      "description": "Associated deal amount"
+    },
+    "deal_stage_name": {
+      "type": "string",
+      "description": "Associated deal stage"
+    },
     "tags": {
       "type": "array",
       "items": {
