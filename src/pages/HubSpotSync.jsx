@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Users, Building2, DollarSign, Ticket, Mail, FileText, Activity, CheckSquare } from "lucide-react";
+import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Users, Building2, DollarSign, Ticket, Mail, FileText, Activity, CheckSquare, Eye, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import NeuroCard from "../components/crm/NeuroCard";
@@ -12,6 +12,8 @@ export default function HubSpotSync() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [syncResults, setSyncResults] = useState({});
+  const [hubspotCounts, setHubspotCounts] = useState(null);
+  const [loadingCounts, setLoadingCounts] = useState(false);
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['contacts'],
@@ -62,6 +64,25 @@ export default function HubSpotSync() {
   const hubspotActivities = activities.filter(a => a.custom_data?.hubspot_id);
   const hubspotTasks = tasks.filter(t => t.custom_data?.hubspot_id);
 
+  // Load HubSpot counts on mount
+  useEffect(() => {
+    loadHubSpotCounts();
+  }, []);
+
+  const loadHubSpotCounts = async () => {
+    setLoadingCounts(true);
+    try {
+      const response = await base44.functions.invoke('getHubSpotCounts', {});
+      if (response.data.success) {
+        setHubspotCounts(response.data.counts);
+      }
+    } catch (error) {
+      console.error('Failed to load HubSpot counts:', error);
+    } finally {
+      setLoadingCounts(false);
+    }
+  };
+
   const createSyncMutation = (functionName, key, queryKeys) => {
     return useMutation({
       mutationFn: async () => {
@@ -72,6 +93,8 @@ export default function HubSpotSync() {
         setSyncResults(prev => ({ ...prev, [key]: data }));
         queryKeys.forEach(qk => queryClient.invalidateQueries([qk]));
         queryClient.invalidateQueries(['sync_logs']);
+        // Reload counts after sync
+        loadHubSpotCounts();
       },
       onError: (error) => {
         setSyncResults(prev => ({ ...prev, [key]: {
@@ -109,14 +132,86 @@ export default function HubSpotSync() {
   };
 
   const syncItems = [
-    { name: 'Contacts', icon: Users, mutation: contactsMutation, current: contacts.length, synced: hubspotContacts.length, color: '#4a90e2', fields: 37 },
-    { name: 'Companies', icon: Building2, mutation: companiesMutation, current: companies.length, synced: hubspotCompanies.length, color: '#52c41a', fields: 13 },
-    { name: 'Deals', icon: DollarSign, mutation: dealsMutation, current: deals.length, synced: hubspotDeals.length, color: '#fa8c16', fields: 10 },
-    { name: 'Tickets', icon: Ticket, mutation: ticketsMutation, current: tickets.length, synced: hubspotTickets.length, color: '#eb2f96', fields: 11 },
-    { name: 'Email Campaigns', icon: Mail, mutation: campaignsMutation, current: campaigns.length, synced: hubspotCampaigns.length, color: '#722ed1', fields: 15 },
-    { name: 'Forms', icon: FileText, mutation: formsMutation, current: forms.length, synced: hubspotForms.length, color: '#13c2c2', fields: 8 },
-    { name: 'Engagements', icon: Activity, mutation: engagementsMutation, current: activities.length, synced: hubspotActivities.length, color: '#faad14', fields: 8 },
-    { name: 'Tasks', icon: CheckSquare, mutation: tasksMutation, current: tasks.length, synced: hubspotTasks.length, color: '#52c41a', fields: 7 }
+    { 
+      name: 'Contacts', 
+      icon: Users, 
+      mutation: contactsMutation, 
+      current: contacts.length, 
+      synced: hubspotContacts.length, 
+      hubspotCount: hubspotCounts?.contacts || 0,
+      color: '#4a90e2', 
+      fields: 37 
+    },
+    { 
+      name: 'Companies', 
+      icon: Building2, 
+      mutation: companiesMutation, 
+      current: companies.length, 
+      synced: hubspotCompanies.length, 
+      hubspotCount: hubspotCounts?.companies || 0,
+      color: '#52c41a', 
+      fields: 13 
+    },
+    { 
+      name: 'Deals', 
+      icon: DollarSign, 
+      mutation: dealsMutation, 
+      current: deals.length, 
+      synced: hubspotDeals.length, 
+      hubspotCount: hubspotCounts?.deals || 0,
+      color: '#fa8c16', 
+      fields: 10 
+    },
+    { 
+      name: 'Tickets', 
+      icon: Ticket, 
+      mutation: ticketsMutation, 
+      current: tickets.length, 
+      synced: hubspotTickets.length, 
+      hubspotCount: hubspotCounts?.tickets || 0,
+      color: '#eb2f96', 
+      fields: 11 
+    },
+    { 
+      name: 'Email Campaigns', 
+      icon: Mail, 
+      mutation: campaignsMutation, 
+      current: campaigns.length, 
+      synced: hubspotCampaigns.length, 
+      hubspotCount: hubspotCounts?.campaigns || 0,
+      color: '#722ed1', 
+      fields: 15 
+    },
+    { 
+      name: 'Forms', 
+      icon: FileText, 
+      mutation: formsMutation, 
+      current: forms.length, 
+      synced: hubspotForms.length, 
+      hubspotCount: hubspotCounts?.forms || 0,
+      color: '#13c2c2', 
+      fields: 8 
+    },
+    { 
+      name: 'Engagements', 
+      icon: Activity, 
+      mutation: engagementsMutation, 
+      current: activities.length, 
+      synced: hubspotActivities.length, 
+      hubspotCount: hubspotCounts?.engagements || 0,
+      color: '#faad14', 
+      fields: 8 
+    },
+    { 
+      name: 'Tasks', 
+      icon: CheckSquare, 
+      mutation: tasksMutation, 
+      current: tasks.length, 
+      synced: hubspotTasks.length, 
+      hubspotCount: hubspotCounts?.tasks || 0,
+      color: '#52c41a', 
+      fields: 7 
+    }
   ];
 
   const renderSyncResult = (result, title) => {
@@ -173,6 +268,14 @@ export default function HubSpotSync() {
     );
   };
 
+  const totalHubSpotRecords = hubspotCounts ? 
+    (hubspotCounts.contacts + hubspotCounts.companies + hubspotCounts.deals + 
+     hubspotCounts.tickets + hubspotCounts.campaigns + hubspotCounts.forms + 
+     hubspotCounts.engagements + hubspotCounts.tasks) : 0;
+
+  const totalCurrentRecords = contacts.length + companies.length + deals.length + 
+    tickets.length + campaigns.length + forms.length + activities.length + tasks.length;
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -191,19 +294,69 @@ export default function HubSpotSync() {
               </p>
             </div>
           </div>
+          <NeuroButton onClick={loadHubSpotCounts} disabled={loadingCounts}>
+            <Eye className="w-4 h-4 mr-2" />
+            {loadingCounts ? 'Loading...' : 'Refresh Counts'}
+          </NeuroButton>
         </div>
 
-        {/* Stats Grid */}
+        {/* Summary Stats */}
+        {hubspotCounts && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <StatCard
+              icon={TrendingUp}
+              title="In HubSpot"
+              value={totalHubSpotRecords.toLocaleString()}
+              subtitle="Total records available"
+              color="#fa8c16"
+            />
+            <StatCard
+              icon={CheckCircle}
+              title="In AmplifyCRM"
+              value={totalCurrentRecords.toLocaleString()}
+              subtitle="Total records synced"
+              color="#00A86B"
+            />
+            <StatCard
+              icon={RefreshCw}
+              title="Will Process"
+              value={totalHubSpotRecords.toLocaleString()}
+              subtitle="Records to sync/update"
+              color="#4a90e2"
+            />
+          </div>
+        )}
+
+        {/* Stats Grid with HubSpot Counts */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {syncItems.map(item => (
-            <StatCard
-              key={item.name}
-              icon={item.icon}
-              title={item.name}
-              value={item.current}
-              subtitle={`${item.synced} from HubSpot`}
-              color={item.color}
-            />
+            <NeuroCard key={item.name}>
+              <div className="flex items-start justify-between mb-3">
+                <item.icon className="w-6 h-6" style={{ color: item.color }} />
+                {hubspotCounts && (
+                  <span className="ampvibe-button px-2 py-1 text-xs font-bold" style={{ color: item.color }}>
+                    {item.hubspotCount} in HubSpot
+                  </span>
+                )}
+              </div>
+              <h3 className="font-bold mb-2" style={{ color: "#666" }}>{item.name}</h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span style={{ color: "#888" }}>Current:</span>
+                  <span className="font-bold" style={{ color: "#666" }}>{item.current}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: "#888" }}>From HubSpot:</span>
+                  <span className="font-bold text-green-600">{item.synced}</span>
+                </div>
+                {hubspotCounts && (
+                  <div className="flex justify-between pt-1 border-t" style={{ borderColor: "#e0e0e0" }}>
+                    <span style={{ color: "#888" }}>Will Sync:</span>
+                    <span className="font-bold" style={{ color: item.color }}>{item.hubspotCount}</span>
+                  </div>
+                )}
+              </div>
+            </NeuroCard>
           ))}
         </div>
 
@@ -214,14 +367,20 @@ export default function HubSpotSync() {
               <h3 className="font-bold mb-1" style={{ color: "#666" }}>
                 Ready to Sync Everything?
               </h3>
-              <p className="text-sm" style={{ color: "#888" }}>
-                This will sync all 8 object types with full pagination (109 fields total)
-              </p>
+              {hubspotCounts ? (
+                <p className="text-sm" style={{ color: "#888" }}>
+                  This will sync {totalHubSpotRecords.toLocaleString()} records across 8 object types with 109 fields total
+                </p>
+              ) : (
+                <p className="text-sm" style={{ color: "#888" }}>
+                  Loading HubSpot counts...
+                </p>
+              )}
             </div>
             <NeuroButton 
               variant="primary" 
               onClick={handleSyncAll}
-              disabled={isAnySyncing}
+              disabled={isAnySyncing || !hubspotCounts}
             >
               {isAnySyncing ? (
                 <>
@@ -231,7 +390,7 @@ export default function HubSpotSync() {
               ) : (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Sync All (8 Types)
+                  Sync All ({totalHubSpotRecords.toLocaleString()} Records)
                 </>
               )}
             </NeuroButton>
@@ -245,13 +404,18 @@ export default function HubSpotSync() {
               <div className="text-center">
                 <item.icon className="w-8 h-8 mx-auto mb-3" style={{ color: item.color }} />
                 <h3 className="font-bold mb-2" style={{ color: "#666" }}>{item.name}</h3>
-                <p className="text-sm mb-4" style={{ color: "#888" }}>{item.fields} fields</p>
+                <p className="text-sm mb-2" style={{ color: "#888" }}>{item.fields} fields</p>
+                {hubspotCounts && (
+                  <p className="text-lg font-bold mb-4" style={{ color: item.color }}>
+                    {item.hubspotCount.toLocaleString()} to sync
+                  </p>
+                )}
                 <NeuroButton 
                   onClick={() => {
                     setSyncResults(prev => ({ ...prev, [item.name.toLowerCase()]: null }));
                     item.mutation.mutate();
                   }}
-                  disabled={item.mutation.isPending}
+                  disabled={item.mutation.isPending || !hubspotCounts}
                   className="w-full"
                 >
                   {item.mutation.isPending ? 'Syncing...' : 'Sync'}
