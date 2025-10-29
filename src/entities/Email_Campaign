@@ -1,0 +1,100 @@
+{
+  "name": "Email_Campaign",
+  "type": "object",
+  "properties": {
+    "campaign_name": {
+      "type": "string",
+      "description": "Campaign name"
+    },
+    "subject_line": {
+      "type": "string",
+      "description": "Email subject line with token support"
+    },
+    "email_body": {
+      "type": "string",
+      "description": "Rich text/HTML email body"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "Sender name"
+    },
+    "from_email": {
+      "type": "string",
+      "description": "Sender email address"
+    },
+    "reply_to_email": {
+      "type": "string",
+      "description": "Reply-to email address"
+    },
+    "campaign_type": {
+      "type": "string",
+      "enum": [
+        "One-Time Blast",
+        "Sequence",
+        "A/B Test"
+      ],
+      "default": "One-Time Blast",
+      "description": "Type of campaign"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Scheduled",
+        "Sending",
+        "Sent",
+        "Paused"
+      ],
+      "default": "Draft",
+      "description": "Campaign status"
+    },
+    "send_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to send the campaign"
+    },
+    "contact_list_id": {
+      "type": "string",
+      "description": "Associated contact list ID"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Template used for this campaign"
+    },
+    "total_recipients": {
+      "type": "number",
+      "description": "Total number of recipients"
+    },
+    "total_sent": {
+      "type": "number",
+      "description": "Number of emails sent"
+    },
+    "total_delivered": {
+      "type": "number",
+      "description": "Number of emails delivered"
+    },
+    "total_opened": {
+      "type": "number",
+      "description": "Number of emails opened"
+    },
+    "total_clicked": {
+      "type": "number",
+      "description": "Number of emails with clicks"
+    },
+    "total_bounced": {
+      "type": "number",
+      "description": "Number of bounced emails"
+    },
+    "total_unsubscribed": {
+      "type": "number",
+      "description": "Number of unsubscribes"
+    },
+    "custom_data": {
+      "type": "object",
+      "description": "Custom field values including HubSpot metadata"
+    }
+  },
+  "required": [
+    "campaign_name"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "task_name": {
+      "type": "string",
+      "description": "Task name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Task description"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Due date and time"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ],
+      "default": "Medium",
+      "description": "Task priority"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Not Started",
+        "In Progress",
+        "Completed",
+        "Deferred"
+      ],
+      "default": "Not Started",
+      "description": "Task status"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "User email assigned to this task"
+    },
+    "related_to_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Deal",
+        "Lead"
+      ],
+      "description": "Type of related record"
+    },
+    "related_to_id": {
+      "type": "string",
+      "description": "ID of related record"
+    },
+    "custom_data": {
+      "type": "object",
+      "description": "Custom field values including HubSpot metadata"
+    }
+  },
+  "required": [
+    "task_name"
+  ]
+}

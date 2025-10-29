@@ -8,6 +8,11 @@
         "HubSpot Contacts",
         "HubSpot Companies",
         "HubSpot Deals",
+        "HubSpot Tickets",
+        "HubSpot Email Campaigns",
+        "HubSpot Forms",
+        "HubSpot Engagements",
+        "HubSpot Tasks",
         "Salesforce Contacts",
         "Google Contacts",
         "App Sync"

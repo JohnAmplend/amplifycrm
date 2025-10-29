@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Check, Users, Building2, DollarSign } from "lucide-react";
+import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Users, Building2, DollarSign, Ticket, Mail, FileText, Activity, CheckSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import NeuroCard from "../components/crm/NeuroCard";
@@ -11,9 +11,7 @@ import StatCard from "../components/crm/StatCard";
 export default function HubSpotSync() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [contactsSyncResult, setContactsSyncResult] = useState(null);
-  const [companiesSyncResult, setCompaniesSyncResult] = useState(null);
-  const [dealsSyncResult, setDealsSyncResult] = useState(null);
+  const [syncResults, setSyncResults] = useState({});
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['contacts'],
@@ -30,80 +28,96 @@ export default function HubSpotSync() {
     queryFn: () => base44.entities.Deal.list()
   });
 
-  const { data: syncLogs = [] } = useQuery({
-    queryKey: ['sync_logs'],
-    queryFn: () => base44.entities.Sync_Log.list('-created_date', 10)
+  const { data: tickets = [] } = useQuery({
+    queryKey: ['tickets'],
+    queryFn: () => base44.entities.Ticket.list()
+  });
+
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ['campaigns'],
+    queryFn: () => base44.entities.Email_Campaign.list()
+  });
+
+  const { data: forms = [] } = useQuery({
+    queryKey: ['forms'],
+    queryFn: () => base44.entities.Form.list()
+  });
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ['activities'],
+    queryFn: () => base44.entities.Activity.list()
+  });
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => base44.entities.Task.list()
   });
 
   const hubspotContacts = contacts.filter(c => c.custom_data?.hubspot_id);
   const hubspotCompanies = companies.filter(c => c.custom_data?.hubspot_id);
   const hubspotDeals = deals.filter(d => d.custom_data?.hubspot_id);
+  const hubspotTickets = tickets.filter(t => t.custom_data?.hubspot_id);
+  const hubspotCampaigns = campaigns.filter(c => c.custom_data?.hubspot_id);
+  const hubspotForms = forms.filter(f => f.custom_data?.hubspot_id);
+  const hubspotActivities = activities.filter(a => a.custom_data?.hubspot_id);
+  const hubspotTasks = tasks.filter(t => t.custom_data?.hubspot_id);
 
-  const contactsSyncMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('syncHubSpotContacts', {});
-      return response.data;
-    },
-    onSuccess: (data) => {
-      setContactsSyncResult(data);
-      queryClient.invalidateQueries(['contacts']);
-      queryClient.invalidateQueries(['sync_logs']);
-    },
-    onError: (error) => {
-      setContactsSyncResult({
-        success: false,
-        error: error.message || 'Failed to sync contacts'
-      });
-    }
-  });
+  const createSyncMutation = (functionName, key, queryKeys) => {
+    return useMutation({
+      mutationFn: async () => {
+        const response = await base44.functions.invoke(functionName, {});
+        return response.data;
+      },
+      onSuccess: (data) => {
+        setSyncResults(prev => ({ ...prev, [key]: data }));
+        queryKeys.forEach(qk => queryClient.invalidateQueries([qk]));
+        queryClient.invalidateQueries(['sync_logs']);
+      },
+      onError: (error) => {
+        setSyncResults(prev => ({ ...prev, [key]: {
+          success: false,
+          error: error.message || `Failed to sync ${key}`
+        }}));
+      }
+    });
+  };
 
-  const companiesSyncMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('syncHubSpotCompanies', {});
-      return response.data;
-    },
-    onSuccess: (data) => {
-      setCompaniesSyncResult(data);
-      queryClient.invalidateQueries(['companies']);
-      queryClient.invalidateQueries(['sync_logs']);
-    },
-    onError: (error) => {
-      setCompaniesSyncResult({
-        success: false,
-        error: error.message || 'Failed to sync companies'
-      });
-    }
-  });
+  const contactsMutation = createSyncMutation('syncHubSpotContacts', 'contacts', ['contacts']);
+  const companiesMutation = createSyncMutation('syncHubSpotCompanies', 'companies', ['companies']);
+  const dealsMutation = createSyncMutation('syncHubSpotDeals', 'deals', ['deals']);
+  const ticketsMutation = createSyncMutation('syncHubSpotTickets', 'tickets', ['tickets']);
+  const campaignsMutation = createSyncMutation('syncHubSpotEmailCampaigns', 'campaigns', ['campaigns']);
+  const formsMutation = createSyncMutation('syncHubSpotForms', 'forms', ['forms']);
+  const engagementsMutation = createSyncMutation('syncHubSpotEngagements', 'engagements', ['activities']);
+  const tasksMutation = createSyncMutation('syncHubSpotTasks', 'tasks', ['tasks']);
 
-  const dealsSyncMutation = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('syncHubSpotDeals', {});
-      return response.data;
-    },
-    onSuccess: (data) => {
-      setDealsSyncResult(data);
-      queryClient.invalidateQueries(['deals']);
-      queryClient.invalidateQueries(['sync_logs']);
-    },
-    onError: (error) => {
-      setDealsSyncResult({
-        success: false,
-        error: error.message || 'Failed to sync deals'
-      });
-    }
-  });
+  const allMutations = [contactsMutation, companiesMutation, dealsMutation, ticketsMutation, campaignsMutation, formsMutation, engagementsMutation, tasksMutation];
+  const isAnySyncing = allMutations.some(m => m.isPending);
 
   const handleSyncAll = () => {
-    if (window.confirm('This will sync ALL contacts, companies, and deals from HubSpot. This may take a few minutes. Continue?')) {
-      setContactsSyncResult(null);
-      setCompaniesSyncResult(null);
-      setDealsSyncResult(null);
-      
-      contactsSyncMutation.mutate();
-      companiesSyncMutation.mutate();
-      dealsSyncMutation.mutate();
+    if (window.confirm('This will sync ALL data from HubSpot (Contacts, Companies, Deals, Tickets, Campaigns, Forms, Engagements, Tasks). This may take several minutes. Continue?')) {
+      setSyncResults({});
+      contactsMutation.mutate();
+      companiesMutation.mutate();
+      dealsMutation.mutate();
+      ticketsMutation.mutate();
+      campaignsMutation.mutate();
+      formsMutation.mutate();
+      engagementsMutation.mutate();
+      tasksMutation.mutate();
     }
   };
+
+  const syncItems = [
+    { name: 'Contacts', icon: Users, mutation: contactsMutation, current: contacts.length, synced: hubspotContacts.length, color: '#4a90e2', fields: 37 },
+    { name: 'Companies', icon: Building2, mutation: companiesMutation, current: companies.length, synced: hubspotCompanies.length, color: '#52c41a', fields: 13 },
+    { name: 'Deals', icon: DollarSign, mutation: dealsMutation, current: deals.length, synced: hubspotDeals.length, color: '#fa8c16', fields: 10 },
+    { name: 'Tickets', icon: Ticket, mutation: ticketsMutation, current: tickets.length, synced: hubspotTickets.length, color: '#eb2f96', fields: 11 },
+    { name: 'Email Campaigns', icon: Mail, mutation: campaignsMutation, current: campaigns.length, synced: hubspotCampaigns.length, color: '#722ed1', fields: 15 },
+    { name: 'Forms', icon: FileText, mutation: formsMutation, current: forms.length, synced: hubspotForms.length, color: '#13c2c2', fields: 8 },
+    { name: 'Engagements', icon: Activity, mutation: engagementsMutation, current: activities.length, synced: hubspotActivities.length, color: '#faad14', fields: 8 },
+    { name: 'Tasks', icon: CheckSquare, mutation: tasksMutation, current: tasks.length, synced: hubspotTasks.length, color: '#52c41a', fields: 7 }
+  ];
 
   const renderSyncResult = (result, title) => {
     if (!result) return null;
@@ -126,7 +140,7 @@ export default function HubSpotSync() {
                 <div className="ampvibe-inset p-3 rounded-lg">
                   <p className="text-xs" style={{ color: "#888" }}>Total</p>
                   <p className="text-xl font-bold" style={{ color: "#666" }}>
-                    {result.summary.total_hubspot_contacts || result.summary.total_hubspot_companies || result.summary.total_hubspot_deals || 0}
+                    {result.summary.total_hubspot_contacts || result.summary.total_hubspot_companies || result.summary.total_hubspot_deals || result.summary.total_hubspot_tickets || result.summary.total_hubspot_campaigns || result.summary.total_hubspot_forms || result.summary.total_hubspot_engagements || result.summary.total_hubspot_tasks || 0}
                   </p>
                 </div>
                 <div className="ampvibe-inset p-3 rounded-lg">
@@ -150,22 +164,6 @@ export default function HubSpotSync() {
               </div>
             )}
 
-            {result.errors && result.errors.length > 0 && (
-              <div className="ampvibe-inset p-3 rounded-lg mt-3">
-                <p className="font-bold mb-2 text-sm" style={{ color: "#666" }}>Errors:</p>
-                <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {result.errors.slice(0, 5).map((err, idx) => (
-                    <div key={idx} className="text-xs" style={{ color: "#888" }}>
-                      <strong>{err.contact || err.company || err.deal}:</strong> {err.error}
-                    </div>
-                  ))}
-                  {result.errors.length > 5 && (
-                    <p className="text-xs" style={{ color: "#888" }}>+ {result.errors.length - 5} more errors</p>
-                  )}
-                </div>
-              </div>
-            )}
-
             {result.error && (
               <p className="text-sm" style={{ color: "#f5222d" }}>{result.error}</p>
             )}
@@ -175,11 +173,9 @@ export default function HubSpotSync() {
     );
   };
 
-  const isAnySyncing = contactsSyncMutation.isPending || companiesSyncMutation.isPending || dealsSyncMutation.isPending;
-
   return (
     <div className="p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -188,38 +184,27 @@ export default function HubSpotSync() {
             </NeuroButton>
             <div>
               <h1 className="text-3xl font-bold" style={{ color: "#555" }}>
-                HubSpot Full Sync
+                HubSpot Complete Sync
               </h1>
               <p style={{ color: "#888" }}>
-                Sync all contacts, companies, and deals from HubSpot
+                Sync all contacts, companies, deals, tickets, campaigns, forms, activities & tasks
               </p>
             </div>
           </div>
         </div>
 
-        {/* Current Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <StatCard
-            icon={Users}
-            title="Contacts"
-            value={contacts.length}
-            subtitle={`${hubspotContacts.length} from HubSpot`}
-            color="#4a90e2"
-          />
-          <StatCard
-            icon={Building2}
-            title="Companies"
-            value={companies.length}
-            subtitle={`${hubspotCompanies.length} from HubSpot`}
-            color="#52c41a"
-          />
-          <StatCard
-            icon={DollarSign}
-            title="Deals"
-            value={deals.length}
-            subtitle={`${hubspotDeals.length} from HubSpot`}
-            color="#fa8c16"
-          />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {syncItems.map(item => (
+            <StatCard
+              key={item.name}
+              icon={item.icon}
+              title={item.name}
+              value={item.current}
+              subtitle={`${item.synced} from HubSpot`}
+              color={item.color}
+            />
+          ))}
         </div>
 
         {/* Sync All Button */}
@@ -230,7 +215,7 @@ export default function HubSpotSync() {
                 Ready to Sync Everything?
               </h3>
               <p className="text-sm" style={{ color: "#888" }}>
-                This will sync all your contacts (37 fields), companies (13 fields), and deals (10 fields) from HubSpot with full pagination
+                This will sync all 8 object types with full pagination (109 fields total)
               </p>
             </div>
             <NeuroButton 
@@ -246,128 +231,40 @@ export default function HubSpotSync() {
               ) : (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Sync All
+                  Sync All (8 Types)
                 </>
               )}
             </NeuroButton>
           </div>
         </NeuroCard>
 
-        {/* Individual Sync Options */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <NeuroCard>
-            <div className="text-center">
-              <Users className="w-8 h-8 mx-auto mb-3" style={{ color: "#4a90e2" }} />
-              <h3 className="font-bold mb-2" style={{ color: "#666" }}>Contacts</h3>
-              <p className="text-sm mb-4" style={{ color: "#888" }}>37 fields with pagination</p>
-              <NeuroButton 
-                onClick={() => {
-                  setContactsSyncResult(null);
-                  contactsSyncMutation.mutate();
-                }}
-                disabled={contactsSyncMutation.isPending}
-                className="w-full"
-              >
-                {contactsSyncMutation.isPending ? 'Syncing...' : 'Sync Contacts'}
-              </NeuroButton>
-            </div>
-          </NeuroCard>
-
-          <NeuroCard>
-            <div className="text-center">
-              <Building2 className="w-8 h-8 mx-auto mb-3" style={{ color: "#52c41a" }} />
-              <h3 className="font-bold mb-2" style={{ color: "#666" }}>Companies</h3>
-              <p className="text-sm mb-4" style={{ color: "#888" }}>13 fields with pagination</p>
-              <NeuroButton 
-                onClick={() => {
-                  setCompaniesSyncResult(null);
-                  companiesSyncMutation.mutate();
-                }}
-                disabled={companiesSyncMutation.isPending}
-                className="w-full"
-              >
-                {companiesSyncMutation.isPending ? 'Syncing...' : 'Sync Companies'}
-              </NeuroButton>
-            </div>
-          </NeuroCard>
-
-          <NeuroCard>
-            <div className="text-center">
-              <DollarSign className="w-8 h-8 mx-auto mb-3" style={{ color: "#fa8c16" }} />
-              <h3 className="font-bold mb-2" style={{ color: "#666" }}>Deals</h3>
-              <p className="text-sm mb-4" style={{ color: "#888" }}>10 fields with pagination</p>
-              <NeuroButton 
-                onClick={() => {
-                  setDealsSyncResult(null);
-                  dealsSyncMutation.mutate();
-                }}
-                disabled={dealsSyncMutation.isPending}
-                className="w-full"
-              >
-                {dealsSyncMutation.isPending ? 'Syncing...' : 'Sync Deals'}
-              </NeuroButton>
-            </div>
-          </NeuroCard>
+        {/* Individual Sync Grid */}
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+          {syncItems.map(item => (
+            <NeuroCard key={item.name}>
+              <div className="text-center">
+                <item.icon className="w-8 h-8 mx-auto mb-3" style={{ color: item.color }} />
+                <h3 className="font-bold mb-2" style={{ color: "#666" }}>{item.name}</h3>
+                <p className="text-sm mb-4" style={{ color: "#888" }}>{item.fields} fields</p>
+                <NeuroButton 
+                  onClick={() => {
+                    setSyncResults(prev => ({ ...prev, [item.name.toLowerCase()]: null }));
+                    item.mutation.mutate();
+                  }}
+                  disabled={item.mutation.isPending}
+                  className="w-full"
+                >
+                  {item.mutation.isPending ? 'Syncing...' : 'Sync'}
+                </NeuroButton>
+              </div>
+            </NeuroCard>
+          ))}
         </div>
 
         {/* Sync Results */}
-        {renderSyncResult(contactsSyncResult, 'Contacts Sync')}
-        {renderSyncResult(companiesSyncResult, 'Companies Sync')}
-        {renderSyncResult(dealsSyncResult, 'Deals Sync')}
-
-        {/* Field Details */}
-        <NeuroCard>
-          <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>
-            What Gets Synced
-          </h2>
-          
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-bold mb-2 flex items-center gap-2" style={{ color: "#4a90e2" }}>
-                <Users className="w-5 h-5" />
-                Contacts (37 Fields)
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                {['Basic Info (7)', 'Address (5)', 'Social Media (4)', 'Marketing Source (5)', 'Engagement (4)', 'Company Info (5)', 'Sales Data (3)', 'Status (2)', '+ HubSpot metadata'].map(f => (
-                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
-                    <Check className="w-3 h-3 text-green-600" />
-                    <span style={{ color: "#666" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-2 flex items-center gap-2" style={{ color: "#52c41a" }}>
-                <Building2 className="w-5 h-5" />
-                Companies (13 Fields)
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                {['Name', 'Domain', 'Industry', 'Phone', 'Address', 'City', 'State', 'Zip', 'Country', 'Employees', 'Revenue', 'Lifecycle Stage', '+ HubSpot metadata'].map(f => (
-                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
-                    <Check className="w-3 h-3 text-green-600" />
-                    <span style={{ color: "#666" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-2 flex items-center gap-2" style={{ color: "#fa8c16" }}>
-                <DollarSign className="w-5 h-5" />
-                Deals (10 Fields)
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                {['Deal Name', 'Amount', 'Close Date', 'Stage', 'Pipeline', 'Type', 'Priority', 'Probability', 'Description', '+ HubSpot metadata'].map(f => (
-                  <div key={f} className="ampvibe-inset px-3 py-2 rounded flex items-center gap-2">
-                    <Check className="w-3 h-3 text-green-600" />
-                    <span style={{ color: "#666" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </NeuroCard>
+        {Object.entries(syncResults).map(([key, result]) => 
+          renderSyncResult(result, key.charAt(0).toUpperCase() + key.slice(1) + ' Sync')
+        )}
       </div>
     </div>
   );
