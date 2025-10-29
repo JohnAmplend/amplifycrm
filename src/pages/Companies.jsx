@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search, Plus, Download, Upload, X } from "lucide-react";
+import { Search, Plus, Download, Upload, X, ChevronLeft, ChevronRight } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -19,6 +18,11 @@ export default function Companies() {
   const [filterStage, setFilterStage] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [customPage, setCustomPage] = useState('');
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -42,22 +46,16 @@ export default function Companies() {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Company.create(data),
     onMutate: async (newCompany) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries(['companies']);
-
-      // Snapshot the previous value
       const previousCompanies = queryClient.getQueryData(['companies']);
 
-      // Optimistically update to the new value
       queryClient.setQueryData(['companies'], (old) => {
         const optimisticCompany = {
           ...newCompany,
-          id: 'temp-' + Date.now(), // Assign a temporary ID
+          id: 'temp-' + Date.now(),
           created_date: new Date().toISOString(),
           created_by: currentUser?.email,
-          // If CompanyForm doesn't provide company_owner, default to currentUser
-          company_owner: newCompany.company_owner || currentUser?.email, 
-          // Other default fields for display
+          company_owner: newCompany.company_owner || currentUser?.email,
           domain: newCompany.domain || '',
           industry: newCompany.industry || '',
           phone: newCompany.phone || '',
@@ -66,12 +64,11 @@ export default function Companies() {
           country: newCompany.country || '',
           number_of_employees: newCompany.number_of_employees || null,
           annual_revenue: newCompany.annual_revenue || null,
-          lifecycle_stage: newCompany.lifecycle_stage || 'Lead', // Default stage
+          lifecycle_stage: newCompany.lifecycle_stage || 'Lead',
         };
         return [optimisticCompany, ...(old || [])];
       });
 
-      // Return a context object with the snapshotted value
       return { previousCompanies };
     },
     onError: (err, newCompany, context) => {
@@ -94,7 +91,7 @@ export default function Companies() {
         c.number_of_employees, c.annual_revenue, c.company_owner, c.lifecycle_stage,
         new Date(c.created_date).toLocaleDateString()
       ])
-    ].map(row => row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',')).join('\n'); // Ensure CSV formatting handles commas and quotes
+    ].map(row => row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -102,7 +99,7 @@ export default function Companies() {
     a.href = url;
     a.download = `companies-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    URL.revokeObjectURL(url); // Clean up the URL object
+    URL.revokeObjectURL(url);
   };
 
   const filteredCompanies = companies.filter(company => {
@@ -115,6 +112,66 @@ export default function Companies() {
     
     return matchesSearch && matchesOwner && matchesStage;
   });
+
+  // Pagination calculations
+  const totalItems = filteredCompanies.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCompanies = filteredCompanies.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 300, behavior: 'smooth' });
+    }
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const handleCustomPageSubmit = (e) => {
+    e.preventDefault();
+    const page = parseInt(customPage);
+    if (page && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setCustomPage('');
+      window.scrollTo({ top: 300, behavior: 'smooth' });
+    }
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterOwner, filterStage]);
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage < maxVisible - 1) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`ampvibe-button px-4 py-2 ${currentPage === i ? 'active' : ''}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return pages;
+  };
 
   if (showForm) {
     return (
@@ -203,6 +260,64 @@ export default function Companies() {
           </div>
         </NeuroCard>
 
+        {/* Pagination Controls - Top */}
+        {totalPages > 1 && (
+          <NeuroCard className="mb-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm" style={{ color: "#666" }}>Show:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  className="ampvibe-input px-3 py-2"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={40}>40</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="text-sm" style={{ color: "#888" }}>
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </NeuroButton>
+
+                {renderPageNumbers()}
+
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </NeuroButton>
+
+                <form onSubmit={handleCustomPageSubmit} className="flex items-center gap-2 ml-4">
+                  <span className="text-sm" style={{ color: "#888" }}>Go to:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={customPage}
+                    onChange={(e) => setCustomPage(e.target.value)}
+                    placeholder="#"
+                    className="ampvibe-input w-16 px-2 py-1 text-center"
+                  />
+                  <NeuroButton type="submit" size="sm">Go</NeuroButton>
+                </form>
+              </div>
+            </div>
+          </NeuroCard>
+        )}
+
         <NeuroCard>
           {isLoading ? (
             <div className="text-center py-12" style={{ color: "#aaa" }}>
@@ -230,7 +345,7 @@ export default function Companies() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCompanies.map((company) => (
+                  {paginatedCompanies.map((company) => (
                     <tr
                       key={company.id}
                       onClick={() => navigate(createPageUrl("CompanyDetail") + `?id=${company.id}`)}
@@ -267,6 +382,39 @@ export default function Companies() {
             </div>
           )}
         </NeuroCard>
+
+        {/* Pagination Controls - Bottom */}
+        {totalPages > 1 && (
+          <NeuroCard className="mt-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <span className="text-sm" style={{ color: "#888" }}>
+                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </NeuroButton>
+
+                <span className="text-sm px-4" style={{ color: "#666" }}>
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <NeuroButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </NeuroButton>
+              </div>
+            </div>
+          </NeuroCard>
+        )}
       </div>
     </div>
   );
