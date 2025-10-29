@@ -45,6 +45,8 @@ import Notifications from './pages/Notifications';
 import Dashboards from './pages/Dashboards';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import ReportBuilder from './pages/ReportBuilder';
+import ReportViewer from './pages/ReportViewer';
+import DashboardViewer from './pages/DashboardViewer';
 import Layout from './Layout.jsx';
 
 
@@ -96,6 +98,8 @@ export const PAGES = {
     "Dashboards": Dashboards,
     "WorkflowBuilder": WorkflowBuilder,
     "ReportBuilder": ReportBuilder,
+    "ReportViewer": ReportViewer,
+    "DashboardViewer": DashboardViewer,
 }
 
 export const pagesConfig = {
