@@ -48,6 +48,7 @@ import ReportBuilder from './pages/ReportBuilder';
 import ReportViewer from './pages/ReportViewer';
 import DashboardViewer from './pages/DashboardViewer';
 import HubSpotSync from './pages/HubSpotSync';
+import SyncStatus from './pages/SyncStatus';
 import Layout from './Layout.jsx';
 
 
@@ -102,6 +103,7 @@ export const PAGES = {
     "ReportViewer": ReportViewer,
     "DashboardViewer": DashboardViewer,
     "HubSpotSync": HubSpotSync,
+    "SyncStatus": SyncStatus,
 }
 
 export const pagesConfig = {

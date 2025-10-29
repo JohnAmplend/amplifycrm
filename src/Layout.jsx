@@ -149,8 +149,9 @@ export default function Layout({ children, currentPageName }) {
         {
           title: 'Integrations',
           items: [
-            { name: "RingCentral", icon: Phone, page: "RingCentral" },
-            { name: "HubSpot Sync", icon: RefreshCw, page: "HubSpotSync" } // New item added
+            { name: "Sync Status", icon: BarChart3, page: "SyncStatus" },
+            { name: "HubSpot Sync", icon: RefreshCw, page: "HubSpotSync" },
+            { name: "RingCentral", icon: Phone, page: "RingCentral" }
           ]
         }
       ]

@@ -1,0 +1,64 @@
+{
+  "name": "Sync_Log",
+  "type": "object",
+  "properties": {
+    "sync_type": {
+      "type": "string",
+      "enum": [
+        "HubSpot Contacts",
+        "Salesforce Contacts",
+        "Google Contacts",
+        "App Sync"
+      ],
+      "description": "Type of sync performed"
+    },
+    "sync_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When sync started"
+    },
+    "sync_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When sync completed"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "In Progress",
+        "Completed",
+        "Failed",
+        "Partial"
+      ],
+      "default": "In Progress",
+      "description": "Sync job status"
+    },
+    "records_synced": {
+      "type": "number",
+      "description": "Number of records successfully synced"
+    },
+    "records_created": {
+      "type": "number",
+      "description": "Number of new records created"
+    },
+    "records_updated": {
+      "type": "number",
+      "description": "Number of existing records updated"
+    },
+    "records_failed": {
+      "type": "number",
+      "description": "Number of records that failed"
+    },
+    "error_details": {
+      "type": "string",
+      "description": "Error messages and details"
+    },
+    "sync_summary": {
+      "type": "object",
+      "description": "Detailed sync results"
+    }
+  },
+  "required": [
+    "sync_type"
+  ]
+}

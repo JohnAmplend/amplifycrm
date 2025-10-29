@@ -1,6 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
 
 Deno.serve(async (req) => {
+  const syncStartTime = new Date().toISOString();
+  
   try {
     const base44 = createClientFromRequest(req);
     
@@ -16,6 +18,13 @@ Deno.serve(async (req) => {
         error: 'HubSpot API key not configured' 
       }, { status: 400 });
     }
+
+    // Create sync log entry
+    const syncLog = await base44.asServiceRole.entities.Sync_Log.create({
+      sync_type: 'HubSpot Contacts',
+      sync_started_at: syncStartTime,
+      sync_status: 'In Progress'
+    });
 
     // HubSpot API endpoint for contacts with expanded properties
     const properties = [
@@ -40,6 +49,14 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
+      
+      // Update sync log with failure
+      await base44.asServiceRole.entities.Sync_Log.update(syncLog.id, {
+        sync_status: 'Failed',
+        sync_completed_at: new Date().toISOString(),
+        error_details: `Failed to fetch from HubSpot: ${errorText}`
+      });
+      
       return Response.json({ 
         error: 'Failed to fetch from HubSpot', 
         details: errorText,
@@ -54,7 +71,6 @@ Deno.serve(async (req) => {
     let updatedCount = 0;
     let errorCount = 0;
     const errors = [];
-    const missingFields = [];
 
     // Get existing contacts to check for duplicates
     const existingContacts = await base44.asServiceRole.entities.Contact.list();
@@ -71,7 +87,7 @@ Deno.serve(async (req) => {
           phone: props.phone || '',
           mobile: props.mobilephone || '',
           job_title: props.jobtitle || '',
-          company_id: '', // Will need to match company by name
+          company_id: '',
           contact_owner: user.email,
           lifecycle_stage: mapLifecycleStage(props.lifecyclestage),
           lead_status: mapLeadStatus(props.hs_lead_status),
@@ -125,11 +141,9 @@ Deno.serve(async (req) => {
         );
 
         if (existingContact) {
-          // Update existing contact
           await base44.asServiceRole.entities.Contact.update(existingContact.id, contactData);
           updatedCount++;
         } else {
-          // Create new contact
           await base44.asServiceRole.entities.Contact.create(contactData);
           createdCount++;
         }
@@ -143,27 +157,42 @@ Deno.serve(async (req) => {
       }
     }
 
+    const syncCompleteTime = new Date().toISOString();
+    const summary = {
+      total_hubspot_contacts: hubspotContacts.length,
+      created: createdCount,
+      updated: updatedCount,
+      errors: errorCount,
+      fields_synced: 37
+    };
+
+    // Update sync log with success
+    await base44.asServiceRole.entities.Sync_Log.update(syncLog.id, {
+      sync_status: errorCount > 0 ? 'Partial' : 'Completed',
+      sync_completed_at: syncCompleteTime,
+      records_synced: createdCount + updatedCount,
+      records_created: createdCount,
+      records_updated: updatedCount,
+      records_failed: errorCount,
+      sync_summary: summary,
+      error_details: errors.length > 0 ? JSON.stringify(errors) : null
+    });
+
     return Response.json({
       success: true,
-      summary: {
-        total_hubspot_contacts: hubspotContacts.length,
-        created: createdCount,
-        updated: updatedCount,
-        errors: errorCount,
-        fields_synced: 37
-      },
+      summary,
       errors: errors.length > 0 ? errors : undefined
     });
 
   } catch (error) {
     console.error('HubSpot sync error:', error);
+    
     return Response.json({ 
       error: error.message || 'Failed to sync HubSpot contacts' 
     }, { status: 500 });
   }
 });
 
-// Helper function to map HubSpot lifecycle stage to Base44
 function mapLifecycleStage(hsStage) {
   const stageMap = {
     'subscriber': 'Subscriber',
@@ -178,7 +207,6 @@ function mapLifecycleStage(hsStage) {
   return stageMap[hsStage?.toLowerCase()] || 'Lead';
 }
 
-// Helper function to map HubSpot lead status to Base44
 function mapLeadStatus(hsStatus) {
   const statusMap = {
     'new': 'New',

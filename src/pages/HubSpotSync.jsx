@@ -1,15 +1,29 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation } from "@tanstack/react-query";
-import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Check } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { RefreshCw, CheckCircle, AlertCircle, ArrowLeft, Check, Users, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
+import StatCard from "../components/crm/StatCard";
 
 export default function HubSpotSync() {
   const navigate = useNavigate();
   const [syncResult, setSyncResult] = useState(null);
+
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['contacts'],
+    queryFn: () => base44.entities.Contact.list()
+  });
+
+  const { data: syncLogs = [] } = useQuery({
+    queryKey: ['sync_logs'],
+    queryFn: () => base44.entities.Sync_Log.list('-created_date', 5)
+  });
+
+  const hubspotContacts = contacts.filter(c => c.custom_data?.hubspot_id);
+  const lastSync = syncLogs.find(log => log.sync_type === 'HubSpot Contacts');
 
   const syncMutation = useMutation({
     mutationFn: async () => {
@@ -40,7 +54,7 @@ export default function HubSpotSync() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <NeuroButton onClick={() => navigate(createPageUrl("AppSync"))}>
+            <NeuroButton onClick={() => navigate(createPageUrl("SyncStatus"))}>
               <ArrowLeft className="w-4 h-4" />
             </NeuroButton>
             <div>
@@ -52,6 +66,31 @@ export default function HubSpotSync() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Current Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <StatCard
+            icon={Users}
+            title="Total Contacts"
+            value={contacts.length}
+            subtitle="In AmplifyCRM"
+            color="#4a90e2"
+          />
+          <StatCard
+            icon={RefreshCw}
+            title="HubSpot Contacts"
+            value={hubspotContacts.length}
+            subtitle="Synced from HubSpot"
+            color="#00A86B"
+          />
+          <StatCard
+            icon={TrendingUp}
+            title="Last Sync"
+            value={lastSync ? (lastSync.records_created + lastSync.records_updated) : 0}
+            subtitle={lastSync ? new Date(lastSync.created_date).toLocaleDateString() : 'Never'}
+            color="#fa8c16"
+          />
         </div>
 
         {/* Sync Info */}

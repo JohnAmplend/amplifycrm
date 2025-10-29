@@ -40,6 +40,16 @@ export default function Contacts() {
     queryFn: () => base44.entities.User.list()
   });
 
+  // Calculate stats
+  const hubspotContacts = contacts.filter(c => c.custom_data?.hubspot_id);
+  const newThisWeek = contacts.filter(c => {
+    const created = new Date(c.created_date);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return created > weekAgo;
+  });
+  const customers = contacts.filter(c => c.lifecycle_stage === 'Customer');
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Contact.create(data),
     onMutate: async (newContact) => {
@@ -165,6 +175,42 @@ export default function Contacts() {
               Add Contact
             </NeuroButton>
           </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <NeuroCard>
+            <div className="text-center">
+              <p className="text-sm mb-1" style={{ color: "#888" }}>Total Contacts</p>
+              <p className="text-3xl font-bold" style={{ color: "#4a90e2" }}>
+                {contacts.length}
+              </p>
+            </div>
+          </NeuroCard>
+          <NeuroCard>
+            <div className="text-center">
+              <p className="text-sm mb-1" style={{ color: "#888" }}>From HubSpot</p>
+              <p className="text-3xl font-bold" style={{ color: "#00A86B" }}>
+                {hubspotContacts.length}
+              </p>
+            </div>
+          </NeuroCard>
+          <NeuroCard>
+            <div className="text-center">
+              <p className="text-sm mb-1" style={{ color: "#888" }}>New This Week</p>
+              <p className="text-3xl font-bold" style={{ color: "#fa8c16" }}>
+                {newThisWeek.length}
+              </p>
+            </div>
+          </NeuroCard>
+          <NeuroCard>
+            <div className="text-center">
+              <p className="text-sm mb-1" style={{ color: "#888" }}>Customers</p>
+              <p className="text-3xl font-bold" style={{ color: "#52c41a" }}>
+                {customers.length}
+              </p>
+            </div>
+          </NeuroCard>
         </div>
 
         {/* Filters */}
