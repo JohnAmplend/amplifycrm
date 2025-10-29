@@ -1,0 +1,155 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    
+    // Authenticate user
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const HUBSPOT_API_KEY = Deno.env.get("HUBSPOT_API_KEY");
+    if (!HUBSPOT_API_KEY) {
+      return Response.json({ 
+        error: 'HubSpot API key not configured' 
+      }, { status: 400 });
+    }
+
+    // HubSpot API endpoint for contacts
+    const hubspotUrl = 'https://api.hubapi.com/crm/v3/objects/contacts?limit=100&properties=firstname,lastname,email,phone,mobilephone,jobtitle,company,lifecyclestage,hs_lead_status,address,city,state,zip,country,website,linkedinbio,twitterhandle,createdate,lastmodifieddate,hs_object_id';
+
+    const response = await fetch(hubspotUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return Response.json({ 
+        error: 'Failed to fetch from HubSpot', 
+        details: errorText,
+        status: response.status
+      }, { status: response.status });
+    }
+
+    const hubspotData = await response.json();
+    const hubspotContacts = hubspotData.results || [];
+
+    let createdCount = 0;
+    let updatedCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    // Get existing contacts to check for duplicates
+    const existingContacts = await base44.asServiceRole.entities.Contact.list();
+
+    for (const hsContact of hubspotContacts) {
+      try {
+        const props = hsContact.properties;
+        
+        // Map HubSpot fields to Base44 fields
+        const contactData = {
+          first_name: props.firstname || '',
+          last_name: props.lastname || '',
+          email: props.email || '',
+          phone: props.phone || '',
+          mobile: props.mobilephone || '',
+          job_title: props.jobtitle || '',
+          company_id: '', // Will need to match company by name
+          contact_owner: user.email,
+          lifecycle_stage: mapLifecycleStage(props.lifecyclestage),
+          lead_status: mapLeadStatus(props.hs_lead_status),
+          address: props.address || '',
+          city: props.city || '',
+          state: props.state || '',
+          zip: props.zip || '',
+          country: props.country || '',
+          linkedin_url: props.linkedinbio || '',
+          twitter_handle: props.twitterhandle || '',
+          custom_data: {
+            hubspot_id: hsContact.id,
+            hubspot_created_date: props.createdate,
+            hubspot_modified_date: props.lastmodifieddate,
+            hubspot_company_name: props.company,
+            hubspot_website: props.website
+          }
+        };
+
+        // Check if contact already exists by email or HubSpot ID
+        const existingContact = existingContacts.find(c => 
+          c.email === contactData.email || 
+          c.custom_data?.hubspot_id === hsContact.id
+        );
+
+        if (existingContact) {
+          // Update existing contact
+          await base44.asServiceRole.entities.Contact.update(existingContact.id, contactData);
+          updatedCount++;
+        } else {
+          // Create new contact
+          await base44.asServiceRole.entities.Contact.create(contactData);
+          createdCount++;
+        }
+
+      } catch (error) {
+        errorCount++;
+        errors.push({
+          contact: hsContact.properties?.email || hsContact.id,
+          error: error.message
+        });
+      }
+    }
+
+    return Response.json({
+      success: true,
+      summary: {
+        total_hubspot_contacts: hubspotContacts.length,
+        created: createdCount,
+        updated: updatedCount,
+        errors: errorCount
+      },
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    console.error('HubSpot sync error:', error);
+    return Response.json({ 
+      error: error.message || 'Failed to sync HubSpot contacts' 
+    }, { status: 500 });
+  }
+});
+
+// Helper function to map HubSpot lifecycle stage to Base44
+function mapLifecycleStage(hsStage) {
+  const stageMap = {
+    'subscriber': 'Subscriber',
+    'lead': 'Lead',
+    'marketingqualifiedlead': 'MQL',
+    'salesqualifiedlead': 'SQL',
+    'opportunity': 'Opportunity',
+    'customer': 'Customer',
+    'evangelist': 'Customer',
+    'other': 'Lead'
+  };
+  return stageMap[hsStage?.toLowerCase()] || 'Lead';
+}
+
+// Helper function to map HubSpot lead status to Base44
+function mapLeadStatus(hsStatus) {
+  const statusMap = {
+    'new': 'New',
+    'open': 'Attempting',
+    'in progress': 'Attempting',
+    'open deal': 'Connected',
+    'unqualified': 'Unqualified',
+    'attempted to contact': 'Attempting',
+    'connected': 'Connected',
+    'bad timing': 'Unqualified'
+  };
+  return statusMap[hsStatus?.toLowerCase()] || 'New';
+}
