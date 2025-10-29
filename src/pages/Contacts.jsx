@@ -1,14 +1,16 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search, Plus, Download, Upload, X, ChevronLeft, ChevronRight, Users, TrendingUp, DollarSign, UserPlus } from "lucide-react";
+import { Search, Plus, Download, Upload, X, ChevronLeft, ChevronRight, Users, TrendingUp, DollarSign, UserPlus, Filter } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import ContactForm from "../components/crm/ContactForm";
+import AdvancedFilters from "../components/crm/AdvancedFilters";
 
 export default function Contacts() {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ export default function Contacts() {
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeStatFilter, setActiveStatFilter] = useState(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState([]);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,7 +54,6 @@ export default function Contacts() {
     queryFn: () => base44.entities.Lead.list()
   });
 
-  // Calculate stats
   const newThisWeek = contacts.filter(c => {
     const created = new Date(c.created_date);
     const weekAgo = new Date();
@@ -61,7 +64,6 @@ export default function Contacts() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      // If lifecycle_stage is "Lead", create as Lead instead
       if (data.lifecycle_stage === 'Lead') {
         return await base44.entities.Lead.create({
           first_name: data.first_name,
@@ -142,25 +144,79 @@ export default function Contacts() {
   };
 
   const handleStatCardClick = (filterType) => {
-    // Clear other filters
     setSearchTerm("");
     setFilterOwner("");
     setFilterStage("");
     setFilterStatus("");
+    setAdvancedFilters([]);
     
-    // Set the active stat filter
     if (activeStatFilter === filterType) {
-      setActiveStatFilter(null); // Toggle off if clicking the same card
+      setActiveStatFilter(null);
     } else {
       setActiveStatFilter(filterType);
     }
     
-    // Reset to page 1
     setCurrentPage(1);
   };
 
+  const applyAdvancedFilter = (contact, filter) => {
+    const value = contact[filter.field]; // Changed from filter.id to filter.field based on AdvancedFilters component structure
+    const filterValue = filter.value;
+
+    switch (filter.operator) {
+      case 'contains':
+        return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+      case 'not_contains':
+        return !value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+      case 'equals':
+        return value?.toString().toLowerCase() === filterValue.toLowerCase();
+      case 'not_equals':
+        return value?.toString().toLowerCase() !== filterValue.toLowerCase();
+      case 'starts_with':
+        return value?.toString().toLowerCase().startsWith(filterValue.toLowerCase());
+      case 'ends_with':
+        return value?.toString().toLowerCase().endsWith(filterValue.toLowerCase());
+      case 'is_empty':
+        return !value || value === '';
+      case 'is_not_empty':
+        return value && value !== '';
+      case 'greater_than':
+        return parseFloat(value) > parseFloat(filterValue);
+      case 'less_than':
+        return parseFloat(value) < parseFloat(filterValue);
+      case 'greater_or_equal':
+        return parseFloat(value) >= parseFloat(filterValue);
+      case 'less_or_equal':
+        return parseFloat(value) <= parseFloat(filterValue);
+      case 'is_after':
+        return new Date(value) > new Date(filterValue);
+      case 'is_before':
+        return new Date(value) < new Date(filterValue);
+      case 'in_last':
+        const daysAgo = new Date();
+        const amount = parseInt(filterValue);
+        const unit = filter.unit || 'days';
+        if (unit === 'days') daysAgo.setDate(daysAgo.getDate() - amount);
+        else if (unit === 'weeks') daysAgo.setDate(daysAgo.getDate() - (amount * 7));
+        else if (unit === 'months') daysAgo.setMonth(daysAgo.getMonth() - amount);
+        else if (unit === 'years') daysAgo.setFullYear(daysAgo.getFullYear() - amount);
+        return new Date(value) > daysAgo;
+      case 'in_next':
+        const daysAhead = new Date();
+        const amountAhead = parseInt(filterValue);
+        const unitAhead = filter.unit || 'days';
+        if (unitAhead === 'days') daysAhead.setDate(daysAhead.getDate() + amountAhead);
+        else if (unitAhead === 'weeks') daysAhead.setDate(daysAhead.getDate() + (amountAhead * 7));
+        else if (unitAhead === 'months') daysAhead.setMonth(daysAhead.getMonth() + amountAhead);
+        else if (unitAhead === 'years') daysAhead.setFullYear(daysAhead.getFullYear() + amountAhead);
+        return new Date(value) < daysAhead;
+      default:
+        return true;
+    }
+  };
+
   const filteredContacts = contacts.filter(contact => {
-    // Apply stat card filter first
+    // Apply stat card filter
     if (activeStatFilter === 'new-week') {
       const created = new Date(contact.created_date);
       const weekAgo = new Date();
@@ -168,9 +224,17 @@ export default function Contacts() {
       if (created <= weekAgo) return false;
     } else if (activeStatFilter === 'customers') {
       if (contact.lifecycle_stage !== 'Customer') return false;
+    } else if (activeStatFilter === 'all') {
+      // 'all' stat filter effectively means no stat filter, so do nothing here
     }
     
-    // Then apply regular filters
+    // Apply advanced filters (AND logic)
+    if (advancedFilters.length > 0) {
+      const passesAllFilters = advancedFilters.every(filter => applyAdvancedFilter(contact, filter));
+      if (!passesAllFilters) return false;
+    }
+    
+    // Apply regular filters
     const matchesSearch = 
       contact.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -211,10 +275,9 @@ export default function Contacts() {
     }
   };
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterOwner, filterStage, filterStatus, activeStatFilter]);
+  }, [searchTerm, filterOwner, filterStage, filterStatus, activeStatFilter, advancedFilters]);
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -279,7 +342,7 @@ export default function Contacts() {
               Contacts
             </h1>
             <p style={{ color: "#888" }}>
-              {filteredContacts.length} {activeStatFilter ? 'filtered' : 'total'} contacts
+              {filteredContacts.length} {activeStatFilter || advancedFilters.length > 0 ? 'filtered' : 'total'} contacts
             </p>
           </div>
           <div className="flex gap-3">
@@ -300,11 +363,11 @@ export default function Contacts() {
           </div>
         </div>
 
-        {/* Stats Cards - Now Clickable */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <button
             onClick={() => handleStatCardClick('all')}
-            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'all' ? 'ring-2 ring-blue-500' : ''}`}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'all' && !advancedFilters.length ? 'ring-2 ring-blue-500' : ''}`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -376,24 +439,32 @@ export default function Contacts() {
         </div>
 
         {/* Active Filter Indicator */}
-        {activeStatFilter && (
+        {(activeStatFilter || advancedFilters.length > 0) && (
           <NeuroCard className="mb-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="ampvibe-button px-3 py-2 active">
-                  Active Filter: {
-                    activeStatFilter === 'all' ? 'All Contacts' :
-                    activeStatFilter === 'new-week' ? 'New This Week' :
-                    activeStatFilter === 'customers' ? 'Customers Only' : ''
-                  }
-                </span>
+              <div className="flex items-center gap-3 flex-wrap">
+                {activeStatFilter && (
+                  <span className="ampvibe-button px-3 py-2 active">
+                    {activeStatFilter === 'all' ? 'All Contacts' :
+                     activeStatFilter === 'new-week' ? 'New This Week' :
+                     activeStatFilter === 'customers' ? 'Customers Only' : ''}
+                  </span>
+                )}
+                {advancedFilters.map((filter, index) => (
+                  <span key={`${filter.field}-${index}`} className="ampvibe-button px-3 py-2 active flex items-center gap-2">
+                    {filter.label} {filter.operator}{filter.value ? ` ${filter.value}` : ''}
+                    <button onClick={() => setAdvancedFilters(advancedFilters.filter((_, i) => i !== index))}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
                 <span style={{ color: "#888" }}>
                   Showing {filteredContacts.length} contacts
                 </span>
               </div>
-              <NeuroButton onClick={() => setActiveStatFilter(null)}>
+              <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
                 <X className="w-4 h-4 mr-2" />
-                Clear Filter
+                Clear All
               </NeuroButton>
             </div>
           </NeuroCard>
@@ -401,7 +472,7 @@ export default function Contacts() {
 
         {/* Filters */}
         <NeuroCard className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: "#aaa" }} />
               <input
@@ -443,6 +514,10 @@ export default function Contacts() {
                 { value: 'Unqualified', label: 'Unqualified' }
               ]}
             />
+            <NeuroButton onClick={() => setShowAdvancedFilters(true)} className="flex items-center justify-center gap-2">
+              <Filter className="w-4 h-4" />
+              Advanced Filters {advancedFilters.length > 0 && `(${advancedFilters.length})`}
+            </NeuroButton>
           </div>
         </NeuroCard>
 
@@ -513,14 +588,14 @@ export default function Contacts() {
           ) : filteredContacts.length === 0 ? (
             <div className="text-center py-12">
               <p className="mb-4" style={{ color: "#aaa" }}>
-                {activeStatFilter ? 'No contacts match this filter' : 'No contacts found'}
+                {activeStatFilter || advancedFilters.length > 0 ? 'No contacts match these filters' : 'No contacts found'}
               </p>
-              {activeStatFilter && (
-                <NeuroButton onClick={() => setActiveStatFilter(null)}>
-                  Clear Filter
+              {(activeStatFilter || advancedFilters.length > 0) && (
+                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+                  Clear Filters
                 </NeuroButton>
               )}
-              {!activeStatFilter && (
+              {!activeStatFilter && advancedFilters.length === 0 && (
                 <NeuroButton onClick={() => setShowForm(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Your First Contact
@@ -611,6 +686,23 @@ export default function Contacts() {
           </NeuroCard>
         )}
       </div>
+
+      {/* Advanced Filters Modal */}
+      <AdvancedFilters
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        onApplyFilters={(filters) => {
+          setAdvancedFilters(filters);
+          setActiveStatFilter(null); // Clear stat filter when advanced filters are applied
+          setSearchTerm(""); // Clear basic filters
+          setFilterOwner("");
+          setFilterStage("");
+          setFilterStatus("");
+          setCurrentPage(1);
+          setShowAdvancedFilters(false);
+        }}
+        currentFilters={advancedFilters}
+      />
     </div>
   );
 }
