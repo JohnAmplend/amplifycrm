@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Save, Play, Plus, X } from "lucide-react";
@@ -28,6 +28,7 @@ export default function ReportBuilder() {
   });
 
   const [selectedColumns, setSelectedColumns] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   const reportTypes = [
     { value: "Contacts", label: "Contacts" },
@@ -91,6 +92,35 @@ export default function ReportBuilder() {
     ]
   };
 
+  // Fetch preview data based on report type
+  const { data: previewData = [], isLoading: previewLoading } = useQuery({
+    queryKey: ['preview', reportData.report_type, showPreview],
+    queryFn: async () => {
+      if (!showPreview) return [];
+      
+      const entityMap = {
+        "Contacts": "Contact",
+        "Companies": "Company",
+        "Deals": "Deal",
+        "Activities": "Activity",
+        "Tickets": "Ticket",
+        "Email Performance": "Email_Tracking"
+      };
+      
+      const entityName = entityMap[reportData.report_type];
+      if (!entityName) return [];
+      
+      try {
+        const data = await base44.entities[entityName].list('-created_date', 10);
+        return data || [];
+      } catch (error) {
+        console.error('Preview fetch error:', error);
+        return [];
+      }
+    },
+    enabled: showPreview
+  });
+
   const createReportMutation = useMutation({
     mutationFn: (data) => base44.entities.Reports.create(data),
     onSuccess: () => {
@@ -111,6 +141,14 @@ export default function ReportBuilder() {
     const newColumns = selectedColumns.filter(c => c !== column);
     setSelectedColumns(newColumns);
     setReportData({ ...reportData, columns_to_show: newColumns });
+  };
+
+  const handlePreview = () => {
+    if (selectedColumns.length === 0) {
+      alert("Please select at least one column to preview");
+      return;
+    }
+    setShowPreview(true);
   };
 
   const handleSave = () => {
@@ -144,7 +182,7 @@ export default function ReportBuilder() {
             </div>
           </div>
           <div className="flex gap-3">
-            <NeuroButton>
+            <NeuroButton onClick={handlePreview}>
               <Play className="w-4 h-4 mr-2" />
               Preview
             </NeuroButton>
@@ -154,6 +192,62 @@ export default function ReportBuilder() {
             </NeuroButton>
           </div>
         </div>
+
+        {/* Preview Modal */}
+        {showPreview && (
+          <NeuroCard className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold" style={{ color: "#666" }}>
+                Report Preview
+              </h2>
+              <button onClick={() => setShowPreview(false)} className="ampvibe-button p-2">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {previewLoading ? (
+              <div className="text-center py-12" style={{ color: "#aaa" }}>
+                Loading preview...
+              </div>
+            ) : previewData.length === 0 ? (
+              <div className="text-center py-12" style={{ color: "#aaa" }}>
+                No data available for preview
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b" style={{ borderColor: "#d0d0d0" }}>
+                      {selectedColumns.map((column) => (
+                        <th key={column} className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>
+                          {column}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewData.slice(0, 10).map((row, idx) => (
+                      <tr key={idx} className="border-b hover:bg-gray-50" style={{ borderColor: "#e0e0e0" }}>
+                        {selectedColumns.map((column) => (
+                          <td key={column} className="py-3 px-4" style={{ color: "#666" }}>
+                            {row[column] !== undefined && row[column] !== null
+                              ? String(row[column]).length > 50
+                                ? String(row[column]).substring(0, 50) + '...'
+                                : String(row[column])
+                              : '—'}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-sm mt-4" style={{ color: "#888" }}>
+                  Showing {Math.min(previewData.length, 10)} of {previewData.length} records
+                </p>
+              </div>
+            )}
+          </NeuroCard>
+        )}
 
         {/* Report Configuration */}
         <div className="grid lg:grid-cols-3 gap-6">
@@ -192,6 +286,7 @@ export default function ReportBuilder() {
                 onChange={(e) => {
                   setReportData({ ...reportData, report_type: e.target.value });
                   setSelectedColumns([]);
+                  setShowPreview(false);
                 }}
                 options={reportTypes}
                 required
