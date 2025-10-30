@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "properties": {
+    "phone": {
+      "type": "string",
+      "description": "User phone number"
+    },
+    "team": {
+      "type": "string",
+      "description": "Team the user belongs to"
+    },
+    "territory": {
+      "type": "string",
+      "description": "Sales territory assigned to user"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the user account is active"
+    },
+    "custom_role_id": {
+      "type": "string",
+      "description": "Custom role ID for permissions"
+    },
+    "permissions": {
+      "type": "object",
+      "description": "Custom permissions override for this user"
+    }
+  },
+  "name": "User",
+  "required": []
+}
