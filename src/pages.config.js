@@ -55,6 +55,7 @@ import AdvancedReports from './pages/AdvancedReports';
 import ABTesting from './pages/ABTesting';
 import CustomReportBuilder from './pages/CustomReportBuilder';
 import RolesPermissions from './pages/RolesPermissions';
+import DataEnrichment from './pages/DataEnrichment';
 import Layout from './Layout.jsx';
 
 
@@ -116,6 +117,7 @@ export const PAGES = {
     "ABTesting": ABTesting,
     "CustomReportBuilder": CustomReportBuilder,
     "RolesPermissions": RolesPermissions,
+    "DataEnrichment": DataEnrichment,
 }
 
 export const pagesConfig = {
