@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Save, Eye, Plus, Search, GripVertical, Trash2, X, ChevronUp, ChevronDown, Mail, Users, Bell, Zap, Upload, Palette, Code, Smartphone, Type, Layout, Sparkles, Settings, Wand2, CheckSquare, Layers } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, Search, GripVertical, Trash2, X, ChevronUp, ChevronDown, Mail, Users, Bell, Zap, Upload, Palette, Code, Smartphone, Type, Layout, Sparkles, Settings, Wand2, CheckSquare, Layers, MessageSquare } from "lucide-react"; // Added MessageSquare
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -48,6 +48,7 @@ export default function FormBuilder() {
   const [workflowActions, setWorkflowActions] = useState([]);
   const [logoFile, setLogoFile] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('default'); // NEW: selectedTheme state
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -86,6 +87,70 @@ export default function FormBuilder() {
     queryKey: ['email-sequences'],
     queryFn: () => base44.entities.Email_Sequence.list()
   });
+
+  // NEW: Pre-defined themes
+  const themes = {
+    default: {
+      name: 'Default Blue',
+      primary_color: '#0066cc',
+      button_color: '#0066cc',
+      button_text_color: '#ffffff',
+      font_family: 'Poppins'
+    },
+    modern: {
+      name: 'Modern Purple',
+      primary_color: '#722ed1',
+      button_color: '#722ed1',
+      button_text_color: '#ffffff',
+      font_family: 'Inter'
+    },
+    warm: {
+      name: 'Warm Orange',
+      primary_color: '#fa8c16',
+      button_color: '#fa8c16',
+      button_text_color: '#ffffff',
+      font_family: 'Roboto'
+    },
+    nature: {
+      name: 'Nature Green',
+      primary_color: '#52c41a',
+      button_color: '#52c41a',
+      button_text_color: '#ffffff',
+      font_family: 'Arial'
+    },
+    corporate: {
+      name: 'Corporate Gray',
+      primary_color: '#595959',
+      button_color: '#595959',
+      button_text_color: '#ffffff',
+      font_family: 'Georgia'
+    },
+    vibrant: {
+      name: 'Vibrant Pink',
+      primary_color: '#eb2f96',
+      button_color: '#eb2f96',
+      button_text_color: '#ffffff',
+      font_family: 'Poppins'
+    }
+  };
+
+  // NEW: applyTheme function
+  const applyTheme = (themeName) => {
+    const theme = themes[themeName];
+    if (theme) {
+      setSelectedTheme(themeName);
+      setFormData({
+        ...formData,
+        custom_styles: {
+          ...formData.custom_styles,
+          primary_color: theme.primary_color,
+          button_color: theme.button_color,
+          button_text_color: theme.button_text_color,
+          font_family: theme.font_family
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     if (form) {
@@ -234,7 +299,7 @@ export default function FormBuilder() {
   const getDefaultConfig = (type) => {
     switch (type) {
       case 'send_email':
-        return { template_id: '', delay_minutes: 0, recipient_email: '', subject: '', body: '' };
+        return { template_id: '', delay_minutes: 0, subject: '', body: '' }; // Updated: removed recipient_email
       case 'add_to_list':
         return { list_id: '' };
       case 'notify_team':
@@ -243,6 +308,10 @@ export default function FormBuilder() {
         return { task_name: '', assigned_to: '', priority: 'Medium' };
       case 'add_to_sequence':
         return { sequence_id: '' };
+      case 'webhook': // NEW: Webhook config
+        return { url: '', method: 'POST', headers: '{}', body_template: '{}' };
+      case 'slack': // NEW: Slack config
+        return { webhook_url: '', channel: '', message: '' };
       case 'conditional':
         return { field: '', operator: 'equals', value: '', then_actions: [] };
       default:
@@ -273,8 +342,10 @@ export default function FormBuilder() {
       case 'send_email': return <Mail className="w-4 h-4" />;
       case 'add_to_list': return <Users className="w-4 h-4" />;
       case 'notify_team': return <Bell className="w-4 h-4" />;
-      case 'create_task': return <CheckSquare className="w-4 h-4" />; // Changed to CheckSquare
-      case 'add_to_sequence': return <Layers className="w-4 h-4" />; // Changed to Layers
+      case 'create_task': return <CheckSquare className="w-4 h-4" />;
+      case 'add_to_sequence': return <Layers className="w-4 h-4" />;
+      case 'webhook': return <Zap className="w-4 h-4" />; // NEW: Webhook icon
+      case 'slack': return <MessageSquare className="w-4 h-4" />; // NEW: Slack icon
       case 'conditional': return <Wand2 className="w-4 h-4" />;
       default: return null;
     }
@@ -287,6 +358,8 @@ export default function FormBuilder() {
       case 'notify_team': return 'Notify Team';
       case 'create_task': return 'Create Task';
       case 'add_to_sequence': return 'Add to Sequence';
+      case 'webhook': return 'Trigger Webhook'; // NEW: Webhook label
+      case 'slack': return 'Send Slack Notification'; // NEW: Slack label
       case 'conditional': return 'Conditional Logic';
       default: return 'Unknown Action';
     }
@@ -792,6 +865,47 @@ export default function FormBuilder() {
         {activeTab === 'style' && (
           <div className="flex-1 overflow-y-auto p-8">
             <div className="max-w-4xl mx-auto">
+              {/* NEW: Theme Selector */}
+              <div className="bg-white rounded-lg shadow-sm p-6 border mb-6" style={{ borderColor: "#e5e7eb" }}>
+                <div className="flex items-center gap-3 mb-4">
+                  <Sparkles className="w-5 h-5" style={{ color: "#e3a008" }} />
+                  <h3 className="text-lg font-bold" style={{ color: "#111827" }}>Quick Themes</h3>
+                </div>
+                <p className="text-sm mb-4" style={{ color: "#6b7280" }}>
+                  Choose a pre-designed theme or customize your own
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {Object.entries(themes).map(([key, theme]) => (
+                    <button
+                      key={key}
+                      onClick={() => applyTheme(key)}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        selectedTheme === key
+                          ? 'border-blue-500 ring-2 ring-blue-200'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <div
+                          className="w-8 h-8 rounded"
+                          style={{ background: theme.primary_color }}
+                        />
+                        <p className="font-medium text-sm" style={{ color: "#374151" }}>
+                          {theme.name}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="w-6 h-6 rounded border" style={{ background: theme.primary_color, borderColor: "#e5e7eb" }} />
+                        <div className="w-6 h-6 rounded border" style={{ background: theme.button_color, borderColor: "#e5e7eb" }} />
+                        <div className="w-6 h-6 rounded border" style={{ background: theme.button_text_color, borderColor: "#e5e7eb" }} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rest of style controls */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column - Style Controls */}
                 <div className="space-y-6">
@@ -1061,7 +1175,7 @@ export default function FormBuilder() {
                 </div>
 
                 {/* Right Column - Live Preview */}
-                <div className="sticky top-4 self-start"> {/* Added self-start to sticky work with grid */}
+                <div className="sticky top-4 self-start">
                   <div className="bg-white rounded-lg shadow-sm p-4 border" style={{ borderColor: "#e5e7eb" }}>
                     <h3 className="text-sm font-bold mb-4" style={{ color: "#111827" }}>Live Preview</h3>
                     <div className="border rounded-lg p-6" style={{ borderColor: "#e5e7eb", fontFamily: previewStyles.fontFamily }}>
@@ -1256,6 +1370,32 @@ export default function FormBuilder() {
                           <p className="text-xs" style={{ color: "#9ca3af" }}>Based on form data</p>
                         </div>
                       </button>
+                      
+                      {/* NEW: Webhook Action */}
+                      <button
+                        onClick={() => addWorkflowAction('webhook')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <Zap className="w-5 h-5" style={{ color: "#1890ff" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Webhook</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>HTTP trigger</p>
+                        </div>
+                      </button>
+
+                      {/* NEW: Slack Notification */}
+                      <button
+                        onClick={() => addWorkflowAction('slack')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <MessageSquare className="w-5 h-5" style={{ color: "#4a154b" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Slack</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>Slack message</p>
+                        </div>
+                      </button>
                     </div>
                   </div>
 
@@ -1275,7 +1415,7 @@ export default function FormBuilder() {
                       {workflowActions.map((action, index) => (
                         <div key={action.id} className="workflow-action-card p-6">
                           <div className="flex items-start gap-4">
-                            <div className="flex flex-col items-center gap-1 mt-1">
+                            <div className="flex flex-col items-center gap-1 mt-1"> {/* Existing structure preserved */}
                               <button
                                 onClick={() => moveWorkflowAction(index, 'up')}
                                 disabled={index === 0}
@@ -1310,12 +1450,6 @@ export default function FormBuilder() {
                                         config: { ...action.config, template_id: e.target.value }
                                       })}
                                       options={[{ value: '', label: 'Select template' }, ...emailTemplates.map(t => ({ value: t.id, label: t.template_name }))]}
-                                    />
-                                    <NeuroInput
-                                      label="Recipient Email (comma separated)"
-                                      value={action.config.recipient_email}
-                                      onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, recipient_email: e.target.value } })}
-                                      placeholder="user@example.com"
                                     />
                                     <NeuroInput
                                       label="Subject (optional, overrides template)"
@@ -1417,13 +1551,108 @@ export default function FormBuilder() {
                                   />
                                 )}
                                 
+                                {action.type === 'webhook' && ( // NEW: Webhook configuration UI
+                                  <>
+                                    <NeuroInput
+                                      label="Webhook URL"
+                                      value={action.config.url}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, url: e.target.value }
+                                      })}
+                                      placeholder="https://api.example.com/webhook"
+                                    />
+                                    <NeuroSelect
+                                      label="HTTP Method"
+                                      value={action.config.method}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, method: e.target.value }
+                                      })}
+                                      options={[
+                                        { value: 'POST', label: 'POST' },
+                                        { value: 'GET', label: 'GET' },
+                                        { value: 'PUT', label: 'PUT' },
+                                        { value: 'PATCH', label: 'PATCH' }
+                                      ]}
+                                    />
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
+                                        Headers (JSON)
+                                      </label>
+                                      <textarea
+                                        value={action.config.headers}
+                                        onChange={(e) => updateWorkflowAction(action.id, {
+                                          config: { ...action.config, headers: e.target.value }
+                                        })}
+                                        className="ampvibe-input w-full h-20 font-mono text-xs p-3 border rounded-md"
+                                        style={{ borderColor: "#e5e7eb", color: "#111827" }}
+                                        placeholder='{"Content-Type": "application/json"}'
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
+                                        Body Template (JSON)
+                                      </label>
+                                      <textarea
+                                        value={action.config.body_template}
+                                        onChange={(e) => updateWorkflowAction(action.id, {
+                                          config: { ...action.config, body_template: e.target.value }
+                                        })}
+                                        className="ampvibe-input w-full h-24 font-mono text-xs p-3 border rounded-md"
+                                        style={{ borderColor: "#e5e7eb", color: "#111827" }}
+                                        placeholder='{"email": "{{email}}", "name": "{{first_name}}"}'
+                                      />
+                                      <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>
+                                        Use {`{{field_name}}`} for form field values
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+
+                                {action.type === 'slack' && ( // NEW: Slack configuration UI
+                                  <>
+                                    <NeuroInput
+                                      label="Slack Webhook URL"
+                                      value={action.config.webhook_url}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, webhook_url: e.target.value }
+                                      })}
+                                      placeholder="https://hooks.slack.com/services/..."
+                                    />
+                                    <NeuroInput
+                                      label="Channel (optional)"
+                                      value={action.config.channel}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, channel: e.target.value }
+                                      })}
+                                      placeholder="#general"
+                                    />
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
+                                        Message Template
+                                      </label>
+                                      <textarea
+                                        value={action.config.message}
+                                        onChange={(e) => updateWorkflowAction(action.id, {
+                                          config: { ...action.config, message: e.target.value }
+                                        })}
+                                        className="ampvibe-input w-full h-24 p-3 border rounded-md"
+                                        style={{ borderColor: "#e5e7eb", color: "#111827" }}
+                                        placeholder="New form submission from {{first_name}} {{last_name}}"
+                                      />
+                                      <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>
+                                        Use {`{{field_name}}`} for form field values
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+
                                 {action.type === 'conditional' && (
                                   <p className="text-sm text-gray-500">Conditional logic configuration coming soon.</p>
                                 )}
                               </div>
                             </div>
 
-                            <div className="flex flex-col gap-2 items-end">
+                            <div className="flex flex-col gap-2 items-end"> {/* Existing structure preserved */}
                               <label className="flex items-center gap-2 text-sm cursor-pointer">
                                 <input
                                   type="checkbox"
@@ -1432,7 +1661,7 @@ export default function FormBuilder() {
                                   className="w-4 h-4 rounded"
                                   style={{ accentColor: "#0066cc" }}
                                 />
-                                <span className="text-xs" style={{ color: "#6b7280" }}>Enabled</span>
+                                <span className="text-sm font-medium" style={{ color: "#6b7280" }}>Enabled</span>
                               </label>
                               <button
                                 onClick={() => removeWorkflowAction(action.id)}
