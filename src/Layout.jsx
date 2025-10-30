@@ -33,7 +33,10 @@ import {
   X,
   ChevronDown,
   RefreshCw, // Added RefreshCw icon
-  Plus // Added Plus icon for new campaign
+  Plus, // Added Plus icon for new campaign
+  TestTube2, // Added TestTube2 icon for A/B Testing
+  Shield, // Added Shield icon for Roles & Permissions
+  Sparkles // Added Sparkles icon for Data Enrichment
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -100,7 +103,8 @@ export default function Layout({ children, currentPageName }) {
             { name: "Create Campaign", icon: Plus, page: "EmailCampaignBuilder" },
             { name: "Email Templates", icon: Mail, page: "EmailTemplates" },
             { name: "Sequences", icon: Layers, page: "EmailSequences" },
-            { name: "Contact Lists", icon: List, page: "ContactLists" }
+            { name: "Contact Lists", icon: List, page: "ContactLists" },
+            { name: "A/B Testing", icon: TestTube2, page: "ABTesting" }
           ]
         },
         {
@@ -139,6 +143,7 @@ export default function Layout({ children, currentPageName }) {
           title: 'Reporting',
           items: [
             { name: "Advanced Reports", icon: BarChart, page: "AdvancedReports" },
+            { name: "Custom Reports", icon: FileText, page: "CustomReportBuilder" },
             { name: "Dashboards", icon: LayoutDashboard, page: "Dashboards" },
             { name: "Reports", icon: BarChart, page: "Reports" },
             { name: "Goals", icon: Target, page: "Goals" }
@@ -162,6 +167,13 @@ export default function Layout({ children, currentPageName }) {
     },
     'Settings': {
       sections: [
+        {
+          title: 'System',
+          items: [
+            { name: "Roles & Permissions", icon: Shield, page: "RolesPermissions" },
+            { name: "Data Enrichment", icon: Sparkles, page: "DataEnrichment" }
+          ]
+        },
         {
           title: 'Advanced',
           items: [
