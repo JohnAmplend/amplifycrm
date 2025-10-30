@@ -1,0 +1,88 @@
+{
+  "name": "AB_Test_Campaign",
+  "type": "object",
+  "properties": {
+    "test_name": {
+      "type": "string",
+      "description": "Name of the A/B test"
+    },
+    "campaign_type": {
+      "type": "string",
+      "enum": [
+        "Email Campaign"
+      ],
+      "default": "Email Campaign",
+      "description": "Type of campaign being tested"
+    },
+    "test_variable": {
+      "type": "string",
+      "enum": [
+        "Subject Line",
+        "Sender Name",
+        "Email Content",
+        "Send Time"
+      ],
+      "description": "Variable being tested"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Running",
+        "Completed",
+        "Paused"
+      ],
+      "default": "Draft",
+      "description": "Test status"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When test started"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When test ended"
+    },
+    "sample_size_percentage": {
+      "type": "number",
+      "minimum": 10,
+      "maximum": 100,
+      "default": 50,
+      "description": "Percentage of list to include in test"
+    },
+    "winner_criteria": {
+      "type": "string",
+      "enum": [
+        "Open Rate",
+        "Click Rate",
+        "Conversion Rate",
+        "Revenue"
+      ],
+      "default": "Open Rate",
+      "description": "Metric to determine winner"
+    },
+    "auto_select_winner": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically select and send winning version"
+    },
+    "winner_variant": {
+      "type": "string",
+      "description": "Variant ID that won the test"
+    },
+    "winning_metric_value": {
+      "type": "number",
+      "description": "Value of winning metric"
+    },
+    "total_recipients": {
+      "type": "number",
+      "description": "Total recipients in test"
+    }
+  },
+  "required": [
+    "test_name",
+    "test_variable"
+  ]
+}
