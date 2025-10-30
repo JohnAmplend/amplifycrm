@@ -51,6 +51,7 @@ import HubSpotSync from './pages/HubSpotSync';
 import SyncStatus from './pages/SyncStatus';
 import EmailCampaignBuilder from './pages/EmailCampaignBuilder';
 import LeadScoring from './pages/LeadScoring';
+import AdvancedReports from './pages/AdvancedReports';
 import Layout from './Layout.jsx';
 
 
@@ -108,6 +109,7 @@ export const PAGES = {
     "SyncStatus": SyncStatus,
     "EmailCampaignBuilder": EmailCampaignBuilder,
     "LeadScoring": LeadScoring,
+    "AdvancedReports": AdvancedReports,
 }
 
 export const pagesConfig = {
