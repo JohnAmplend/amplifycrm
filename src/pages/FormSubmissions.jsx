@@ -1,21 +1,21 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Download, Calendar, BarChart3, FileText, Users, Sparkles, TrendingUp, AlertTriangle, Target, Lightbulb, RefreshCw } from "lucide-react";
+import { ArrowLeft, Download, Calendar, BarChart3, FileText, Users, Sparkles, TrendingUp, AlertTriangle, Target, Lightbulb, RefreshCw, MessageCircle, Brain, Search, Heart, ThumbsUp, ThumbsDown, Smile, Frown, Meh } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 export default function FormSubmissions() {
   const navigate = useNavigate();
   const [formId, setFormId] = useState(null);
-  const [activeTab, setActiveTab] = useState("performance"); // performance, ai-insights, analyze, submissions
+  const [activeTab, setActiveTab] = useState("performance");
   const [dateRange, setDateRange] = useState("last30days");
   const [aiInsights, setAiInsights] = useState(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState('comprehensive'); // comprehensive, sentiment, intent
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -46,16 +46,17 @@ export default function FormSubmissions() {
     enabled: !!formId
   });
 
-  // Generate AI Insights
-  const generateAIInsights = async () => {
+  // Generate AI Insights - Enhanced with Sentiment & Intent
+  const generateAIInsights = async (analysisType = 'comprehensive') => {
     if (submissions.length === 0) {
       alert('Need at least some submissions to generate insights');
       return;
     }
 
     setLoadingInsights(true);
+    setSelectedAnalysis(analysisType);
+    
     try {
-      // Prepare data for AI analysis
       const submissionsData = submissions.map(s => ({
         date: new Date(s.created_date).toISOString(),
         data: s.submission_data,
@@ -69,7 +70,11 @@ export default function FormSubmissions() {
         required: f.is_required
       }));
 
-      const prompt = `Analyze these form submissions and provide insights:
+      let prompt = '';
+      let schema = {};
+
+      if (analysisType === 'comprehensive') {
+        prompt = `Analyze these form submissions and provide insights:
 
 Form: ${form.form_name}
 Total Submissions: ${submissions.length}
@@ -86,9 +91,7 @@ Please provide:
 
 Format as JSON with these keys: topFields, lowFields, trends, recommendations, fraudPatterns, abTestIdeas`;
 
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
+        schema = {
           type: "object",
           properties: {
             topFields: { type: "array", items: { type: "object" } },
@@ -98,10 +101,74 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
             fraudPatterns: { type: "array", items: { type: "string" } },
             abTestIdeas: { type: "array", items: { type: "string" } }
           }
-        }
+        };
+      } else if (analysisType === 'sentiment') {
+        prompt = `Analyze the sentiment and emotional tone of these form submissions:
+
+Form: ${form.form_name}
+Submissions Data (last 30): ${JSON.stringify(submissionsData.slice(0, 30))}
+
+Analyze:
+1. Overall sentiment distribution (positive/neutral/negative percentages)
+2. Sentiment by field (which fields have most positive/negative responses)
+3. Common emotional themes (excitement, frustration, confusion, satisfaction)
+4. Sentiment trends over time
+5. Actionable insights based on sentiment
+
+Format as JSON with: sentimentDistribution, fieldSentiment, emotionalThemes, sentimentTrends, sentimentInsights`;
+
+        schema = {
+          type: "object",
+          properties: {
+            sentimentDistribution: { 
+              type: "object",
+              properties: {
+                positive: { type: "number" },
+                neutral: { type: "number" },
+                negative: { type: "number" }
+              }
+            },
+            fieldSentiment: { type: "array", items: { type: "object" } },
+            emotionalThemes: { type: "array", items: { type: "string" } },
+            sentimentTrends: { type: "string" },
+            sentimentInsights: { type: "array", items: { type: "string" } }
+          }
+        };
+      } else if (analysisType === 'intent') {
+        prompt = `Analyze the user intent behind these form submissions:
+
+Form: ${form.form_name}
+Submissions Data (last 30): ${JSON.stringify(submissionsData.slice(0, 30))}
+
+Identify:
+1. Primary user intents (what are users trying to accomplish?)
+2. Intent categories with percentages (e.g., Purchase Intent 40%, Support Request 30%, etc.)
+3. Intent by field (which fields reveal user intent)
+4. Buying signals detected (urgency indicators, budget mentions, timeline)
+5. User journey stage (awareness, consideration, decision)
+6. Action recommendations based on intent
+
+Format as JSON with: primaryIntents, intentCategories, intentByField, buyingSignals, journeyStage, actionRecommendations`;
+
+        schema = {
+          type: "object",
+          properties: {
+            primaryIntents: { type: "array", items: { type: "string" } },
+            intentCategories: { type: "array", items: { type: "object" } },
+            intentByField: { type: "array", items: { type: "object" } },
+            buyingSignals: { type: "array", items: { type: "string" } },
+            journeyStage: { type: "object" },
+            actionRecommendations: { type: "array", items: { type: "string" } }
+          }
+        };
+      }
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: schema
       });
 
-      setAiInsights(result);
+      setAiInsights({ type: analysisType, data: result });
     } catch (error) {
       alert('Failed to generate AI insights: ' + error.message);
     } finally {
@@ -124,10 +191,10 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
     return created > sevenDaysAgo;
   });
 
-  // Prepare chart data (submissions over time)
+  // Prepare chart data
   const getChartData = () => {
     const data = [];
-    const days = dateRange === 'last7days' ? 7 : (dateRange === 'last90days' ? 90 : 30);
+    const days = dateRange === 'last7days' ? 7 : 30;
     
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date();
@@ -177,7 +244,6 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
       return;
     }
 
-    // Get all unique field names from submissions
     const fieldNames = new Set();
     submissions.forEach(sub => {
       if (sub.submission_data) {
@@ -222,6 +288,12 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
       </div>
     );
   }
+
+  const SENTIMENT_COLORS = {
+    positive: '#52c41a',
+    neutral: '#1890ff',
+    negative: '#f5222d'
+  };
 
   return (
     <div className="h-screen flex flex-col" style={{ background: '#f5f7fa' }}>
@@ -294,6 +366,7 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-8">
         <div className="max-w-7xl mx-auto">
+          {/* Performance Tab */}
           {activeTab === 'performance' && (
             <div className="space-y-6">
               {/* Stats Cards */}
@@ -395,11 +468,12 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
             </div>
           )}
 
+          {/* AI Insights Tab - ENHANCED */}
           {activeTab === 'ai-insights' && (
             <div className="space-y-6">
-              {/* Generate Insights Button */}
+              {/* Analysis Type Selector */}
               <NeuroCard className="p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className="ampvibe-inset p-3 rounded-xl">
                       <Sparkles className="w-6 h-6" style={{ color: "#722ed1" }} />
@@ -407,31 +481,73 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                     <div>
                       <h2 className="text-xl font-bold" style={{ color: "#666" }}>AI-Powered Insights</h2>
                       <p className="text-sm" style={{ color: "#888" }}>
-                        Get intelligent analysis and recommendations for your form
+                        Choose analysis type for intelligent recommendations
                       </p>
                     </div>
                   </div>
-                  <NeuroButton
-                    variant="primary"
-                    onClick={generateAIInsights}
-                    disabled={loadingInsights || submissions.length === 0}
-                  >
-                    {loadingInsights ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generate AI Insights
-                      </>
-                    )}
-                  </NeuroButton>
                 </div>
+
+                {/* Analysis Type Buttons */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <button
+                    onClick={() => generateAIInsights('comprehensive')}
+                    disabled={loadingInsights}
+                    className={`p-6 rounded-lg border-2 transition-all ${
+                      selectedAnalysis === 'comprehensive' && aiInsights
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <Brain className="w-8 h-8 mb-3 mx-auto" style={{ color: "#0066cc" }} />
+                    <h3 className="font-bold mb-2" style={{ color: "#111827" }}>Comprehensive Analysis</h3>
+                    <p className="text-sm" style={{ color: "#6b7280" }}>
+                      Complete form analysis with performance, fraud detection, and A/B testing ideas
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => generateAIInsights('sentiment')}
+                    disabled={loadingInsights}
+                    className={`p-6 rounded-lg border-2 transition-all ${
+                      selectedAnalysis === 'sentiment' && aiInsights
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200 hover:border-green-300'
+                    }`}
+                  >
+                    <MessageCircle className="w-8 h-8 mb-3 mx-auto" style={{ color: "#52c41a" }} />
+                    <h3 className="font-bold mb-2" style={{ color: "#111827" }}>Sentiment Analysis</h3>
+                    <p className="text-sm" style={{ color: "#6b7280" }}>
+                      Understand emotional tone and user satisfaction from submissions
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => generateAIInsights('intent')}
+                    disabled={loadingInsights}
+                    className={`p-6 rounded-lg border-2 transition-all ${
+                      selectedAnalysis === 'intent' && aiInsights
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <Search className="w-8 h-8 mb-3 mx-auto" style={{ color: "#722ed1" }} />
+                    <h3 className="font-bold mb-2" style={{ color: "#111827" }}>Intent Detection</h3>
+                    <p className="text-sm" style={{ color: "#6b7280" }}>
+                      Identify user goals, buying signals, and journey stages
+                    </p>
+                  </button>
+                </div>
+
+                {loadingInsights && (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="w-8 h-8 animate-spin mr-3" style={{ color: "#0066cc" }} />
+                    <span style={{ color: "#6b7280" }}>Analyzing {submissions.length} submissions...</span>
+                  </div>
+                )}
               </NeuroCard>
 
-              {aiInsights && (
+              {/* Comprehensive Analysis Results */}
+              {aiInsights && aiInsights.type === 'comprehensive' && (
                 <>
                   {/* Top Performing Fields */}
                   <NeuroCard className="p-6">
@@ -440,7 +556,7 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                       <h3 className="text-lg font-bold" style={{ color: "#666" }}>Top Performing Fields</h3>
                     </div>
                     <div className="space-y-3">
-                      {aiInsights.topFields?.map((field, idx) => (
+                      {aiInsights.data.topFields?.map((field, idx) => (
                         <div key={idx} className="ampvibe-inset p-4 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <p className="font-semibold" style={{ color: "#666" }}>{field.field || field.name}</p>
@@ -459,7 +575,7 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                       <h3 className="text-lg font-bold" style={{ color: "#666" }}>Fields Needing Improvement</h3>
                     </div>
                     <div className="space-y-3">
-                      {aiInsights.lowFields?.map((field, idx) => (
+                      {aiInsights.data.lowFields?.map((field, idx) => (
                         <div key={idx} className="ampvibe-inset p-4 rounded-lg border-l-4 border-orange-400">
                           <div className="flex items-center justify-between mb-2">
                             <p className="font-semibold" style={{ color: "#666" }}>{field.field || field.name}</p>
@@ -477,7 +593,7 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                       <BarChart3 className="w-5 h-5" style={{ color: "#4a90e2" }} />
                       <h3 className="text-lg font-bold" style={{ color: "#666" }}>Submission Trends</h3>
                     </div>
-                    <p style={{ color: "#666", lineHeight: "1.6" }}>{aiInsights.trends}</p>
+                    <p style={{ color: "#666", lineHeight: "1.6" }}>{aiInsights.data.trends}</p>
                   </NeuroCard>
 
                   {/* Recommendations */}
@@ -487,7 +603,7 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                       <h3 className="text-lg font-bold" style={{ color: "#666" }}>Conversion Improvement Recommendations</h3>
                     </div>
                     <div className="space-y-3">
-                      {aiInsights.recommendations?.map((rec, idx) => (
+                      {aiInsights.data.recommendations?.map((rec, idx) => (
                         <div key={idx} className="flex items-start gap-3 ampvibe-inset p-4 rounded-lg">
                           <div className="ampvibe-button p-2 rounded-lg text-green-600 font-bold">
                             {idx + 1}
@@ -499,14 +615,14 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                   </NeuroCard>
 
                   {/* Fraud Detection */}
-                  {aiInsights.fraudPatterns && aiInsights.fraudPatterns.length > 0 && (
+                  {aiInsights.data.fraudPatterns && aiInsights.data.fraudPatterns.length > 0 && (
                     <NeuroCard className="p-6">
                       <div className="flex items-center gap-3 mb-4">
                         <AlertTriangle className="w-5 h-5" style={{ color: "#f5222d" }} />
                         <h3 className="text-lg font-bold" style={{ color: "#666" }}>Potential Fraud/Spam Patterns</h3>
                       </div>
                       <div className="space-y-3">
-                        {aiInsights.fraudPatterns.map((pattern, idx) => (
+                        {aiInsights.data.fraudPatterns.map((pattern, idx) => (
                           <div key={idx} className="ampvibe-inset p-4 rounded-lg border-l-4 border-red-500">
                             <p style={{ color: "#666" }}>{pattern}</p>
                           </div>
@@ -522,7 +638,7 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                       <h3 className="text-lg font-bold" style={{ color: "#666" }}>A/B Testing Recommendations</h3>
                     </div>
                     <div className="space-y-3">
-                      {aiInsights.abTestIdeas?.map((idea, idx) => (
+                      {aiInsights.data.abTestIdeas?.map((idea, idx) => (
                         <div key={idx} className="flex items-start gap-3 ampvibe-inset p-4 rounded-lg">
                           <div className="ampvibe-button p-2 rounded-lg text-orange-600">
                             <Lightbulb className="w-4 h-4" />
@@ -535,6 +651,254 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                 </>
               )}
 
+              {/* Sentiment Analysis Results */}
+              {aiInsights && aiInsights.type === 'sentiment' && (
+                <>
+                  {/* Sentiment Distribution */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <MessageCircle className="w-5 h-5" style={{ color: "#52c41a" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Overall Sentiment Distribution</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      <div className="text-center p-6 rounded-lg" style={{ background: '#f6ffed', border: '2px solid #52c41a' }}>
+                        <Smile className="w-12 h-12 mx-auto mb-3" style={{ color: "#52c41a" }} />
+                        <p className="text-3xl font-bold mb-1" style={{ color: "#52c41a" }}>
+                          {aiInsights.data.sentimentDistribution?.positive || 0}%
+                        </p>
+                        <p className="text-sm font-medium" style={{ color: "#52c41a" }}>Positive</p>
+                      </div>
+
+                      <div className="text-center p-6 rounded-lg" style={{ background: '#e6f7ff', border: '2px solid #1890ff' }}>
+                        <Meh className="w-12 h-12 mx-auto mb-3" style={{ color: "#1890ff" }} />
+                        <p className="text-3xl font-bold mb-1" style={{ color: "#1890ff" }}>
+                          {aiInsights.data.sentimentDistribution?.neutral || 0}%
+                        </p>
+                        <p className="text-sm font-medium" style={{ color: "#1890ff" }}>Neutral</p>
+                      </div>
+
+                      <div className="text-center p-6 rounded-lg" style={{ background: '#fff1f0', border: '2px solid #f5222d' }}>
+                        <Frown className="w-12 h-12 mx-auto mb-3" style={{ color: "#f5222d" }} />
+                        <p className="text-3xl font-bold mb-1" style={{ color: "#f5222d" }}>
+                          {aiInsights.data.sentimentDistribution?.negative || 0}%
+                        </p>
+                        <p className="text-sm font-medium" style={{ color: "#f5222d" }}>Negative</p>
+                      </div>
+                    </div>
+
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Positive', value: aiInsights.data.sentimentDistribution?.positive || 0 },
+                              { name: 'Neutral', value: aiInsights.data.sentimentDistribution?.neutral || 0 },
+                              { name: 'Negative', value: aiInsights.data.sentimentDistribution?.negative || 0 }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            <Cell fill={SENTIMENT_COLORS.positive} />
+                            <Cell fill={SENTIMENT_COLORS.neutral} />
+                            <Cell fill={SENTIMENT_COLORS.negative} />
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </NeuroCard>
+
+                  {/* Field Sentiment */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Heart className="w-5 h-5" style={{ color: "#eb2f96" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Sentiment by Field</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {aiInsights.data.fieldSentiment?.map((field, idx) => (
+                        <div key={idx} className="ampvibe-inset p-4 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-semibold" style={{ color: "#666" }}>{field.field}</p>
+                            <div className="flex gap-2">
+                              <span className="px-2 py-1 rounded text-xs" style={{ background: '#f6ffed', color: '#52c41a' }}>
+                                <ThumbsUp className="w-3 h-3 inline mr-1" />
+                                {field.positive}%
+                              </span>
+                              <span className="px-2 py-1 rounded text-xs" style={{ background: '#fff1f0', color: '#f5222d' }}>
+                                <ThumbsDown className="w-3 h-3 inline mr-1" />
+                                {field.negative}%
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-sm" style={{ color: "#888" }}>{field.insight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+
+                  {/* Emotional Themes */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Sparkles className="w-5 h-5" style={{ color: "#722ed1" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Common Emotional Themes</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      {aiInsights.data.emotionalThemes?.map((theme, idx) => (
+                        <span key={idx} className="px-4 py-2 rounded-full text-sm font-medium" style={{ background: '#f0f0f0', color: "#666" }}>
+                          {theme}
+                        </span>
+                      ))}
+                    </div>
+                  </NeuroCard>
+
+                  {/* Sentiment Trends */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <TrendingUp className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Sentiment Trends Over Time</h3>
+                    </div>
+                    <p style={{ color: "#666", lineHeight: "1.6" }}>{aiInsights.data.sentimentTrends}</p>
+                  </NeuroCard>
+
+                  {/* Actionable Insights */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Target className="w-5 h-5" style={{ color: "#00a86b" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Actionable Sentiment Insights</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {aiInsights.data.sentimentInsights?.map((insight, idx) => (
+                        <div key={idx} className="flex items-start gap-3 ampvibe-inset p-4 rounded-lg">
+                          <div className="ampvibe-button p-2 rounded-lg text-green-600 font-bold">
+                            {idx + 1}
+                          </div>
+                          <p style={{ color: "#666" }}>{insight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+                </>
+              )}
+
+              {/* Intent Detection Results */}
+              {aiInsights && aiInsights.type === 'intent' && (
+                <>
+                  {/* Primary Intents */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Search className="w-5 h-5" style={{ color: "#722ed1" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Primary User Intents Detected</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {aiInsights.data.primaryIntents?.map((intent, idx) => (
+                        <div key={idx} className="ampvibe-inset p-4 rounded-lg flex items-center gap-3">
+                          <Target className="w-6 h-6" style={{ color: "#722ed1" }} />
+                          <p className="font-medium" style={{ color: "#666" }}>{intent}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+
+                  {/* Intent Categories */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <BarChart3 className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Intent Distribution</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {aiInsights.data.intentCategories?.map((category, idx) => (
+                        <div key={idx} className="ampvibe-inset p-4 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-semibold" style={{ color: "#666" }}>{category.name || category.intent}</p>
+                            <span className="text-lg font-bold" style={{ color: "#0066cc" }}>
+                              {category.percentage || category.percent}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-500 h-2 rounded-full"
+                              style={{ width: `${category.percentage || category.percent}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+
+                  {/* Intent by Field */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <FileText className="w-5 h-5" style={{ color: "#fa8c16" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Intent Indicators by Field</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {aiInsights.data.intentByField?.map((field, idx) => (
+                        <div key={idx} className="ampvibe-inset p-4 rounded-lg">
+                          <p className="font-semibold mb-2" style={{ color: "#666" }}>{field.field}</p>
+                          <p className="text-sm" style={{ color: "#888" }}>{field.reveals || field.insight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+
+                  {/* Buying Signals */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <DollarSign className="w-5 h-5" style={{ color: "#52c41a" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Buying Signals Detected</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {aiInsights.data.buyingSignals?.map((signal, idx) => (
+                        <div key={idx} className="ampvibe-inset p-4 rounded-lg border-l-4 border-green-500">
+                          <p style={{ color: "#666" }}>{signal}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+
+                  {/* Journey Stage */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <TrendingUp className="w-5 h-5" style={{ color: "#1890ff" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>User Journey Stage Analysis</h3>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      {Object.entries(aiInsights.data.journeyStage || {}).map(([stage, percentage]) => (
+                        <div key={stage} className="text-center p-4 rounded-lg ampvibe-inset">
+                          <p className="text-2xl font-bold mb-2" style={{ color: "#0066cc" }}>{percentage}%</p>
+                          <p className="text-sm font-medium capitalize" style={{ color: "#666" }}>{stage}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+
+                  {/* Action Recommendations */}
+                  <NeuroCard className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Lightbulb className="w-5 h-5" style={{ color: "#fa8c16" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#666" }}>Intent-Based Action Recommendations</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {aiInsights.data.actionRecommendations?.map((rec, idx) => (
+                        <div key={idx} className="flex items-start gap-3 ampvibe-inset p-4 rounded-lg">
+                          <div className="ampvibe-button p-2 rounded-lg text-orange-600 font-bold">
+                            {idx + 1}
+                          </div>
+                          <p style={{ color: "#666" }}>{rec}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </NeuroCard>
+                </>
+              )}
+
+              {/* Empty State */}
               {!aiInsights && !loadingInsights && (
                 <NeuroCard className="p-12 text-center">
                   <Sparkles className="w-16 h-16 mx-auto mb-4" style={{ color: "#d1d5db" }} />
@@ -542,13 +906,14 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
                     No insights generated yet
                   </p>
                   <p className="text-sm mb-6" style={{ color: "#aaa" }}>
-                    Click the button above to generate AI-powered insights for your form
+                    Choose an analysis type above to generate AI-powered insights
                   </p>
                 </NeuroCard>
               )}
             </div>
           )}
 
+          {/* Analyze Tab */}
           {activeTab === 'analyze' && (
             <NeuroCard className="p-6">
               <h3 className="text-lg font-bold mb-6" style={{ color: "#666" }}>Detailed Field Analysis</h3>
@@ -611,6 +976,7 @@ Format as JSON with these keys: topFields, lowFields, trends, recommendations, f
             </NeuroCard>
           )}
 
+          {/* Submissions Tab */}
           {activeTab === 'submissions' && (
             <NeuroCard>
               {submissions.length === 0 ? (
