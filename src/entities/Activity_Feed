@@ -1,0 +1,65 @@
+{
+  "name": "Activity_Feed",
+  "type": "object",
+  "properties": {
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "Record Created",
+        "Record Updated",
+        "Note Added",
+        "Task Assigned",
+        "Mention",
+        "Deal Stage Changed",
+        "Email Sent",
+        "Form Submitted",
+        "File Uploaded"
+      ],
+      "description": "Type of activity"
+    },
+    "actor_email": {
+      "type": "string",
+      "description": "User who performed the activity"
+    },
+    "actor_name": {
+      "type": "string",
+      "description": "Name of user who performed activity"
+    },
+    "record_type": {
+      "type": "string",
+      "description": "Type of record affected"
+    },
+    "record_id": {
+      "type": "string",
+      "description": "ID of record affected"
+    },
+    "record_name": {
+      "type": "string",
+      "description": "Name/title of record"
+    },
+    "activity_summary": {
+      "type": "string",
+      "description": "Human-readable activity summary"
+    },
+    "activity_details": {
+      "type": "object",
+      "description": "Additional activity details as JSON"
+    },
+    "mentioned_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Users mentioned in this activity"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether activity has been seen"
+    }
+  },
+  "required": [
+    "activity_type",
+    "actor_email"
+  ]
+}
