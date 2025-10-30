@@ -1,0 +1,80 @@
+{
+  "name": "AB_Test_Variant",
+  "type": "object",
+  "properties": {
+    "test_id": {
+      "type": "string",
+      "description": "Associated A/B test ID"
+    },
+    "variant_name": {
+      "type": "string",
+      "description": "Name of variant (e.g., Variant A, Variant B)"
+    },
+    "subject_line": {
+      "type": "string",
+      "description": "Email subject line for this variant"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Sender name for this variant"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Sender email for this variant"
+    },
+    "email_body": {
+      "type": "string",
+      "description": "Email content for this variant"
+    },
+    "send_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled send time for this variant"
+    },
+    "recipients_count": {
+      "type": "number",
+      "description": "Number of recipients for this variant"
+    },
+    "sent_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Emails sent"
+    },
+    "opened_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Emails opened"
+    },
+    "clicked_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Links clicked"
+    },
+    "converted_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Conversions"
+    },
+    "open_rate": {
+      "type": "number",
+      "description": "Open rate percentage"
+    },
+    "click_rate": {
+      "type": "number",
+      "description": "Click rate percentage"
+    },
+    "conversion_rate": {
+      "type": "number",
+      "description": "Conversion rate percentage"
+    },
+    "is_winner": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this variant won"
+    }
+  },
+  "required": [
+    "test_id",
+    "variant_name"
+  ]
+}
