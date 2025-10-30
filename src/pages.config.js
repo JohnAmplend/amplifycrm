@@ -54,6 +54,7 @@ import LeadScoring from './pages/LeadScoring';
 import AdvancedReports from './pages/AdvancedReports';
 import ABTesting from './pages/ABTesting';
 import CustomReportBuilder from './pages/CustomReportBuilder';
+import RolesPermissions from './pages/RolesPermissions';
 import Layout from './Layout.jsx';
 
 
@@ -114,6 +115,7 @@ export const PAGES = {
     "AdvancedReports": AdvancedReports,
     "ABTesting": ABTesting,
     "CustomReportBuilder": CustomReportBuilder,
+    "RolesPermissions": RolesPermissions,
 }
 
 export const pagesConfig = {
