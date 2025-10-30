@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Save, Eye, Plus, Search, GripVertical, Trash2, X, ChevronUp, ChevronDown, Mail, Users, Bell, Zap, Upload, Palette, Code, Smartphone, Type, Layout, Sparkles, Settings, Wand2 } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, Search, GripVertical, Trash2, X, ChevronUp, ChevronDown, Mail, Users, Bell, Zap, Upload, Palette, Code, Smartphone, Type, Layout, Sparkles, Settings, Wand2, CheckSquare, Layers } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -138,7 +138,8 @@ export default function FormBuilder() {
           logo_url: file_url
         }
       });
-      setLogoFile(null); // Clear file input
+      // Do not clear file input, it will be automatically cleared as it's uncontrolled
+      // setLogoFile(null); // This line is not needed.
     } catch (error) {
       alert('Failed to upload logo: ' + error.message);
     } finally {
@@ -272,8 +273,8 @@ export default function FormBuilder() {
       case 'send_email': return <Mail className="w-4 h-4" />;
       case 'add_to_list': return <Users className="w-4 h-4" />;
       case 'notify_team': return <Bell className="w-4 h-4" />;
-      case 'create_task': return <Plus className="w-4 h-4" />;
-      case 'add_to_sequence': return <Zap className="w-4 h-4" />;
+      case 'create_task': return <CheckSquare className="w-4 h-4" />; // Changed to CheckSquare
+      case 'add_to_sequence': return <Layers className="w-4 h-4" />; // Changed to Layers
       case 'conditional': return <Wand2 className="w-4 h-4" />;
       default: return null;
     }
@@ -440,30 +441,20 @@ export default function FormBuilder() {
         .workflow-action-card:hover {
           border-color: #0066cc;
         }
-        .color-input {
-          -webkit-appearance: none;
-          -moz-appearance: none;
-          appearance: none;
-          width: 24px;
-          height: 24px;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          background: transparent;
+        /* Color input specific styles */
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
         }
-        .color-input::-webkit-color-swatch-wrapper {
-          padding: 0;
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px; /* Adjust as needed */
         }
-        .color-input::-webkit-color-swatch {
-          border-radius: 4px;
-          border: 1px solid #e5e7eb;
+        input[type="color"]::-moz-color-swatch-wrapper {
+            padding: 0;
         }
-        .color-input::-moz-color-swatch-wrapper {
-          padding: 0;
-        }
-        .color-input::-moz-color-swatch {
-          border-radius: 4px;
-          border: 1px solid #e5e7eb;
+        input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 4px; /* Adjust as needed */
         }
       `}</style>
 
@@ -800,88 +791,159 @@ export default function FormBuilder() {
 
         {activeTab === 'style' && (
           <div className="flex-1 overflow-y-auto p-8">
-            <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
-                <h2 className="text-xl font-bold mb-6" style={{ color: "#111827" }}>Style & Appearance</h2>
-                
+            <div className="max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column - Style Controls */}
                 <div className="space-y-6">
+                  {/* Logo Upload */}
+                  <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Palette className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#111827" }}>Custom Logo</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {formData.custom_styles.logo_url && (
+                        <div className="flex items-center gap-3 p-3 border rounded-lg" style={{ borderColor: "#e5e7eb" }}>
+                          <img src={formData.custom_styles.logo_url} alt="Logo" className="h-12 rounded object-contain" />
+                          <button
+                            onClick={() => setFormData({
+                              ...formData,
+                              custom_styles: { ...formData.custom_styles, logo_url: '' }
+                            })}
+                            className="ml-auto text-red-600 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                      
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                          id="logo-upload"
+                          disabled={uploadingLogo}
+                        />
+                        <label
+                          htmlFor="logo-upload"
+                          className={`flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                            uploadingLogo ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'hover:border-blue-500'
+                          }`}
+                          style={{ borderColor: "#e5e7eb" }}
+                        >
+                          <Upload className="w-5 h-5" style={{ color: "#6b7280" }} />
+                          <span style={{ color: "#6b7280" }}>
+                            {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                          </span>
+                        </label>
+                      </label>
+                    </div>
+                  </div>
+
                   {/* Colors */}
-                  <div className="border-b pb-4" style={{borderColor: "#e5e7eb"}}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "#111827" }}>
-                      <Palette className="w-5 h-5" /> Colors
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium w-32" style={{ color: "#374151" }}>Primary Color</label>
-                        <input
-                          type="color"
-                          className="color-input"
-                          value={formData.custom_styles.primary_color}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            custom_styles: { ...formData.custom_styles, primary_color: e.target.value }
-                          })}
-                        />
-                        <NeuroInput
-                          type="text"
-                          value={formData.custom_styles.primary_color}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            custom_styles: { ...formData.custom_styles, primary_color: e.target.value }
-                          })}
-                          className="!py-1 !px-2 text-sm max-w-[100px]"
-                        />
+                  <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Palette className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#111827" }}>Colors</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
+                          Primary Color
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={formData.custom_styles.primary_color}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              custom_styles: { ...formData.custom_styles, primary_color: e.target.value }
+                            })}
+                            className="h-10 w-20 rounded border cursor-pointer"
+                            style={{ borderColor: "#e5e7eb" }}
+                          />
+                          <input
+                            type="text"
+                            value={formData.custom_styles.primary_color}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              custom_styles: { ...formData.custom_styles, primary_color: e.target.value }
+                            })}
+                            className="flex-1 px-3 py-2 text-sm rounded border"
+                            style={{ borderColor: "#e5e7eb" }}
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium w-32" style={{ color: "#374151" }}>Button Color</label>
-                        <input
-                          type="color"
-                          className="color-input"
-                          value={formData.custom_styles.button_color}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            custom_styles: { ...formData.custom_styles, button_color: e.target.value }
-                          })}
-                        />
-                        <NeuroInput
-                          type="text"
-                          value={formData.custom_styles.button_color}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            custom_styles: { ...formData.custom_styles, button_color: e.target.value }
-                          })}
-                          className="!py-1 !px-2 text-sm max-w-[100px]"
-                        />
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
+                          Button Color
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={formData.custom_styles.button_color}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              custom_styles: { ...formData.custom_styles, button_color: e.target.value }
+                            })}
+                            className="h-10 w-20 rounded border cursor-pointer"
+                            style={{ borderColor: "#e5e7eb" }}
+                          />
+                          <input
+                            type="text"
+                            value={formData.custom_styles.button_color}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              custom_styles: { ...formData.custom_styles, button_color: e.target.value }
+                            })}
+                            className="flex-1 px-3 py-2 text-sm rounded border"
+                            style={{ borderColor: "#e5e7eb" }}
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium w-32" style={{ color: "#374151" }}>Button Text Color</label>
-                        <input
-                          type="color"
-                          className="color-input"
-                          value={formData.custom_styles.button_text_color}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            custom_styles: { ...formData.custom_styles, button_text_color: e.target.value }
-                          })}
-                        />
-                        <NeuroInput
-                          type="text"
-                          value={formData.custom_styles.button_text_color}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            custom_styles: { ...formData.custom_styles, button_text_color: e.target.value }
-                          })}
-                          className="!py-1 !px-2 text-sm max-w-[100px]"
-                        />
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
+                          Button Text Color
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={formData.custom_styles.button_text_color}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              custom_styles: { ...formData.custom_styles, button_text_color: e.target.value }
+                            })}
+                            className="h-10 w-20 rounded border cursor-pointer"
+                            style={{ borderColor: "#e5e7eb" }}
+                          />
+                          <input
+                            type="text"
+                            value={formData.custom_styles.button_text_color}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              custom_styles: { ...formData.custom_styles, button_text_color: e.target.value }
+                            })}
+                            className="flex-1 px-3 py-2 text-sm rounded border"
+                            style={{ borderColor: "#e5e7eb" }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Typography */}
-                  <div className="border-b pb-4" style={{borderColor: "#e5e7eb"}}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "#111827" }}>
-                      <Type className="w-5 h-5" /> Typography
-                    </h3>
+                  <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Type className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#111827" }}>Typography</h3>
+                    </div>
+                    
                     <NeuroSelect
                       label="Font Family"
                       value={formData.custom_styles.font_family}
@@ -890,22 +952,24 @@ export default function FormBuilder() {
                         custom_styles: { ...formData.custom_styles, font_family: e.target.value }
                       })}
                       options={[
-                        { value: 'Poppins, sans-serif', label: 'Poppins' },
-                        { value: 'Inter, sans-serif', label: 'Inter' },
-                        { value: 'Open Sans, sans-serif', label: 'Open Sans' },
-                        { value: 'Roboto, sans-serif', label: 'Roboto' },
-                        { value: 'Arial, sans-serif', label: 'Arial' },
-                        { value: 'Georgia, serif', label: 'Georgia' },
+                        { value: 'Poppins', label: 'Poppins' },
+                        { value: 'Inter', label: 'Inter' },
+                        { value: 'Roboto', label: 'Roboto' },
+                        { value: 'Arial', label: 'Arial' },
+                        { value: 'Georgia', label: 'Georgia' },
+                        { value: 'Times New Roman', label: 'Times New Roman' }
                       ]}
                     />
                   </div>
 
-                  {/* Layout */}
-                  <div className="border-b pb-4" style={{borderColor: "#e5e7eb"}}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "#111827" }}>
-                      <Layout className="w-5 h-5" /> Layout
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Spacing & Layout */}
+                  <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Layout className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#111827" }}>Spacing & Layout</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
                       <NeuroSelect
                         label="Field Spacing"
                         value={formData.custom_styles.field_spacing}
@@ -914,11 +978,12 @@ export default function FormBuilder() {
                           custom_styles: { ...formData.custom_styles, field_spacing: e.target.value }
                         })}
                         options={[
-                          { value: 'compact', label: 'Compact' },
-                          { value: 'normal', label: 'Normal' },
-                          { value: 'relaxed', label: 'Relaxed' },
+                          { value: 'compact', label: 'Compact (12px)' },
+                          { value: 'normal', label: 'Normal (20px)' },
+                          { value: 'relaxed', label: 'Relaxed (32px)' }
                         ]}
                       />
+
                       <NeuroSelect
                         label="Field Padding"
                         value={formData.custom_styles.field_padding}
@@ -929,9 +994,10 @@ export default function FormBuilder() {
                         options={[
                           { value: 'compact', label: 'Compact' },
                           { value: 'normal', label: 'Normal' },
-                          { value: 'relaxed', label: 'Relaxed' },
+                          { value: 'relaxed', label: 'Relaxed' }
                         ]}
                       />
+
                       <NeuroSelect
                         label="Border Radius"
                         value={formData.custom_styles.border_radius}
@@ -940,93 +1006,138 @@ export default function FormBuilder() {
                           custom_styles: { ...formData.custom_styles, border_radius: e.target.value }
                         })}
                         options={[
-                          { value: 'none', label: 'None (0px)' },
+                          { value: 'none', label: 'None (Square)' },
                           { value: 'small', label: 'Small (4px)' },
                           { value: 'medium', label: 'Medium (8px)' },
-                          { value: 'large', label: 'Large (12px)' },
+                          { value: 'large', label: 'Large (12px)' }
                         ]}
                       />
                     </div>
                   </div>
 
-                  {/* Branding */}
-                  <div className="border-b pb-4" style={{borderColor: "#e5e7eb"}}>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "#111827" }}>
-                      <Sparkles className="w-5 h-5" /> Branding
-                    </h3>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>Logo</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        id="logo-upload"
-                        onChange={handleLogoUpload}
-                        disabled={uploadingLogo}
-                      />
-                      <div className="flex items-center gap-4">
-                        {formData.custom_styles.logo_url && (
-                          <div className="relative w-24 h-24 rounded-lg border flex items-center justify-center bg-gray-50">
-                            <img src={formData.custom_styles.logo_url} alt="Current Logo" className="max-w-full max-h-full object-contain" />
-                            <button
-                              onClick={() => setFormData({ ...formData, custom_styles: { ...formData.custom_styles, logo_url: '' } })}
-                              className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
-                              title="Remove logo"
-                            >
-                              <X className="w-3 h-3 text-red-500" />
-                            </button>
+                  {/* Mobile Preset */}
+                  <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Smartphone className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#111827" }}>Mobile Responsive</h3>
+                    </div>
+                    
+                    <NeuroSelect
+                      label="Mobile Preset"
+                      value={formData.custom_styles.mobile_preset}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        custom_styles: { ...formData.custom_styles, mobile_preset: e.target.value }
+                      })}
+                      options={[
+                        { value: 'responsive', label: 'Fully Responsive (Recommended)' },
+                        { value: 'desktop-only', label: 'Desktop Only' },
+                        { value: 'mobile-optimized', label: 'Mobile Optimized' }
+                      ]}
+                    />
+                  </div>
+
+                  {/* Custom CSS */}
+                  <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Code className="w-5 h-5" style={{ color: "#0066cc" }} />
+                      <h3 className="text-lg font-bold" style={{ color: "#111827" }}>Custom CSS</h3>
+                    </div>
+                    
+                    <textarea
+                      value={formData.custom_styles.custom_css}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        custom_styles: { ...formData.custom_styles, custom_css: e.target.value }
+                      })}
+                      placeholder="/* Add your custom CSS here */"
+                      className="w-full h-32 px-3 py-2 text-sm font-mono rounded border"
+                      style={{ borderColor: "#e5e7eb", color: "#111827" }}
+                    />
+                    <p className="text-xs mt-2" style={{ color: "#9ca3af" }}>
+                      Advanced users can add custom CSS for complete styling control
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Column - Live Preview */}
+                <div className="sticky top-4 self-start"> {/* Added self-start to sticky work with grid */}
+                  <div className="bg-white rounded-lg shadow-sm p-4 border" style={{ borderColor: "#e5e7eb" }}>
+                    <h3 className="text-sm font-bold mb-4" style={{ color: "#111827" }}>Live Preview</h3>
+                    <div className="border rounded-lg p-6" style={{ borderColor: "#e5e7eb", fontFamily: previewStyles.fontFamily }}>
+                      <div className="flex items-center gap-3 mb-6">
+                        {formData.custom_styles.logo_url ? (
+                          <img src={formData.custom_styles.logo_url} alt="Logo" className="h-10 object-contain rounded" />
+                        ) : (
+                          <div className="w-10 h-10 rounded flex items-center justify-center text-white font-bold" style={{ background: previewStyles.primaryColor }}>
+                            A
                           </div>
                         )}
-                        <label
-                          htmlFor="logo-upload"
-                          className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md border transition-colors ${
-                            uploadingLogo ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-50 cursor-pointer'
-                          }`}
-                          style={{ borderColor: "#e5e7eb", color: "#374151" }}
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: "#111827" }}>AmplifyCRM</p>
+                          <p className="text-xs" style={{ color: "#6b7280" }}>Get Started!</p>
+                        </div>
+                      </div>
+                      
+                      <div className="border-l-4 pl-3 py-2 mb-6" style={{ borderColor: previewStyles.primaryColor, background: `${previewStyles.primaryColor}11` }}>
+                        <h2 className="text-lg font-bold" style={{ color: "#111827" }}>
+                          {formData.form_name || "Sample Form"}
+                        </h2>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: previewStyles.fieldSpacing }}>
+                        <div>
+                          <label className="block text-xs font-medium mb-1.5" style={{ color: "#374151" }}>
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full text-sm"
+                            style={{ 
+                              borderColor: "#e5e7eb", 
+                              color: "#6b7280",
+                              padding: previewStyles.fieldPadding,
+                              borderRadius: previewStyles.borderRadius,
+                              border: '1px solid #e5e7eb'
+                            }}
+                            placeholder="Enter your name"
+                            disabled
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium mb-1.5" style={{ color: "#374151" }}>
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            className="w-full text-sm"
+                            style={{ 
+                              borderColor: "#e5e7eb", 
+                              color: "#6b7280",
+                              padding: previewStyles.fieldPadding,
+                              borderRadius: previewStyles.borderRadius,
+                              border: '1px solid #e5e7eb'
+                            }}
+                            placeholder="Enter your email"
+                            disabled
+                          />
+                        </div>
+
+                        <button 
+                          className="w-full px-4 py-2.5 text-sm font-medium"
+                          style={{ 
+                            background: previewStyles.buttonColor,
+                            color: previewStyles.buttonTextColor,
+                            borderRadius: previewStyles.borderRadius
+                          }}
+                          disabled
                         >
-                          <Upload className="w-4 h-4 mr-2" />
-                          {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
-                        </label>
+                          Submit
+                        </button>
                       </div>
                     </div>
-                    <NeuroSelect
-                        label="Mobile Layout"
-                        value={formData.custom_styles.mobile_preset}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          custom_styles: { ...formData.custom_styles, mobile_preset: e.target.value }
-                        })}
-                        options={[
-                          { value: 'responsive', label: 'Responsive (Default)' },
-                          { value: 'compact', label: 'Compact Layout' },
-                          { value: 'large_text', label: 'Large Text Fields' },
-                        ]}
-                      />
                   </div>
-
-
-                  {/* Advanced */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "#111827" }}>
-                      <Code className="w-5 h-5" /> Advanced
-                    </h3>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>Custom CSS</label>
-                      <textarea
-                        className="w-full p-3 border rounded-md font-mono text-sm"
-                        rows="6"
-                        value={formData.custom_styles.custom_css}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          custom_styles: { ...formData.custom_styles, custom_css: e.target.value }
-                        })}
-                        placeholder="/* Add your custom CSS here */"
-                        style={{ borderColor: "#e5e7eb", color: "#374151", background: "#f9fafb" }}
-                      ></textarea>
-                      <p className="text-xs text-gray-500 mt-1">Use with caution. Incorrect CSS may break your form layout.</p>
-                    </div>
-                  </div>
-
                 </div>
               </div>
             </div>
@@ -1035,206 +1146,309 @@ export default function FormBuilder() {
 
         {activeTab === 'automation' && (
           <div className="flex-1 overflow-y-auto p-8">
-            <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
-                <h2 className="text-xl font-bold mb-6" style={{ color: "#111827" }}>Automation Workflow</h2>
-                
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="automation-toggle" className="text-sm font-medium cursor-pointer" style={{ color: "#374151" }}>Enable Automation</label>
+            <div className="max-w-4xl mx-auto">
+              {/* Header */}
+              <div className="bg-white rounded-lg shadow-sm p-6 border mb-6" style={{ borderColor: "#e5e7eb" }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <Zap className="w-6 h-6" style={{ color: "#0066cc" }} />
+                      <h2 className="text-xl font-bold" style={{ color: "#111827" }}>Workflow Automation</h2>
+                    </div>
+                    <p style={{ color: "#6b7280" }}>
+                      Automate actions when this form is submitted
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      id="automation-toggle"
                       checked={formData.automation_enabled}
                       onChange={(e) => setFormData({ ...formData, automation_enabled: e.target.checked })}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: "#0066cc" }}
                     />
-                  </div>
-                  <div className="relative">
-                    <NeuroButton
-                      icon={<Plus className="w-4 h-4" />}
-                      onClick={() => document.getElementById('add-action-dropdown').classList.toggle('hidden')}
-                      variant="primary"
-                    >
-                      Add Action
-                    </NeuroButton>
-                    <div id="add-action-dropdown" className="hidden absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-10">
-                      <button className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => { addWorkflowAction('send_email'); document.getElementById('add-action-dropdown').classList.add('hidden'); }}>
-                        <Mail className="w-4 h-4" /> Send Email
+                    <span className="text-sm font-medium" style={{ color: "#374151" }}>
+                      Enable Automation
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Workflow Actions */}
+              {!formData.automation_enabled ? (
+                <div className="text-center py-12 text-gray-500">
+                  Automation is currently disabled. Enable it to add workflow actions.
+                </div>
+              ) : (
+                <>
+                  {/* Add Action Buttons */}
+                  <div className="bg-white rounded-lg shadow-sm p-6 border mb-6" style={{ borderColor: "#e5e7eb" }}>
+                    <h3 className="text-sm font-bold mb-4" style={{ color: "#111827" }}>Add Workflow Action</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => addWorkflowAction('send_email')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <Mail className="w-5 h-5" style={{ color: "#0066cc" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Send Email</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>Follow-up email</p>
+                        </div>
                       </button>
-                      <button className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => { addWorkflowAction('add_to_list'); document.getElementById('add-action-dropdown').classList.add('hidden'); }}>
-                        <Users className="w-4 h-4" /> Add to List
+
+                      <button
+                        onClick={() => addWorkflowAction('add_to_list')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <Users className="w-5 h-5" style={{ color: "#00a86b" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Add to List</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>Contact list</p>
+                        </div>
                       </button>
-                      <button className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => { addWorkflowAction('notify_team'); document.getElementById('add-action-dropdown').classList.add('hidden'); }}>
-                        <Bell className="w-4 h-4" /> Notify Team
+
+                      <button
+                        onClick={() => addWorkflowAction('notify_team')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <Bell className="w-5 h-5" style={{ color: "#fa8c16" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Notify Team</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>Internal alert</p>
+                        </div>
                       </button>
-                      <button className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => { addWorkflowAction('create_task'); document.getElementById('add-action-dropdown').classList.add('hidden'); }}>
-                        <Plus className="w-4 h-4" /> Create Task
+
+                      <button
+                        onClick={() => addWorkflowAction('create_task')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <CheckSquare className="w-5 h-5" style={{ color: "#722ed1" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Create Task</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>Follow-up task</p>
+                        </div>
                       </button>
-                      <button className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => { addWorkflowAction('add_to_sequence'); document.getElementById('add-action-dropdown').classList.add('hidden'); }}>
-                        <Zap className="w-4 h-4" /> Add to Sequence
+
+                      <button
+                        onClick={() => addWorkflowAction('add_to_sequence')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <Layers className="w-5 h-5" style={{ color: "#eb2f96" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Add to Sequence</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>Email sequence</p>
+                        </div>
                       </button>
-                      <button className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => { addWorkflowAction('conditional'); document.getElementById('add-action-dropdown').classList.add('hidden'); }}>
-                        <Wand2 className="w-4 h-4" /> Conditional Logic
+
+                      <button
+                        onClick={() => addWorkflowAction('conditional')}
+                        className="flex items-center gap-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors"
+                        style={{ borderColor: "#e5e7eb" }}
+                      >
+                        <Wand2 className="w-5 h-5" style={{ color: "#6c5ce7" }} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium" style={{ color: "#374151" }}>Conditional Logic</p>
+                          <p className="text-xs" style={{ color: "#9ca3af" }}>Based on form data</p>
+                        </div>
                       </button>
                     </div>
                   </div>
-                </div>
 
-                {!formData.automation_enabled && (
-                  <div className="text-center py-12 text-gray-500">
-                    Automation is currently disabled. Enable it to add workflow actions.
-                  </div>
-                )}
+                  {/* Workflow Actions List */}
+                  {workflowActions.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow-sm p-12 border text-center" style={{ borderColor: "#e5e7eb" }}>
+                      <Zap className="w-12 h-12 mx-auto mb-4" style={{ color: "#d1d5db" }} />
+                      <p className="text-base font-medium mb-1" style={{ color: "#6b7280" }}>
+                        No automation actions yet
+                      </p>
+                      <p className="text-sm" style={{ color: "#9ca3af" }}>
+                        Add actions above to automate this form
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {workflowActions.map((action, index) => (
+                        <div key={action.id} className="workflow-action-card p-6">
+                          <div className="flex items-start gap-4">
+                            <div className="flex flex-col items-center gap-1 mt-1">
+                              <button
+                                onClick={() => moveWorkflowAction(index, 'up')}
+                                disabled={index === 0}
+                                className="p-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ color: index === 0 ? "#d1d5db" : "#6b7280" }}
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </button>
+                              <GripVertical className="w-4 h-4" style={{ color: "#9ca3af" }} />
+                              <button
+                                onClick={() => moveWorkflowAction(index, 'down')}
+                                disabled={index === workflowActions.length - 1}
+                                className="p-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ color: index === workflowActions.length - 1 ? "#d1d5db" : "#6b7280" }}
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </button>
+                            </div>
 
-                {formData.automation_enabled && workflowActions.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed rounded-lg" style={{ borderColor: "#e5e7eb" }}>
-                    <div className="text-4xl mb-3">⚙️</div>
-                    <p className="text-base font-medium mb-1" style={{ color: "#6b7280" }}>
-                      No automation actions configured.
-                    </p>
-                    <p className="text-sm" style={{ color: "#9ca3af" }}>
-                      Click "Add Action" to set up what happens after a submission.
-                    </p>
-                  </div>
-                )}
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-4">
+                                  {getActionIcon(action.type)}
+                                  <h4 className="font-bold text-lg" style={{ color: "#374151" }}>{getActionLabel(action.type)}</h4>
+                                </div>
+                                <div className="space-y-4">
+                                {action.type === 'send_email' && (
+                                  <>
+                                    <NeuroSelect
+                                      label="Email Template"
+                                      value={action.config.template_id}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, template_id: e.target.value }
+                                      })}
+                                      options={[{ value: '', label: 'Select template' }, ...emailTemplates.map(t => ({ value: t.id, label: t.template_name }))]}
+                                    />
+                                    <NeuroInput
+                                      label="Recipient Email (comma separated)"
+                                      value={action.config.recipient_email}
+                                      onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, recipient_email: e.target.value } })}
+                                      placeholder="user@example.com"
+                                    />
+                                    <NeuroInput
+                                      label="Subject (optional, overrides template)"
+                                      value={action.config.subject}
+                                      onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, subject: e.target.value } })}
+                                    />
+                                    <NeuroInput
+                                      label="Body (optional, overrides template)"
+                                      type="textarea"
+                                      value={action.config.body}
+                                      onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, body: e.target.value } })}
+                                    />
+                                    <NeuroInput
+                                      label="Delay (minutes)"
+                                      type="number"
+                                      value={action.config.delay_minutes}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, delay_minutes: parseInt(e.target.value) || 0 }
+                                      })}
+                                      placeholder="0"
+                                    />
+                                  </>
+                                )}
 
-                {formData.automation_enabled && workflowActions.length > 0 && (
-                  <div className="space-y-4">
-                    {workflowActions.map((action, index) => (
-                      <div key={action.id} className="workflow-action-card p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            {getActionIcon(action.type)}
-                            <h3 className="font-semibold text-base" style={{ color: "#111827" }}>
-                              {getActionLabel(action.type)}
-                            </h3>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={action.enabled}
-                              onChange={(e) => updateWorkflowAction(action.id, { enabled: e.target.checked })}
-                              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <label className="text-sm" style={{ color: "#374151" }}>Enabled</label>
+                                {action.type === 'add_to_list' && (
+                                  <NeuroSelect
+                                    label="Contact List"
+                                    value={action.config.list_id}
+                                    onChange={(e) => updateWorkflowAction(action.id, {
+                                      config: { ...action.config, list_id: e.target.value }
+                                    })}
+                                    options={[{ value: '', label: 'Select list' }, ...contactLists.map(l => ({ value: l.id, label: l.list_name }))]}
+                                  />
+                                )}
 
-                            <button onClick={() => moveWorkflowAction(index, 'up')} disabled={index === 0} className="p-1 rounded hover:bg-gray-100" title="Move Up">
-                              <ChevronUp className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => moveWorkflowAction(index, 'down')} disabled={index === workflowActions.length - 1} className="p-1 rounded hover:bg-gray-100" title="Move Down">
-                              <ChevronDown className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => removeWorkflowAction(action.id)} className="p-1 rounded hover:bg-red-50" title="Remove Action">
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </button>
+                                {action.type === 'notify_team' && (
+                                  <>
+                                    <NeuroInput
+                                      label="Notification Emails (comma separated)"
+                                      value={action.config.emails}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, emails: e.target.value }
+                                      })}
+                                      placeholder="email1@example.com, email2@example.com"
+                                    />
+                                    <NeuroInput
+                                      label="Notification Message"
+                                      type="textarea"
+                                      value={action.config.message}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, message: e.target.value }
+                                      })}
+                                      placeholder="New form submission received"
+                                    />
+                                  </>
+                                )}
+
+                                {action.type === 'create_task' && (
+                                  <>
+                                    <NeuroInput
+                                      label="Task Name"
+                                      value={action.config.task_name}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, task_name: e.target.value }
+                                      })}
+                                      placeholder="Follow up with lead"
+                                    />
+                                    <NeuroInput
+                                      label="Assigned To (email)"
+                                      value={action.config.assigned_to}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, assigned_to: e.target.value }
+                                      })}
+                                      placeholder="user@example.com"
+                                    />
+                                    <NeuroSelect
+                                      label="Priority"
+                                      value={action.config.priority}
+                                      onChange={(e) => updateWorkflowAction(action.id, {
+                                        config: { ...action.config, priority: e.target.value }
+                                      })}
+                                      options={[
+                                        { value: 'Low', label: 'Low' },
+                                        { value: 'Medium', label: 'Medium' },
+                                        { value: 'High', label: 'High' }
+                                      ]}
+                                    />
+                                  </>
+                                )}
+
+                                {action.type === 'add_to_sequence' && (
+                                  <NeuroSelect
+                                    label="Email Sequence"
+                                    value={action.config.sequence_id}
+                                    onChange={(e) => updateWorkflowAction(action.id, {
+                                      config: { ...action.config, sequence_id: e.target.value }
+                                    })}
+                                    options={[{ value: '', label: 'Select sequence' }, ...sequences.map(s => ({ value: s.id, label: s.sequence_name }))]}
+                                  />
+                                )}
+                                
+                                {action.type === 'conditional' && (
+                                  <p className="text-sm text-gray-500">Conditional logic configuration coming soon.</p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 items-end">
+                              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={action.enabled}
+                                  onChange={(e) => updateWorkflowAction(action.id, { enabled: e.target.checked })}
+                                  className="w-4 h-4 rounded"
+                                  style={{ accentColor: "#0066cc" }}
+                                />
+                                <span className="text-xs" style={{ color: "#6b7280" }}>Enabled</span>
+                              </label>
+                              <button
+                                onClick={() => removeWorkflowAction(action.id)}
+                                className="p-2 rounded hover:bg-red-50 transition-colors"
+                                style={{ color: "#dc2626" }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-
-                        {action.enabled && (
-                          <div className="space-y-3">
-                            {action.type === 'send_email' && (
-                              <>
-                                <NeuroSelect
-                                  label="Email Template"
-                                  value={action.config.template_id}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, template_id: e.target.value } })}
-                                  options={[{ value: '', label: 'Select template' }, ...emailTemplates.map(t => ({ value: t.id, label: t.template_name }))]}
-                                />
-                                <NeuroInput
-                                  label="Recipient Email (comma separated)"
-                                  value={action.config.recipient_email}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, recipient_email: e.target.value } })}
-                                  placeholder="user@example.com"
-                                />
-                                <NeuroInput
-                                  label="Subject (optional, overrides template)"
-                                  value={action.config.subject}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, subject: e.target.value } })}
-                                />
-                                <NeuroInput
-                                  label="Body (optional, overrides template)"
-                                  type="textarea"
-                                  value={action.config.body}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, body: e.target.value } })}
-                                />
-                                <NeuroInput
-                                  label="Delay (minutes)"
-                                  type="number"
-                                  value={action.config.delay_minutes}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, delay_minutes: parseInt(e.target.value) || 0 } })}
-                                />
-                              </>
-                            )}
-
-                            {action.type === 'add_to_list' && (
-                              <NeuroSelect
-                                label="Contact List"
-                                value={action.config.list_id}
-                                onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, list_id: e.target.value } })}
-                                options={[{ value: '', label: 'Select list' }, ...contactLists.map(list => ({ value: list.id, label: list.list_name }))]}
-                              />
-                            )}
-
-                            {action.type === 'notify_team' && (
-                              <>
-                                <NeuroInput
-                                  label="Notification Emails (comma separated)"
-                                  value={action.config.emails}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, emails: e.target.value } })}
-                                  placeholder="team@example.com"
-                                />
-                                <NeuroInput
-                                  label="Message"
-                                  type="textarea"
-                                  value={action.config.message}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, message: e.target.value } })}
-                                  placeholder="New form submission from {form.form_name}"
-                                />
-                              </>
-                            )}
-
-                            {action.type === 'create_task' && (
-                              <>
-                                <NeuroInput
-                                  label="Task Name"
-                                  value={action.config.task_name}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, task_name: e.target.value } })}
-                                />
-                                <NeuroInput
-                                  label="Assigned To (User ID or Email)"
-                                  value={action.config.assigned_to}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, assigned_to: e.target.value } })}
-                                />
-                                <NeuroSelect
-                                  label="Priority"
-                                  value={action.config.priority}
-                                  onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, priority: e.target.value } })}
-                                  options={[{ value: 'Low', label: 'Low' }, { value: 'Medium', label: 'Medium' }, { value: 'High', label: 'High' }]}
-                                />
-                              </>
-                            )}
-
-                            {action.type === 'add_to_sequence' && (
-                              <NeuroSelect
-                                label="Email Sequence"
-                                value={action.config.sequence_id}
-                                onChange={(e) => updateWorkflowAction(action.id, { config: { ...action.config, sequence_id: e.target.value } })}
-                                options={[{ value: '', label: 'Select sequence' }, ...sequences.map(s => ({ value: s.id, label: s.sequence_name }))]}
-                              />
-                            )}
-
-                            {/* Conditional Logic (simplified for now) */}
-                            {action.type === 'conditional' && (
-                              <p className="text-sm text-gray-500">Conditional logic configuration coming soon.</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}
