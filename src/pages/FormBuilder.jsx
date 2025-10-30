@@ -13,7 +13,7 @@ export default function FormBuilder() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [formId, setFormId] = useState(null);
-  const [activeTab, setActiveTab] = useState("form"); // form, options, style, automation
+  const [activeTab, setActiveTab] = useState("form");
   const [searchProperty, setSearchProperty] = useState("");
   
   const [formData, setFormData] = useState({
@@ -37,37 +37,43 @@ export default function FormBuilder() {
     }
   }, []);
 
-  const { data: form } = useQuery({
+  const { data: form, isLoading: formLoading } = useQuery({
     queryKey: ['form', formId],
     queryFn: async () => {
       const forms = await base44.entities.Form.filter({ id: formId });
       return forms[0];
     },
-    enabled: !!formId,
-    onSuccess: (data) => {
-      if (data) {
-        setFormData({
-          form_name: data.form_name || "",
-          form_description: data.form_description || "",
-          form_type: data.form_type || "Contact Form",
-          submit_action: data.submit_action || "Create Contact",
-          thank_you_message: data.thank_you_message || "",
-          redirect_url: data.redirect_url || "",
-          notification_emails: data.notification_emails || "",
-          is_active: data.is_active ?? true
-        });
-      }
-    }
+    enabled: !!formId
   });
 
-  const { data: fields = [] } = useQuery({
+  const { data: fields = [], isLoading: fieldsLoading } = useQuery({
     queryKey: ['form-fields', formId],
-    queryFn: () => base44.entities.Form_Field.filter({ form_id: formId }),
-    enabled: !!formId,
-    onSuccess: (data) => {
-      setFormFields(data.sort((a, b) => (a.field_order || 0) - (b.field_order || 0)));
-    }
+    queryFn: () => base44.entities.Form_Field.filter({ form_id: formId }, 'field_order'),
+    enabled: !!formId
   });
+
+  // Update form data when form loads
+  useEffect(() => {
+    if (form) {
+      setFormData({
+        form_name: form.form_name || "",
+        form_description: form.form_description || "",
+        form_type: form.form_type || "Contact Form",
+        submit_action: form.submit_action || "Create Contact",
+        thank_you_message: form.thank_you_message || "Thank you for your submission!",
+        redirect_url: form.redirect_url || "",
+        notification_emails: form.notification_emails || "",
+        is_active: form.is_active ?? true
+      });
+    }
+  }, [form]);
+
+  // Update form fields when fields load
+  useEffect(() => {
+    if (fields && fields.length > 0) {
+      setFormFields(fields.sort((a, b) => (a.field_order || 0) - (b.field_order || 0)));
+    }
+  }, [fields]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -81,12 +87,27 @@ export default function FormBuilder() {
         await base44.entities.Form.update(savedFormId, formData);
       }
 
+      // Delete removed fields first
+      if (formId) {
+        const existingFieldIds = fields.map(f => f.id);
+        const currentFieldIds = formFields.map(f => f.id).filter(id => !id.toString().startsWith('temp-'));
+        const fieldsToDelete = existingFieldIds.filter(id => !currentFieldIds.includes(id));
+        
+        for (const fieldId of fieldsToDelete) {
+          await base44.entities.Form_Field.delete(fieldId);
+        }
+      }
+
       // Save fields
       for (let i = 0; i < formFields.length; i++) {
         const field = formFields[i];
         const fieldData = {
-          ...field,
           form_id: savedFormId,
+          field_label: field.field_label,
+          field_name: field.field_name,
+          field_type: field.field_type,
+          is_required: field.is_required || false,
+          placeholder_text: field.placeholder_text || "",
           field_order: i
         };
 
@@ -103,15 +124,17 @@ export default function FormBuilder() {
       queryClient.invalidateQueries(['forms']);
       queryClient.invalidateQueries(['form', formId]);
       queryClient.invalidateQueries(['form-fields', formId]);
+      alert('Form saved successfully!');
+    },
+    onError: (error) => {
+      alert('Failed to save form: ' + error.message);
     }
   });
 
   const handleSave = async () => {
     await saveMutation.mutateAsync();
-    alert('Form saved successfully!');
   };
 
-  // Predefined properties (HubSpot style)
   const frequentlyUsedProperties = [
     { name: "first_name", label: "First name", type: "Text", icon: "👤" },
     { name: "last_name", label: "Last name", type: "Text", icon: "👤" },
@@ -174,6 +197,17 @@ export default function FormBuilder() {
     }
   };
 
+  if (formLoading || (formId && fieldsLoading)) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ background: '#f5f8fa' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p style={{ color: "#666" }}>Loading form...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col" style={{ background: '#f5f8fa' }}>
       {/* Top Bar */}
@@ -193,7 +227,7 @@ export default function FormBuilder() {
                 onChange={(e) => setFormData({ ...formData, form_name: e.target.value })}
                 placeholder="Untitled form"
                 className="text-xl font-bold bg-transparent border-none outline-none"
-                style={{ color: "#333" }}
+                style={{ color: "#333", minWidth: "200px" }}
               />
               <p className="text-sm" style={{ color: "#888" }}>
                 {formId ? '✓ Auto-saved' : 'Not saved yet'}
@@ -202,13 +236,15 @@ export default function FormBuilder() {
           </div>
           
           <div className="flex items-center gap-3">
-            <NeuroButton onClick={() => navigate(createPageUrl("FormSubmissions") + `?form=${formId}`)}>
-              <Eye className="w-4 h-4 mr-2" />
-              View Submissions
-            </NeuroButton>
-            <NeuroButton variant="primary" onClick={handleSave}>
+            {formId && (
+              <NeuroButton onClick={() => navigate(createPageUrl("FormSubmissions") + `?form=${formId}`)}>
+                <Eye className="w-4 h-4 mr-2" />
+                View Submissions
+              </NeuroButton>
+            )}
+            <NeuroButton variant="primary" onClick={handleSave} disabled={saveMutation.isLoading}>
               <Save className="w-4 h-4 mr-2" />
-              Save
+              {saveMutation.isLoading ? 'Saving...' : 'Save'}
             </NeuroButton>
           </div>
         </div>
@@ -375,6 +411,7 @@ export default function FormBuilder() {
                                 onClick={() => moveField(index, 'up')}
                                 disabled={index === 0}
                                 className="ampvibe-button p-2"
+                                title="Move up"
                               >
                                 <GripVertical className="w-4 h-4" />
                               </button>
@@ -391,6 +428,7 @@ export default function FormBuilder() {
                               <button
                                 onClick={() => removeField(field.id)}
                                 className="ampvibe-button p-2 text-red-600"
+                                title="Delete field"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
