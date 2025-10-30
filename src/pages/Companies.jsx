@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +24,7 @@ export default function Companies() {
   const [activeStatFilter, setActiveStatFilter] = useState(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState([]);
+  const [filterLogic, setFilterLogic] = useState('AND'); // Added filterLogic state
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,6 +115,7 @@ export default function Companies() {
     setFilterStage("");
     setFilterIndustry("");
     setAdvancedFilters([]);
+    setFilterLogic('AND'); // Reset logic when stat card clicked
     
     if (activeStatFilter === filterType) {
       setActiveStatFilter(null);
@@ -204,10 +207,16 @@ export default function Companies() {
       // 'all' stat filter means no stat filter
     }
     
-    // Apply advanced filters (AND logic)
+    // Apply advanced filters with AND/OR logic
     if (advancedFilters.length > 0) {
-      const passesAllFilters = advancedFilters.every(filter => applyAdvancedFilter(company, filter));
-      if (!passesAllFilters) return false;
+      if (filterLogic === 'AND') {
+        const passesAllFilters = advancedFilters.every(filter => applyAdvancedFilter(company, filter));
+        if (!passesAllFilters) return false;
+      } else {
+        // OR logic - at least one filter must match
+        const passesAnyFilter = advancedFilters.some(filter => applyAdvancedFilter(company, filter));
+        if (!passesAnyFilter) return false;
+      }
     }
     
     // Apply regular filters
@@ -253,7 +262,7 @@ export default function Companies() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterOwner, filterStage, filterIndustry, activeStatFilter, advancedFilters]);
+  }, [searchTerm, filterOwner, filterStage, filterIndustry, activeStatFilter, advancedFilters, filterLogic]);
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -427,6 +436,13 @@ export default function Companies() {
                      activeStatFilter === 'large' ? 'Large Companies' : ''}
                   </span>
                 )}
+                {advancedFilters.length > 0 && (
+                  <span className={`px-3 py-2 rounded-full text-sm font-medium ${
+                    filterLogic === 'OR' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {filterLogic} Logic
+                  </span>
+                )}
                 {advancedFilters.map((filter, index) => (
                   <span key={`${filter.field}-${index}`} className="ampvibe-button px-3 py-2 active flex items-center gap-2">
                     {filter.label} {filter.operator}{filter.value ? ` ${filter.value}` : ''}
@@ -439,7 +455,7 @@ export default function Companies() {
                   Showing {filteredCompanies.length} companies
                 </span>
               </div>
-              <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+              <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); setFilterLogic('AND'); }}>
                 <X className="w-4 h-4 mr-2" />
                 Clear All
               </NeuroButton>
@@ -567,7 +583,7 @@ export default function Companies() {
                 {activeStatFilter || advancedFilters.length > 0 ? 'No companies match these filters' : 'No companies found'}
               </p>
               {(activeStatFilter || advancedFilters.length > 0) && (
-                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); setFilterLogic('AND'); }}>
                   Clear Filters
                 </NeuroButton>
               )}
@@ -668,8 +684,9 @@ export default function Companies() {
       <AdvancedFilters
         isOpen={showAdvancedFilters}
         onClose={() => setShowAdvancedFilters(false)}
-        onApplyFilters={(filters) => {
+        onApplyFilters={(filters, logic) => {
           setAdvancedFilters(filters);
+          setFilterLogic(logic); // Set the logic
           setActiveStatFilter(null);
           setSearchTerm("");
           setFilterOwner("");
@@ -679,6 +696,7 @@ export default function Companies() {
           setShowAdvancedFilters(false);
         }}
         currentFilters={advancedFilters}
+        currentLogic={filterLogic} // Pass current logic to AdvancedFilters
       />
     </div>
   );
