@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +24,8 @@ export default function Leads() {
   const [activeStatFilter, setActiveStatFilter] = useState(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState([]);
-  
+  const [filterLogic, setFilterLogic] = useState('AND');
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -31,7 +33,7 @@ export default function Leads() {
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'new') {
       setShowForm(true);
@@ -108,13 +110,14 @@ export default function Leads() {
     setFilterStatus("");
     setFilterSource("");
     setAdvancedFilters([]);
-    
+    setFilterLogic('AND'); // Reset filter logic when stat card is clicked
+
     if (activeStatFilter === filterType) {
       setActiveStatFilter(null);
     } else {
       setActiveStatFilter(filterType);
     }
-    
+
     setCurrentPage(1);
   };
 
@@ -198,15 +201,21 @@ export default function Leads() {
     } else if (activeStatFilter === 'all') {
       // 'all' stat filter means no stat filter
     }
-    
-    // Apply advanced filters (AND logic)
+
+    // Apply advanced filters with AND/OR logic
     if (advancedFilters.length > 0) {
-      const passesAllFilters = advancedFilters.every(filter => applyAdvancedFilter(lead, filter));
-      if (!passesAllFilters) return false;
+      if (filterLogic === 'AND') {
+        const passesAllFilters = advancedFilters.every(filter => applyAdvancedFilter(lead, filter));
+        if (!passesAllFilters) return false;
+      } else {
+        // OR logic - at least one filter must match
+        const passesAnyFilter = advancedFilters.some(filter => applyAdvancedFilter(lead, filter));
+        if (!passesAnyFilter) return false;
+      }
     }
-    
+
     // Apply regular filters
-    const matchesSearch = 
+    const matchesSearch =
       lead.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -214,7 +223,7 @@ export default function Leads() {
     const matchesOwner = !filterOwner || lead.lead_owner === filterOwner;
     const matchesStatus = !filterStatus || lead.lead_status === filterStatus;
     const matchesSource = !filterSource || lead.lead_source === filterSource;
-    
+
     return matchesSearch && matchesOwner && matchesStatus && matchesSource;
   });
 
@@ -249,15 +258,15 @@ export default function Leads() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterOwner, filterStatus, filterSource, activeStatFilter, advancedFilters]);
+  }, [searchTerm, filterOwner, filterStatus, filterSource, activeStatFilter, advancedFilters, filterLogic]);
 
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
-    
+
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
+
     if (endPage - startPage < maxVisible - 1) {
       startPage = Math.max(1, endPage - maxVisible + 1);
     }
@@ -423,6 +432,13 @@ export default function Leads() {
                      activeStatFilter === 'high-score' ? 'High Score Leads' : ''}
                   </span>
                 )}
+                {advancedFilters.length > 0 && (
+                  <span className={`px-3 py-2 rounded-full text-sm font-medium ${
+                    filterLogic === 'OR' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {filterLogic} Logic
+                  </span>
+                )}
                 {advancedFilters.map((filter, index) => (
                   <span key={`${filter.field}-${index}`} className="ampvibe-button px-3 py-2 active flex items-center gap-2">
                     {filter.label} {filter.operator}{filter.value ? ` ${filter.value}` : ''}
@@ -435,7 +451,7 @@ export default function Leads() {
                   Showing {filteredLeads.length} leads
                 </span>
               </div>
-              <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+              <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); setFilterLogic('AND'); }}>
                 <X className="w-4 h-4 mr-2" />
                 Clear All
               </NeuroButton>
@@ -566,7 +582,7 @@ export default function Leads() {
                 {activeStatFilter || advancedFilters.length > 0 ? 'No leads match these filters' : 'No leads found'}
               </p>
               {(activeStatFilter || advancedFilters.length > 0) && (
-                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); setFilterLogic('AND'); }}>
                   Clear Filters
                 </NeuroButton>
               )}
@@ -689,8 +705,9 @@ export default function Leads() {
       <AdvancedFilters
         isOpen={showAdvancedFilters}
         onClose={() => setShowAdvancedFilters(false)}
-        onApplyFilters={(filters) => {
+        onApplyFilters={(filters, logic) => {
           setAdvancedFilters(filters);
+          setFilterLogic(logic);
           setActiveStatFilter(null);
           setSearchTerm("");
           setFilterOwner("");
@@ -700,6 +717,7 @@ export default function Leads() {
           setShowAdvancedFilters(false);
         }}
         currentFilters={advancedFilters}
+        currentLogic={filterLogic}
       />
     </div>
   );
