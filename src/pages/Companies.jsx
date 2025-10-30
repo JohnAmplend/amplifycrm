@@ -3,12 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search, Plus, Download, Upload, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Download, Upload, X, ChevronLeft, ChevronRight, Building2, TrendingUp, DollarSign, Users, Filter } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import CompanyForm from "../components/crm/CompanyForm";
+import AdvancedFilters from "../components/crm/AdvancedFilters";
 
 export default function Companies() {
   const navigate = useNavigate();
@@ -16,8 +17,12 @@ export default function Companies() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOwner, setFilterOwner] = useState("");
   const [filterStage, setFilterStage] = useState("");
+  const [filterIndustry, setFilterIndustry] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [activeStatFilter, setActiveStatFilter] = useState(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState([]);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,15 +107,119 @@ export default function Companies() {
     URL.revokeObjectURL(url);
   };
 
+  const handleStatCardClick = (filterType) => {
+    setSearchTerm("");
+    setFilterOwner("");
+    setFilterStage("");
+    setFilterIndustry("");
+    setAdvancedFilters([]);
+    
+    if (activeStatFilter === filterType) {
+      setActiveStatFilter(null);
+    } else {
+      setActiveStatFilter(filterType);
+    }
+    
+    setCurrentPage(1);
+  };
+
+  const applyAdvancedFilter = (company, filter) => {
+    const value = company[filter.field];
+    const filterValue = filter.value;
+
+    switch (filter.operator) {
+      case 'contains':
+        return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+      case 'not_contains':
+        return !value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+      case 'equals':
+        return value?.toString().toLowerCase() === filterValue.toLowerCase();
+      case 'not_equals':
+        return value?.toString().toLowerCase() !== filterValue.toLowerCase();
+      case 'starts_with':
+        return value?.toString().toLowerCase().startsWith(filterValue.toLowerCase());
+      case 'ends_with':
+        return value?.toString().toLowerCase().endsWith(filterValue.toLowerCase());
+      case 'is_empty':
+        return !value || value === '';
+      case 'is_not_empty':
+        return value && value !== '';
+      case 'greater_than':
+        return parseFloat(value) > parseFloat(filterValue);
+      case 'less_than':
+        return parseFloat(value) < parseFloat(filterValue);
+      case 'greater_or_equal':
+        return parseFloat(value) >= parseFloat(filterValue);
+      case 'less_or_equal':
+        return parseFloat(value) <= parseFloat(filterValue);
+      case 'is_after':
+        return new Date(value) > new Date(filterValue);
+      case 'is_before':
+        return new Date(value) < new Date(filterValue);
+      case 'in_last':
+        const daysAgo = new Date();
+        const amount = parseInt(filterValue);
+        const unit = filter.unit || 'days';
+        if (unit === 'days') daysAgo.setDate(daysAgo.getDate() - amount);
+        else if (unit === 'weeks') daysAgo.setDate(daysAgo.getDate() - (amount * 7));
+        else if (unit === 'months') daysAgo.setMonth(daysAgo.getMonth() - amount);
+        else if (unit === 'years') daysAgo.setFullYear(daysAgo.getFullYear() - amount);
+        return new Date(value) > daysAgo;
+      case 'in_next':
+        const daysAhead = new Date();
+        const amountAhead = parseInt(filterValue);
+        const unitAhead = filter.unit || 'days';
+        if (unitAhead === 'days') daysAhead.setDate(daysAhead.getDate() + amountAhead);
+        else if (unitAhead === 'weeks') daysAhead.setDate(daysAhead.getDate() + (amountAhead * 7));
+        else if (unitAhead === 'months') daysAhead.setMonth(daysAhead.getMonth() + amountAhead);
+        else if (unitAhead === 'years') daysAhead.setFullYear(daysAhead.getFullYear() + amountAhead);
+        return new Date(value) < daysAhead;
+      default:
+        return true;
+    }
+  };
+
+  // Stats calculations
+  const newThisWeek = companies.filter(c => {
+    const created = new Date(c.created_date);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return created > weekAgo;
+  });
+  const customers = companies.filter(c => c.lifecycle_stage === 'Customer');
+  const largeCompanies = companies.filter(c => c.number_of_employees && c.number_of_employees > 500);
+
   const filteredCompanies = companies.filter(company => {
+    // Apply stat card filter
+    if (activeStatFilter === 'new-week') {
+      const created = new Date(company.created_date);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      if (created <= weekAgo) return false;
+    } else if (activeStatFilter === 'customers') {
+      if (company.lifecycle_stage !== 'Customer') return false;
+    } else if (activeStatFilter === 'large') {
+      if (!company.number_of_employees || company.number_of_employees <= 500) return false;
+    } else if (activeStatFilter === 'all') {
+      // 'all' stat filter means no stat filter
+    }
+    
+    // Apply advanced filters (AND logic)
+    if (advancedFilters.length > 0) {
+      const passesAllFilters = advancedFilters.every(filter => applyAdvancedFilter(company, filter));
+      if (!passesAllFilters) return false;
+    }
+    
+    // Apply regular filters
     const matchesSearch = 
       company.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.domain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.industry?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesOwner = !filterOwner || company.company_owner === filterOwner;
     const matchesStage = !filterStage || company.lifecycle_stage === filterStage;
+    const matchesIndustry = !filterIndustry || company.industry === filterIndustry;
     
-    return matchesSearch && matchesOwner && matchesStage;
+    return matchesSearch && matchesOwner && matchesStage && matchesIndustry;
   });
 
   // Pagination calculations
@@ -142,10 +251,9 @@ export default function Companies() {
     }
   };
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterOwner, filterStage]);
+  }, [searchTerm, filterOwner, filterStage, filterIndustry, activeStatFilter, advancedFilters]);
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -203,12 +311,15 @@ export default function Companies() {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2" style={{ color: "#555" }}>
               Companies
             </h1>
-            <p style={{ color: "#888" }}>{filteredCompanies.length} total companies</p>
+            <p style={{ color: "#888" }}>
+              {filteredCompanies.length} {activeStatFilter || advancedFilters.length > 0 ? 'filtered' : 'total'} companies
+            </p>
           </div>
           <div className="flex gap-3">
             <NeuroButton onClick={handleExport}>
@@ -228,16 +339,126 @@ export default function Companies() {
           </div>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <button
+            onClick={() => handleStatCardClick('all')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'all' && !advancedFilters.length ? 'ring-2 ring-blue-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Total Companies</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#4a90e2" }}>
+                  {companies.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to show all</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <Building2 className="w-6 h-6" style={{ color: "#4a90e2" }} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('new-week')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'new-week' ? 'ring-2 ring-orange-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>New This Week</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#fa8c16" }}>
+                  {newThisWeek.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <TrendingUp className="w-6 h-6" style={{ color: "#fa8c16" }} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('customers')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'customers' ? 'ring-2 ring-green-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Customers</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#52c41a" }}>
+                  {customers.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <DollarSign className="w-6 h-6" style={{ color: "#52c41a" }} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('large')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'large' ? 'ring-2 ring-purple-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Large (500+ employees)</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#722ed1" }}>
+                  {largeCompanies.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <Users className="w-6 h-6" style={{ color: "#722ed1" }} />
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Active Filter Indicator */}
+        {(activeStatFilter || advancedFilters.length > 0) && (
+          <NeuroCard className="mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-wrap">
+                {activeStatFilter && (
+                  <span className="ampvibe-button px-3 py-2 active">
+                    {activeStatFilter === 'all' ? 'All Companies' :
+                     activeStatFilter === 'new-week' ? 'New This Week' :
+                     activeStatFilter === 'customers' ? 'Customers Only' :
+                     activeStatFilter === 'large' ? 'Large Companies' : ''}
+                  </span>
+                )}
+                {advancedFilters.map((filter, index) => (
+                  <span key={`${filter.field}-${index}`} className="ampvibe-button px-3 py-2 active flex items-center gap-2">
+                    {filter.label} {filter.operator}{filter.value ? ` ${filter.value}` : ''}
+                    <button onClick={() => setAdvancedFilters(advancedFilters.filter((_, i) => i !== index))}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                <span style={{ color: "#888" }}>
+                  Showing {filteredCompanies.length} companies
+                </span>
+              </div>
+              <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+                <X className="w-4 h-4 mr-2" />
+                Clear All
+              </NeuroButton>
+            </div>
+          </NeuroCard>
+        )}
+
+        {/* Filters */}
         <NeuroCard className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: "#aaa" }} />
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 w-5 h-5 pointer-events-none" style={{ color: "#aaa" }} />
               <input
                 type="text"
                 placeholder="Search companies..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="neuro-input w-full pl-12"
+                className="ampvibe-input w-full pl-10"
+                style={{ paddingLeft: '2.5rem' }}
               />
             </div>
             <NeuroSelect
@@ -257,6 +478,22 @@ export default function Companies() {
                 { value: 'Evangelist', label: 'Evangelist' }
               ]}
             />
+            <NeuroSelect
+              placeholder="Filter by industry"
+              value={filterIndustry}
+              onChange={(e) => setFilterIndustry(e.target.value)}
+              options={[
+                { value: 'Technology', label: 'Technology' },
+                { value: 'Healthcare', label: 'Healthcare' },
+                { value: 'Finance', label: 'Finance' },
+                { value: 'Retail', label: 'Retail' },
+                { value: 'Manufacturing', label: 'Manufacturing' }
+              ]}
+            />
+            <NeuroButton onClick={() => setShowAdvancedFilters(true)} className="flex items-center justify-center gap-2">
+              <Filter className="w-4 h-4" />
+              Advanced Filters {advancedFilters.length > 0 && `(${advancedFilters.length})`}
+            </NeuroButton>
           </div>
         </NeuroCard>
 
@@ -318,6 +555,7 @@ export default function Companies() {
           </NeuroCard>
         )}
 
+        {/* Companies Table */}
         <NeuroCard>
           {isLoading ? (
             <div className="text-center py-12" style={{ color: "#aaa" }}>
@@ -325,11 +563,20 @@ export default function Companies() {
             </div>
           ) : filteredCompanies.length === 0 ? (
             <div className="text-center py-12">
-              <p className="mb-4" style={{ color: "#aaa" }}>No companies found</p>
-              <NeuroButton onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Company
-              </NeuroButton>
+              <p className="mb-4" style={{ color: "#aaa" }}>
+                {activeStatFilter || advancedFilters.length > 0 ? 'No companies match these filters' : 'No companies found'}
+              </p>
+              {(activeStatFilter || advancedFilters.length > 0) && (
+                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+                  Clear Filters
+                </NeuroButton>
+              )}
+              {!activeStatFilter && advancedFilters.length === 0 && (
+                <NeuroButton onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Company
+                </NeuroButton>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -416,6 +663,23 @@ export default function Companies() {
           </NeuroCard>
         )}
       </div>
+
+      {/* Advanced Filters Modal */}
+      <AdvancedFilters
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        onApplyFilters={(filters) => {
+          setAdvancedFilters(filters);
+          setActiveStatFilter(null);
+          setSearchTerm("");
+          setFilterOwner("");
+          setFilterStage("");
+          setFilterIndustry("");
+          setCurrentPage(1);
+          setShowAdvancedFilters(false);
+        }}
+        currentFilters={advancedFilters}
+      />
     </div>
   );
 }
