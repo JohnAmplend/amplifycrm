@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Save, Eye, Settings, Wand2, Plus, Search, GripVertical, Trash2, X } from "lucide-react";
+import { ArrowLeft, Save, Eye, Settings, Wand2, Plus, Search, GripVertical, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -52,7 +52,6 @@ export default function FormBuilder() {
     enabled: !!formId
   });
 
-  // Update form data when form loads
   useEffect(() => {
     if (form) {
       setFormData({
@@ -68,7 +67,6 @@ export default function FormBuilder() {
     }
   }, [form]);
 
-  // Update form fields when fields load
   useEffect(() => {
     if (fields && fields.length > 0) {
       setFormFields(fields.sort((a, b) => (a.field_order || 0) - (b.field_order || 0)));
@@ -87,7 +85,6 @@ export default function FormBuilder() {
         await base44.entities.Form.update(savedFormId, formData);
       }
 
-      // Delete removed fields first
       if (formId) {
         const existingFieldIds = fields.map(f => f.id);
         const currentFieldIds = formFields.map(f => f.id).filter(id => !id.toString().startsWith('temp-'));
@@ -98,7 +95,6 @@ export default function FormBuilder() {
         }
       }
 
-      // Save fields
       for (let i = 0; i < formFields.length; i++) {
         const field = formFields[i];
         const fieldData = {
@@ -199,7 +195,7 @@ export default function FormBuilder() {
 
   if (formLoading || (formId && fieldsLoading)) {
     return (
-      <div className="h-screen flex items-center justify-center" style={{ background: '#f5f8fa' }}>
+      <div className="h-screen flex items-center justify-center" style={{ background: '#f5f7fa' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p style={{ color: "#666" }}>Loading form...</p>
@@ -209,16 +205,49 @@ export default function FormBuilder() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: '#f5f8fa' }}>
+    <div className="h-screen flex flex-col" style={{ background: '#f5f7fa' }}>
+      <style>{`
+        .form-builder-input:focus {
+          outline: none;
+          border-color: #0066cc;
+        }
+        .property-button {
+          transition: all 0.2s ease;
+          border: 1px solid #e5e7eb;
+          background: white;
+        }
+        .property-button:hover {
+          background: #f9fafb;
+          border-color: #0066cc;
+        }
+        .field-card {
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          background: white;
+          transition: all 0.2s ease;
+        }
+        .field-card:hover {
+          border-color: #0066cc;
+          box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+        }
+        .field-actions {
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .field-card:hover .field-actions {
+          opacity: 1;
+        }
+      `}</style>
+
       {/* Top Bar */}
-      <div className="ampvibe-card border-b" style={{ borderColor: "#e0e0e0" }}>
+      <div className="bg-white border-b" style={{ borderColor: "#e5e7eb" }}>
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(createPageUrl("Forms"))}
-              className="ampvibe-button p-2"
+              className="p-2 rounded hover:bg-gray-100 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" style={{ color: "#6b7280" }} />
             </button>
             <div>
               <input
@@ -226,10 +255,10 @@ export default function FormBuilder() {
                 value={formData.form_name}
                 onChange={(e) => setFormData({ ...formData, form_name: e.target.value })}
                 placeholder="Untitled form"
-                className="text-xl font-bold bg-transparent border-none outline-none"
-                style={{ color: "#333", minWidth: "200px" }}
+                className="text-xl font-semibold bg-transparent border-none outline-none form-builder-input"
+                style={{ color: "#111827", minWidth: "250px" }}
               />
-              <p className="text-sm" style={{ color: "#888" }}>
+              <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>
                 {formId ? '✓ Auto-saved' : 'Not saved yet'}
               </p>
             </div>
@@ -237,29 +266,47 @@ export default function FormBuilder() {
           
           <div className="flex items-center gap-3">
             {formId && (
-              <NeuroButton onClick={() => navigate(createPageUrl("FormSubmissions") + `?form=${formId}`)}>
-                <Eye className="w-4 h-4 mr-2" />
+              <button
+                onClick={() => navigate(createPageUrl("FormSubmissions") + `?form=${formId}`)}
+                className="px-4 py-2 rounded-md border text-sm font-medium transition-colors"
+                style={{ 
+                  borderColor: "#e5e7eb",
+                  color: "#374151",
+                  background: "white"
+                }}
+              >
+                <Eye className="w-4 h-4 inline-block mr-2" />
                 View Submissions
-              </NeuroButton>
+              </button>
             )}
-            <NeuroButton variant="primary" onClick={handleSave} disabled={saveMutation.isLoading}>
-              <Save className="w-4 h-4 mr-2" />
+            <button
+              onClick={handleSave}
+              disabled={saveMutation.isLoading}
+              className="px-6 py-2 rounded-md text-sm font-medium text-white transition-colors"
+              style={{ 
+                background: saveMutation.isLoading ? "#9ca3af" : "#0066cc",
+                cursor: saveMutation.isLoading ? "not-allowed" : "pointer"
+              }}
+            >
+              <Save className="w-4 h-4 inline-block mr-2" />
               {saveMutation.isLoading ? 'Saving...' : 'Save'}
-            </NeuroButton>
+            </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-6 border-t" style={{ borderColor: "#e0e0e0" }}>
+        <div className="flex gap-8 px-6" style={{ borderTop: "1px solid #e5e7eb" }}>
           {['form', 'options', 'style', 'automation'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-3 text-sm font-medium transition-colors ${
-                activeTab === tab
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`px-1 py-3 text-sm font-medium transition-colors relative ${
+                activeTab === tab ? '' : ''
               }`}
+              style={{
+                color: activeTab === tab ? '#0066cc' : '#6b7280',
+                borderBottom: activeTab === tab ? '3px solid #0066cc' : '3px solid transparent'
+              }}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
@@ -272,32 +319,50 @@ export default function FormBuilder() {
         {activeTab === 'form' && (
           <>
             {/* Left Sidebar - Properties */}
-            <div className="w-80 bg-white border-r overflow-y-auto" style={{ borderColor: "#e0e0e0" }}>
+            <div className="w-80 bg-white border-r overflow-y-auto" style={{ borderColor: "#e5e7eb" }}>
               <div className="p-4">
                 <div className="flex gap-2 mb-4">
-                  <button className="flex-1 ampvibe-button px-3 py-2 text-sm active">
+                  <button 
+                    className="flex-1 px-3 py-2 text-xs font-medium rounded-md"
+                    style={{ 
+                      background: "#f3f4f6",
+                      color: "#111827",
+                      border: "1px solid #e5e7eb"
+                    }}
+                  >
                     Existing properties
                   </button>
-                  <button className="flex-1 ampvibe-button px-3 py-2 text-sm">
+                  <button 
+                    className="flex-1 px-3 py-2 text-xs font-medium rounded-md"
+                    style={{ 
+                      background: "white",
+                      color: "#6b7280",
+                      border: "1px solid #e5e7eb"
+                    }}
+                  >
                     Create new
                   </button>
                 </div>
 
                 {/* Search */}
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: "#aaa" }} />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: "#9ca3af" }} />
                   <input
                     type="text"
                     placeholder="Search for properties and fields"
                     value={searchProperty}
                     onChange={(e) => setSearchProperty(e.target.value)}
-                    className="ampvibe-input w-full pl-10 text-sm"
+                    className="w-full pl-10 pr-3 py-2 text-sm rounded-md border"
+                    style={{ 
+                      borderColor: "#e5e7eb",
+                      color: "#111827"
+                    }}
                   />
                 </div>
 
                 {/* Frequently Used Properties */}
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold mb-3" style={{ color: "#666" }}>
+                  <h3 className="text-xs font-semibold mb-3 uppercase tracking-wide" style={{ color: "#9ca3af" }}>
                     Frequently used properties
                   </h3>
                   <div className="space-y-1">
@@ -305,10 +370,10 @@ export default function FormBuilder() {
                       <button
                         key={prop.name}
                         onClick={() => addField(prop)}
-                        className="w-full ampvibe-button px-3 py-2 text-left flex items-center gap-3 text-sm hover:bg-blue-50"
+                        className="property-button w-full px-3 py-2.5 text-left flex items-center gap-3 text-sm rounded-md"
                       >
-                        <span className="text-lg">{prop.icon}</span>
-                        <span style={{ color: "#666" }}>{prop.label}</span>
+                        <span className="text-base">{prop.icon}</span>
+                        <span style={{ color: "#374151" }}>{prop.label}</span>
                       </button>
                     ))}
                   </div>
@@ -316,7 +381,7 @@ export default function FormBuilder() {
 
                 {/* Other Form Elements */}
                 <div>
-                  <h3 className="text-sm font-semibold mb-3" style={{ color: "#666" }}>
+                  <h3 className="text-xs font-semibold mb-3 uppercase tracking-wide" style={{ color: "#9ca3af" }}>
                     Other form elements
                   </h3>
                   <div className="space-y-1">
@@ -324,10 +389,10 @@ export default function FormBuilder() {
                       <button
                         key={prop.name}
                         onClick={() => addField(prop)}
-                        className="w-full ampvibe-button px-3 py-2 text-left flex items-center gap-3 text-sm hover:bg-blue-50"
+                        className="property-button w-full px-3 py-2.5 text-left flex items-center gap-3 text-sm rounded-md"
                       >
-                        <span className="text-lg">{prop.icon}</span>
-                        <span style={{ color: "#666" }}>{prop.label}</span>
+                        <span className="text-base">{prop.icon}</span>
+                        <span style={{ color: "#374151" }}>{prop.label}</span>
                       </button>
                     ))}
                   </div>
@@ -336,24 +401,27 @@ export default function FormBuilder() {
             </div>
 
             {/* Center - Form Preview */}
-            <div className="flex-1 overflow-y-auto p-8" style={{ background: '#f5f8fa' }}>
+            <div className="flex-1 overflow-y-auto p-8" style={{ background: '#f5f7fa' }}>
               <div className="max-w-2xl mx-auto">
                 {/* Form Preview Card */}
-                <div className="ampvibe-card p-8">
+                <div className="bg-white rounded-lg shadow-sm p-8 border" style={{ borderColor: "#e5e7eb" }}>
                   {/* Form Header */}
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl" style={{ background: "#0066cc" }}>
                         A
                       </div>
                       <div>
-                        <p className="font-bold" style={{ color: "#333" }}>AmplifyCRM</p>
-                        <p className="text-sm" style={{ color: "#888" }}>Get Started!</p>
+                        <p className="font-semibold" style={{ color: "#111827" }}>AmplifyCRM</p>
+                        <p className="text-sm" style={{ color: "#6b7280" }}>Get Started!</p>
                       </div>
                     </div>
                     
-                    <div className="border-l-4 border-cyan-500 pl-4 py-2 bg-cyan-50">
-                      <h2 className="text-2xl font-bold" style={{ color: "#333" }}>
+                    <div className="border-l-4 pl-4 py-2" style={{ 
+                      borderColor: "#06b6d4",
+                      background: "#ecfeff"
+                    }}>
+                      <h2 className="text-2xl font-bold" style={{ color: "#111827" }}>
                         {formData.form_name || "Untitled Form"}
                       </h2>
                     </div>
@@ -361,44 +429,51 @@ export default function FormBuilder() {
 
                   {/* Form Fields */}
                   {formFields.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed rounded-lg" style={{ borderColor: "#ddd" }}>
-                      <p className="text-lg mb-2" style={{ color: "#888" }}>
+                    <div className="text-center py-16 border-2 border-dashed rounded-lg" style={{ borderColor: "#e5e7eb" }}>
+                      <div className="text-4xl mb-3">📝</div>
+                      <p className="text-base font-medium mb-1" style={{ color: "#6b7280" }}>
                         Click on properties to add fields
                       </p>
-                      <p className="text-sm" style={{ color: "#aaa" }}>
+                      <p className="text-sm" style={{ color: "#9ca3af" }}>
                         Your form is empty. Add fields from the left sidebar.
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       {formFields.map((field, index) => (
-                        <div key={field.id} className="group">
-                          <div className="flex items-start gap-2">
+                        <div key={field.id} className="field-card p-4">
+                          <div className="flex items-start gap-3">
                             <div className="flex-1">
-                              <label className="block text-sm font-medium mb-2" style={{ color: "#333" }}>
+                              <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
                                 {field.field_label}
                                 {field.is_required && <span className="text-red-500 ml-1">*</span>}
                               </label>
                               
                               {field.field_type === 'Textarea' ? (
                                 <textarea
-                                  className="ampvibe-input w-full h-24"
+                                  className="w-full h-24 px-3 py-2 text-sm rounded-md border"
+                                  style={{ borderColor: "#e5e7eb", color: "#6b7280" }}
                                   placeholder={field.placeholder_text || `Enter ${field.field_label.toLowerCase()}`}
                                   disabled
                                 />
                               ) : field.field_type === 'Dropdown' ? (
-                                <select className="ampvibe-input w-full" disabled>
+                                <select 
+                                  className="w-full px-3 py-2 text-sm rounded-md border"
+                                  style={{ borderColor: "#e5e7eb", color: "#6b7280" }}
+                                  disabled
+                                >
                                   <option>Please Select</option>
                                 </select>
                               ) : field.field_type === 'Checkbox' || field.field_type === 'Radio' ? (
                                 <div className="flex items-center gap-2">
                                   <input type={field.field_type.toLowerCase()} disabled />
-                                  <span className="text-sm" style={{ color: "#666" }}>Option 1</span>
+                                  <span className="text-sm" style={{ color: "#6b7280" }}>Option 1</span>
                                 </div>
                               ) : (
                                 <input
                                   type={field.field_type === 'Email' ? 'email' : field.field_type === 'Phone' ? 'tel' : 'text'}
-                                  className="ampvibe-input w-full"
+                                  className="w-full px-3 py-2 text-sm rounded-md border"
+                                  style={{ borderColor: "#e5e7eb", color: "#6b7280" }}
                                   placeholder={field.placeholder_text || `Enter ${field.field_label.toLowerCase()}`}
                                   disabled
                                 />
@@ -406,28 +481,39 @@ export default function FormBuilder() {
                             </div>
 
                             {/* Field Actions */}
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="field-actions flex flex-col gap-1">
                               <button
                                 onClick={() => moveField(index, 'up')}
                                 disabled={index === 0}
-                                className="ampvibe-button p-2"
+                                className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+                                style={{ color: index === 0 ? "#d1d5db" : "#6b7280" }}
                                 title="Move up"
                               >
-                                <GripVertical className="w-4 h-4" />
+                                <ChevronUp className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => {
-                                  const required = !field.is_required;
-                                  updateField(field.id, { is_required: required });
-                                }}
-                                className={`ampvibe-button p-2 ${field.is_required ? 'text-red-600' : ''}`}
+                                onClick={() => moveField(index, 'down')}
+                                disabled={index === formFields.length - 1}
+                                className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+                                style={{ color: index === formFields.length - 1 ? "#d1d5db" : "#6b7280" }}
+                                title="Move down"
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => updateField(field.id, { is_required: !field.is_required })}
+                                className={`p-1.5 rounded hover:bg-gray-100 transition-colors font-bold ${
+                                  field.is_required ? 'text-red-600' : ''
+                                }`}
+                                style={{ color: field.is_required ? '#dc2626' : '#6b7280' }}
                                 title="Toggle required"
                               >
                                 *
                               </button>
                               <button
                                 onClick={() => removeField(field.id)}
-                                className="ampvibe-button p-2 text-red-600"
+                                className="p-1.5 rounded hover:bg-red-50 transition-colors"
+                                style={{ color: "#dc2626" }}
                                 title="Delete field"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -438,8 +524,12 @@ export default function FormBuilder() {
                       ))}
 
                       {/* Submit Button */}
-                      <div className="pt-4">
-                        <button className="ampvibe-button-primary px-6 py-3 w-full" disabled>
+                      <div className="pt-2">
+                        <button 
+                          className="w-full px-6 py-3 rounded-md text-sm font-medium text-white"
+                          style={{ background: "#0066cc" }}
+                          disabled
+                        >
                           Submit
                         </button>
                       </div>
@@ -454,8 +544,8 @@ export default function FormBuilder() {
         {activeTab === 'options' && (
           <div className="flex-1 overflow-y-auto p-8">
             <div className="max-w-2xl mx-auto">
-              <NeuroCard className="p-6">
-                <h2 className="text-xl font-bold mb-6" style={{ color: "#666" }}>Form Options</h2>
+              <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                <h2 className="text-xl font-bold mb-6" style={{ color: "#111827" }}>Form Options</h2>
                 
                 <div className="space-y-6">
                   <NeuroSelect
@@ -503,7 +593,7 @@ export default function FormBuilder() {
                     placeholder="email1@example.com, email2@example.com"
                   />
                 </div>
-              </NeuroCard>
+              </div>
             </div>
           </div>
         )}
@@ -511,10 +601,10 @@ export default function FormBuilder() {
         {activeTab === 'style' && (
           <div className="flex-1 overflow-y-auto p-8">
             <div className="max-w-2xl mx-auto">
-              <NeuroCard className="p-6">
-                <h2 className="text-xl font-bold mb-6" style={{ color: "#666" }}>Style & Preview</h2>
-                <p style={{ color: "#888" }}>Styling options coming soon...</p>
-              </NeuroCard>
+              <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                <h2 className="text-xl font-bold mb-6" style={{ color: "#111827" }}>Style & Preview</h2>
+                <p style={{ color: "#6b7280" }}>Styling options coming soon...</p>
+              </div>
             </div>
           </div>
         )}
@@ -522,10 +612,10 @@ export default function FormBuilder() {
         {activeTab === 'automation' && (
           <div className="flex-1 overflow-y-auto p-8">
             <div className="max-w-2xl mx-auto">
-              <NeuroCard className="p-6">
-                <h2 className="text-xl font-bold mb-6" style={{ color: "#666" }}>Automation</h2>
-                <p style={{ color: "#888" }}>Automation options coming soon...</p>
-              </NeuroCard>
+              <div className="bg-white rounded-lg shadow-sm p-6 border" style={{ borderColor: "#e5e7eb" }}>
+                <h2 className="text-xl font-bold mb-6" style={{ color: "#111827" }}>Automation</h2>
+                <p style={{ color: "#6b7280" }}>Automation options coming soon...</p>
+              </div>
             </div>
           </div>
         )}
