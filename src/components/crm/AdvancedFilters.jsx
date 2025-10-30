@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { X, Search, Calendar, Type, Hash, Tag, Mail, Phone, Building2, User, MapPin, TrendingUp, Clock } from "lucide-react";
 import NeuroButton from "./NeuroButton";
 
-export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, currentFilters = [] }) {
+export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, currentFilters = [], currentLogic = 'AND' }) {
   const [activeFilters, setActiveFilters] = useState(currentFilters);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterLogic, setFilterLogic] = useState(currentLogic);
 
   // Available filter properties organized by category
   const filterCategories = [
@@ -34,6 +35,8 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
       name: "Company Information",
       properties: [
         { id: "company_id", label: "Company", type: "text", icon: Building2 },
+        { id: "company_name", label: "Company Name", type: "text", icon: Building2 },
+        { id: "domain", label: "Domain", type: "text", icon: Type },
         { id: "industry", label: "Industry", type: "text", icon: Tag },
         { id: "number_of_employees", label: "Number of Employees", type: "number", icon: Hash },
         { id: "annual_revenue", label: "Annual Revenue", type: "number", icon: Hash },
@@ -45,6 +48,7 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
         { id: "lifecycle_stage", label: "Lifecycle Stage", type: "select", icon: TrendingUp, options: ['Subscriber', 'Lead', 'MQL', 'SQL', 'Opportunity', 'Customer'] },
         { id: "lead_status", label: "Lead Status", type: "select", icon: Tag, options: ['New', 'Attempting', 'Connected', 'Qualified', 'Unqualified'] },
         { id: "lead_source", label: "Lead Source", type: "text", icon: Type },
+        { id: "lead_score", label: "Lead Score", type: "number", icon: Hash },
         { id: "original_source", label: "Original Source", type: "text", icon: Type },
       ]
     },
@@ -71,13 +75,16 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
       properties: [
         { id: "deal_amount", label: "Deal Amount", type: "number", icon: Hash },
         { id: "close_date", label: "Close Date", type: "date", icon: Calendar },
-        { id: "deal_stage_name", label: "Deal Stage", type: "text", icon: Type },
+        { id: "deal_stage", label: "Deal Stage", type: "text", icon: Type },
+        { id: "deal_stage_name", label: "Deal Stage Name", type: "text", icon: Type },
       ]
     },
     {
       name: "Other",
       properties: [
         { id: "contact_owner", label: "Contact Owner", type: "text", icon: User },
+        { id: "company_owner", label: "Company Owner", type: "text", icon: User },
+        { id: "lead_owner", label: "Lead Owner", type: "text", icon: User },
         { id: "linkedin_url", label: "LinkedIn URL", type: "text", icon: Type },
         { id: "twitter_handle", label: "Twitter Handle", type: "text", icon: Type },
         { id: "time_zone", label: "Time Zone", type: "text", icon: Clock },
@@ -97,6 +104,7 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
     if (!activeFilters.find(f => f.id === property.id)) {
       setActiveFilters([...activeFilters, {
         id: property.id,
+        field: property.id,
         label: property.label,
         type: property.type,
         icon: property.icon,
@@ -118,7 +126,7 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
   };
 
   const handleApply = () => {
-    onApplyFilters(activeFilters.filter(f => f.value));
+    onApplyFilters(activeFilters.filter(f => f.value), filterLogic);
     onClose();
   };
 
@@ -152,6 +160,42 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
               )}
             </div>
 
+            {/* Filter Logic Selector */}
+            {activeFilters.length > 1 && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-medium mb-2" style={{ color: "#0066cc" }}>
+                  Match records that meet:
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFilterLogic('AND')}
+                    className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-all ${
+                      filterLogic === 'AND' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-white text-gray-700 border border-gray-300'
+                    }`}
+                  >
+                    ALL conditions (AND)
+                  </button>
+                  <button
+                    onClick={() => setFilterLogic('OR')}
+                    className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-all ${
+                      filterLogic === 'OR' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-white text-gray-700 border border-gray-300'
+                    }`}
+                  >
+                    ANY condition (OR)
+                  </button>
+                </div>
+                <p className="text-xs mt-2" style={{ color: "#6b7280" }}>
+                  {filterLogic === 'AND' 
+                    ? 'Records must match all filters below' 
+                    : 'Records matching any filter below will be shown'}
+                </p>
+              </div>
+            )}
+
             {activeFilters.length === 0 ? (
               <div className="text-center py-12" style={{ color: "#aaa" }}>
                 <p className="mb-2">No filters applied</p>
@@ -163,7 +207,11 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
                   <div key={filter.id} className="ampvibe-inset p-4 rounded-lg">
                     {index > 0 && (
                       <div className="text-center mb-3">
-                        <span className="ampvibe-button px-3 py-1 text-xs">AND</span>
+                        <span className={`ampvibe-button px-3 py-1 text-xs ${
+                          filterLogic === 'OR' ? 'bg-orange-100 text-orange-700' : ''
+                        }`}>
+                          {filterLogic}
+                        </span>
                       </div>
                     )}
                     
@@ -301,7 +349,7 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
               <h3 className="font-bold mb-2" style={{ color: "#666" }}>Advanced Filters</h3>
               <p className="text-sm" style={{ color: "#888" }}>
                 {activeFilters.length > 0 
-                  ? `${activeFilters.length} filter(s) applied` 
+                  ? `${activeFilters.length} filter(s) applied with ${filterLogic} logic` 
                   : "No advanced filters applied"}
               </p>
             </div>
