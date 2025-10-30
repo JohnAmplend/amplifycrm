@@ -52,6 +52,7 @@ import SyncStatus from './pages/SyncStatus';
 import EmailCampaignBuilder from './pages/EmailCampaignBuilder';
 import LeadScoring from './pages/LeadScoring';
 import AdvancedReports from './pages/AdvancedReports';
+import ABTesting from './pages/ABTesting';
 import Layout from './Layout.jsx';
 
 
@@ -110,6 +111,7 @@ export const PAGES = {
     "EmailCampaignBuilder": EmailCampaignBuilder,
     "LeadScoring": LeadScoring,
     "AdvancedReports": AdvancedReports,
+    "ABTesting": ABTesting,
 }
 
 export const pagesConfig = {
