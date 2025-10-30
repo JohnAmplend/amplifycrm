@@ -1,0 +1,149 @@
+{
+  "name": "Custom_Report",
+  "type": "object",
+  "properties": {
+    "report_name": {
+      "type": "string",
+      "description": "Name of the custom report"
+    },
+    "report_description": {
+      "type": "string",
+      "description": "Description of what the report shows"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "Contact",
+        "Company",
+        "Deal",
+        "Lead",
+        "Email_Campaign",
+        "Form",
+        "Form_Submission",
+        "Ticket",
+        "Task",
+        "Activity"
+      ],
+      "description": "Primary entity for the report"
+    },
+    "filters": {
+      "type": "object",
+      "description": "Filter conditions as JSON"
+    },
+    "fields_to_display": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Fields to show in report"
+    },
+    "chart_type": {
+      "type": "string",
+      "enum": [
+        "Table",
+        "Bar Chart",
+        "Line Chart",
+        "Pie Chart",
+        "Donut Chart",
+        "Area Chart",
+        "Scatter Plot",
+        "Funnel"
+      ],
+      "default": "Table",
+      "description": "Visualization type"
+    },
+    "grouping_field": {
+      "type": "string",
+      "description": "Field to group by"
+    },
+    "aggregation_type": {
+      "type": "string",
+      "enum": [
+        "Count",
+        "Sum",
+        "Average",
+        "Min",
+        "Max"
+      ],
+      "description": "How to aggregate data"
+    },
+    "aggregation_field": {
+      "type": "string",
+      "description": "Field to aggregate"
+    },
+    "sort_by": {
+      "type": "string",
+      "description": "Field to sort by"
+    },
+    "sort_direction": {
+      "type": "string",
+      "enum": [
+        "Ascending",
+        "Descending"
+      ],
+      "default": "Descending",
+      "description": "Sort direction"
+    },
+    "date_range_type": {
+      "type": "string",
+      "enum": [
+        "All Time",
+        "Today",
+        "This Week",
+        "This Month",
+        "This Quarter",
+        "This Year",
+        "Last 7 Days",
+        "Last 30 Days",
+        "Last 90 Days",
+        "Custom"
+      ],
+      "default": "Last 30 Days",
+      "description": "Date range for report"
+    },
+    "custom_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Custom start date"
+    },
+    "custom_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Custom end date"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this a favorite report"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Share with all users"
+    },
+    "dashboard_id": {
+      "type": "string",
+      "description": "Dashboard this report belongs to"
+    },
+    "position_x": {
+      "type": "number",
+      "description": "X position in dashboard"
+    },
+    "position_y": {
+      "type": "number",
+      "description": "Y position in dashboard"
+    },
+    "width": {
+      "type": "number",
+      "description": "Widget width"
+    },
+    "height": {
+      "type": "number",
+      "description": "Widget height"
+    }
+  },
+  "required": [
+    "report_name",
+    "entity_type"
+  ]
+}
