@@ -3,12 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Search, Plus, Download, Upload, X, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Download, Upload, X, RefreshCw, ChevronLeft, ChevronRight, UserPlus, TrendingUp, Award, AlertCircle, Filter } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import LeadForm from "../components/crm/LeadForm";
+import AdvancedFilters from "../components/crm/AdvancedFilters";
 
 export default function Leads() {
   const navigate = useNavigate();
@@ -19,6 +20,9 @@ export default function Leads() {
   const [filterSource, setFilterSource] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [activeStatFilter, setActiveStatFilter] = useState(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState([]);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,7 +102,110 @@ export default function Leads() {
     URL.revokeObjectURL(url);
   };
 
+  const handleStatCardClick = (filterType) => {
+    setSearchTerm("");
+    setFilterOwner("");
+    setFilterStatus("");
+    setFilterSource("");
+    setAdvancedFilters([]);
+    
+    if (activeStatFilter === filterType) {
+      setActiveStatFilter(null);
+    } else {
+      setActiveStatFilter(filterType);
+    }
+    
+    setCurrentPage(1);
+  };
+
+  const applyAdvancedFilter = (lead, filter) => {
+    const value = lead[filter.field];
+    const filterValue = filter.value;
+
+    switch (filter.operator) {
+      case 'contains':
+        return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+      case 'not_contains':
+        return !value?.toString().toLowerCase().includes(filterValue.toLowerCase());
+      case 'equals':
+        return value?.toString().toLowerCase() === filterValue.toLowerCase();
+      case 'not_equals':
+        return value?.toString().toLowerCase() !== filterValue.toLowerCase();
+      case 'starts_with':
+        return value?.toString().toLowerCase().startsWith(filterValue.toLowerCase());
+      case 'ends_with':
+        return value?.toString().toLowerCase().endsWith(filterValue.toLowerCase());
+      case 'is_empty':
+        return !value || value === '';
+      case 'is_not_empty':
+        return value && value !== '';
+      case 'greater_than':
+        return parseFloat(value) > parseFloat(filterValue);
+      case 'less_than':
+        return parseFloat(value) < parseFloat(filterValue);
+      case 'greater_or_equal':
+        return parseFloat(value) >= parseFloat(filterValue);
+      case 'less_or_equal':
+        return parseFloat(value) <= parseFloat(filterValue);
+      case 'is_after':
+        return new Date(value) > new Date(filterValue);
+      case 'is_before':
+        return new Date(value) < new Date(filterValue);
+      case 'in_last':
+        const daysAgo = new Date();
+        const amount = parseInt(filterValue);
+        const unit = filter.unit || 'days';
+        if (unit === 'days') daysAgo.setDate(daysAgo.getDate() - amount);
+        else if (unit === 'weeks') daysAgo.setDate(daysAgo.getDate() - (amount * 7));
+        else if (unit === 'months') daysAgo.setMonth(daysAgo.getMonth() - amount);
+        else if (unit === 'years') daysAgo.setFullYear(daysAgo.getFullYear() - amount);
+        return new Date(value) > daysAgo;
+      case 'in_next':
+        const daysAhead = new Date();
+        const amountAhead = parseInt(filterValue);
+        const unitAhead = filter.unit || 'days';
+        if (unitAhead === 'days') daysAhead.setDate(daysAhead.getDate() + amountAhead);
+        else if (unitAhead === 'weeks') daysAhead.setDate(daysAhead.getDate() + (amountAhead * 7));
+        else if (unitAhead === 'months') daysAhead.setMonth(daysAhead.getMonth() + amountAhead);
+        else if (unitAhead === 'years') daysAhead.setFullYear(daysAhead.getFullYear() + amountAhead);
+        return new Date(value) < daysAhead;
+      default:
+        return true;
+    }
+  };
+
+  // Stats calculations
+  const newThisWeek = leads.filter(l => {
+    const created = new Date(l.created_date);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return created > weekAgo;
+  });
+  const qualifiedLeads = leads.filter(l => l.lead_status === 'Qualified');
+  const highScoreLeads = leads.filter(l => l.lead_score && l.lead_score >= 75);
+
   const filteredLeads = leads.filter(lead => {
+    // Apply stat card filter
+    if (activeStatFilter === 'new-week') {
+      const created = new Date(lead.created_date);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      if (created <= weekAgo) return false;
+    } else if (activeStatFilter === 'qualified') {
+      if (lead.lead_status !== 'Qualified') return false;
+    } else if (activeStatFilter === 'high-score') {
+      if (!lead.lead_score || lead.lead_score < 75) return false;
+    } else if (activeStatFilter === 'all') {
+      // 'all' stat filter means no stat filter
+    }
+    
+    // Apply advanced filters (AND logic)
+    if (advancedFilters.length > 0) {
+      const passesAllFilters = advancedFilters.every(filter => applyAdvancedFilter(lead, filter));
+      if (!passesAllFilters) return false;
+    }
+    
+    // Apply regular filters
     const matchesSearch = 
       lead.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,10 +247,9 @@ export default function Leads() {
     }
   };
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterOwner, filterStatus, filterSource]);
+  }, [searchTerm, filterOwner, filterStatus, filterSource, activeStatFilter, advancedFilters]);
 
   const renderPageNumbers = () => {
     const pages = [];
@@ -201,13 +307,14 @@ export default function Leads() {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2" style={{ color: "#555" }}>
               Leads
             </h1>
             <p style={{ color: "#888" }}>
-              {filteredLeads.length} total leads • {filteredLeads.filter(l => !l.converted_contact_id).length} unconverted
+              {filteredLeads.length} {activeStatFilter || advancedFilters.length > 0 ? 'filtered' : 'total'} leads • {filteredLeads.filter(l => !l.converted_contact_id).length} unconverted
             </p>
           </div>
           <div className="flex gap-3">
@@ -228,16 +335,126 @@ export default function Leads() {
           </div>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <button
+            onClick={() => handleStatCardClick('all')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'all' && !advancedFilters.length ? 'ring-2 ring-blue-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Total Leads</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#4a90e2" }}>
+                  {leads.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to show all</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <UserPlus className="w-6 h-6" style={{ color: "#4a90e2" }} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('new-week')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'new-week' ? 'ring-2 ring-orange-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>New This Week</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#fa8c16" }}>
+                  {newThisWeek.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <TrendingUp className="w-6 h-6" style={{ color: "#fa8c16" }} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('qualified')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'qualified' ? 'ring-2 ring-green-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>Qualified</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#52c41a" }}>
+                  {qualifiedLeads.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <AlertCircle className="w-6 h-6" style={{ color: "#52c41a" }} />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleStatCardClick('high-score')}
+            className={`ampvibe-card p-6 text-left transition-all hover:scale-105 ${activeStatFilter === 'high-score' ? 'ring-2 ring-purple-500' : ''}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm mb-2 font-medium" style={{ color: "#888" }}>High Score (75+)</p>
+                <p className="text-3xl font-bold mb-1" style={{ color: "#722ed1" }}>
+                  {highScoreLeads.length}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>Click to filter</p>
+              </div>
+              <div className="ampvibe-inset p-3 rounded-xl">
+                <Award className="w-6 h-6" style={{ color: "#722ed1" }} />
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Active Filter Indicator */}
+        {(activeStatFilter || advancedFilters.length > 0) && (
+          <NeuroCard className="mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-wrap">
+                {activeStatFilter && (
+                  <span className="ampvibe-button px-3 py-2 active">
+                    {activeStatFilter === 'all' ? 'All Leads' :
+                     activeStatFilter === 'new-week' ? 'New This Week' :
+                     activeStatFilter === 'qualified' ? 'Qualified Leads' :
+                     activeStatFilter === 'high-score' ? 'High Score Leads' : ''}
+                  </span>
+                )}
+                {advancedFilters.map((filter, index) => (
+                  <span key={`${filter.field}-${index}`} className="ampvibe-button px-3 py-2 active flex items-center gap-2">
+                    {filter.label} {filter.operator}{filter.value ? ` ${filter.value}` : ''}
+                    <button onClick={() => setAdvancedFilters(advancedFilters.filter((_, i) => i !== index))}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                <span style={{ color: "#888" }}>
+                  Showing {filteredLeads.length} leads
+                </span>
+              </div>
+              <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+                <X className="w-4 h-4 mr-2" />
+                Clear All
+              </NeuroButton>
+            </div>
+          </NeuroCard>
+        )}
+
+        {/* Filters */}
         <NeuroCard className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: "#aaa" }} />
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 w-5 h-5 pointer-events-none" style={{ color: "#aaa" }} />
               <input
                 type="text"
                 placeholder="Search leads..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="neuro-input w-full pl-12"
+                className="ampvibe-input w-full pl-10"
+                style={{ paddingLeft: '2.5rem' }}
               />
             </div>
             <NeuroSelect
@@ -272,6 +489,10 @@ export default function Leads() {
                 { value: 'Form', label: 'Form' }
               ]}
             />
+            <NeuroButton onClick={() => setShowAdvancedFilters(true)} className="flex items-center justify-center gap-2">
+              <Filter className="w-4 h-4" />
+              Advanced Filters {advancedFilters.length > 0 && `(${advancedFilters.length})`}
+            </NeuroButton>
           </div>
         </NeuroCard>
 
@@ -333,6 +554,7 @@ export default function Leads() {
           </NeuroCard>
         )}
 
+        {/* Leads Table */}
         <NeuroCard>
           {isLoading ? (
             <div className="text-center py-12" style={{ color: "#aaa" }}>
@@ -340,11 +562,20 @@ export default function Leads() {
             </div>
           ) : filteredLeads.length === 0 ? (
             <div className="text-center py-12">
-              <p className="mb-4" style={{ color: "#aaa" }}>No leads found</p>
-              <NeuroButton onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Lead
-              </NeuroButton>
+              <p className="mb-4" style={{ color: "#aaa" }}>
+                {activeStatFilter || advancedFilters.length > 0 ? 'No leads match these filters' : 'No leads found'}
+              </p>
+              {(activeStatFilter || advancedFilters.length > 0) && (
+                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); }}>
+                  Clear Filters
+                </NeuroButton>
+              )}
+              {!activeStatFilter && advancedFilters.length === 0 && (
+                <NeuroButton onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Lead
+                </NeuroButton>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -453,6 +684,23 @@ export default function Leads() {
           </NeuroCard>
         )}
       </div>
+
+      {/* Advanced Filters Modal */}
+      <AdvancedFilters
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        onApplyFilters={(filters) => {
+          setAdvancedFilters(filters);
+          setActiveStatFilter(null);
+          setSearchTerm("");
+          setFilterOwner("");
+          setFilterStatus("");
+          setFilterSource("");
+          setCurrentPage(1);
+          setShowAdvancedFilters(false);
+        }}
+        currentFilters={advancedFilters}
+      />
     </div>
   );
 }
