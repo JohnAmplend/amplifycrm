@@ -32,7 +32,8 @@ import {
   Menu,
   X,
   ChevronDown,
-  RefreshCw // Added RefreshCw icon
+  RefreshCw, // Added RefreshCw icon
+  Plus // Added Plus icon for new campaign
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -84,7 +85,8 @@ export default function Layout({ children, currentPageName }) {
           title: 'Data Management',
           items: [
             { name: "Import", icon: Upload, page: "Import" },
-            { name: "Documents", icon: FileText, page: "Documents" }
+            { name: "Documents", icon: FileText, page: "Documents" },
+            { name: "Lead Scoring", icon: Target, page: "LeadScoring" }
           ]
         }
       ]
@@ -95,6 +97,7 @@ export default function Layout({ children, currentPageName }) {
           title: 'Email Marketing',
           items: [
             { name: "Campaigns", icon: Send, page: "Campaigns" },
+            { name: "Create Campaign", icon: Plus, page: "EmailCampaignBuilder" },
             { name: "Email Templates", icon: Mail, page: "EmailTemplates" },
             { name: "Sequences", icon: Layers, page: "EmailSequences" },
             { name: "Contact Lists", icon: List, page: "ContactLists" }
@@ -135,6 +138,7 @@ export default function Layout({ children, currentPageName }) {
         {
           title: 'Reporting',
           items: [
+            { name: "Advanced Reports", icon: BarChart, page: "AdvancedReports" },
             { name: "Dashboards", icon: LayoutDashboard, page: "Dashboards" },
             { name: "Reports", icon: BarChart, page: "Reports" },
             { name: "Goals", icon: Target, page: "Goals" }
