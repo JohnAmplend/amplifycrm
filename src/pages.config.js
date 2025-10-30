@@ -49,6 +49,7 @@ import ReportViewer from './pages/ReportViewer';
 import DashboardViewer from './pages/DashboardViewer';
 import HubSpotSync from './pages/HubSpotSync';
 import SyncStatus from './pages/SyncStatus';
+import EmailCampaignBuilder from './pages/EmailCampaignBuilder';
 import Layout from './Layout.jsx';
 
 
@@ -104,6 +105,7 @@ export const PAGES = {
     "DashboardViewer": DashboardViewer,
     "HubSpotSync": HubSpotSync,
     "SyncStatus": SyncStatus,
+    "EmailCampaignBuilder": EmailCampaignBuilder,
 }
 
 export const pagesConfig = {
