@@ -36,7 +36,8 @@ import {
   Plus, // Added Plus icon for new campaign
   TestTube2, // Added TestTube2 icon for A/B Testing
   Shield, // Added Shield icon for Roles & Permissions
-  Sparkles // Added Sparkles icon for Data Enrichment
+  Sparkles, // Added Sparkles icon for Data Enrichment
+  User as UserIcon // Added UserIcon for profile
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -312,18 +313,22 @@ export default function Layout({ children, currentPageName }) {
 
             {user && (
               <div className="hidden md:flex items-center gap-3">
-                <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center" style={{
-                  background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
-                  border: '2px solid rgba(255, 255, 255, 0.5)'
-                }}>
-                  <span className="font-semibold text-white text-sm">
-                    {user.full_name?.charAt(0) || user.email?.charAt(0)}
-                  </span>
-                </div>
+                <Link to={createPageUrl("UserProfile")}>
+                  <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" style={{
+                    background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
+                    border: '2px solid rgba(255, 255, 255, 0.5)'
+                  }}>
+                    <span className="font-semibold text-white text-sm">
+                      {user.full_name?.charAt(0) || user.email?.charAt(0)}
+                    </span>
+                  </div>
+                </Link>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "#333" }}>
-                    {user.full_name || "User"}
-                  </p>
+                  <Link to={createPageUrl("UserProfile")}>
+                    <p className="text-sm font-medium truncate hover:opacity-80 transition-opacity cursor-pointer" style={{ color: "#333" }}>
+                      {user.full_name || "User"}
+                    </p>
+                  </Link>
                   <p className="text-xs truncate" style={{ color: "#666" }}>
                     {user.role || "User"}
                   </p>
@@ -378,7 +383,11 @@ export default function Layout({ children, currentPageName }) {
 
             {user && (
               <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-                <div className="flex items-center gap-3 mb-3">
+                <Link
+                  to={createPageUrl("UserProfile")}
+                  className="flex items-center gap-3 mb-3"
+                  onClick={() => setShowMobileMenu(false)}
+                >
                   <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center" style={{
                     background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
                     border: '2px solid rgba(255, 255, 255, 0.5)'
@@ -395,7 +404,15 @@ export default function Layout({ children, currentPageName }) {
                       {user.role || "User"}
                     </p>
                   </div>
-                </div>
+                </Link>
+                <Link
+                  to={createPageUrl("UserProfile")}
+                  className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2 mb-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <UserIcon className="w-4 h-4" />
+                  <span className="text-sm">Account Settings</span>
+                </Link>
                 <button onClick={handleLogout} className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2">
                   <LogOut className="w-4 h-4" />
                   <span className="text-sm">Logout</span>
