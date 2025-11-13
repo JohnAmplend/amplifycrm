@@ -10,12 +10,11 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Check if API key is set
         const apiKey = Deno.env.get("OPENAI_API_KEY");
         if (!apiKey) {
             return Response.json({ 
                 error: 'OpenAI API key not configured',
-                details: 'Please set the OPENAI_API_KEY environment variable in your app settings.'
+                details: 'Please set the OPENAI_API_KEY environment variable.'
             }, { status: 500 });
         }
 
@@ -26,94 +25,61 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Prompt is required' }, { status: 400 });
         }
 
-        const openai = new OpenAI({
-            apiKey: apiKey,
-        });
+        const openai = new OpenAI({ apiKey: apiKey });
 
         let systemPrompt = "You are an AI assistant integrated into AmplifyCRM. You help users with CRM tasks, data analysis, email writing, and business insights.";
-        let messages = [];
+        let userPrompt = prompt;
 
         switch (action) {
-            case "chat":
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: prompt }
-                ];
-                break;
-
             case "draft_email":
                 systemPrompt = "You are a professional email writer. Create clear, concise, and professional emails based on the user's requirements. Format the output as JSON with 'subject' and 'body' fields.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Create an email with the following details:\n${prompt}\n\nContext: ${JSON.stringify(context || {})}` }
-                ];
+                userPrompt = `Create an email with the following details:\n${prompt}\n\nContext: ${JSON.stringify(context || {})}`;
                 break;
 
             case "summarize_contact":
                 systemPrompt = "You are a CRM data analyst. Analyze contact information and provide a concise, actionable summary highlighting key insights, engagement patterns, and recommended next steps.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Summarize this contact:\n${JSON.stringify(context)}` }
-                ];
+                userPrompt = `Summarize this contact:\n${JSON.stringify(context)}`;
                 break;
 
             case "summarize_deal":
                 systemPrompt = "You are a sales analyst. Analyze deal information and provide insights on deal health, potential risks, and recommendations to move it forward.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Analyze this deal:\n${JSON.stringify(context)}` }
-                ];
+                userPrompt = `Analyze this deal:\n${JSON.stringify(context)}`;
                 break;
 
             case "analyze_data":
                 systemPrompt = "You are a business intelligence analyst. Analyze the provided data and generate insights, trends, and actionable recommendations.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Analyze this data:\n${JSON.stringify(context)}\n\nUser question: ${prompt}` }
-                ];
+                userPrompt = `Analyze this data:\n${JSON.stringify(context)}\n\nUser question: ${prompt}`;
                 break;
 
             case "generate_task_list":
                 systemPrompt = "You are a productivity expert. Based on the provided context, generate a prioritized list of tasks. Format as a JSON array of objects with 'task_name', 'priority', and 'description' fields.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Generate tasks for:\n${prompt}\n\nContext: ${JSON.stringify(context || {})}` }
-                ];
+                userPrompt = `Generate tasks for:\n${prompt}\n\nContext: ${JSON.stringify(context || {})}`;
                 break;
 
             case "extract_insights":
                 systemPrompt = "You are a conversation analyst. Extract key insights, action items, and important details from the provided text.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Extract insights from:\n${prompt}` }
-                ];
+                userPrompt = `Extract insights from:\n${prompt}`;
                 break;
 
             case "suggest_next_steps":
                 systemPrompt = "You are a sales strategist. Based on the current situation, suggest specific next steps to advance the relationship or close the deal.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Current situation:\n${JSON.stringify(context)}\n\nAdditional info: ${prompt}` }
-                ];
+                userPrompt = `Current situation:\n${JSON.stringify(context)}\n\nAdditional info: ${prompt}`;
                 break;
 
             case "rewrite_content":
                 systemPrompt = "You are a professional copywriter. Rewrite the provided content according to the user's specifications while maintaining the core message.";
-                messages = [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Rewrite this:\n${prompt}\n\nInstructions: ${context?.instructions || 'Make it more professional'}` }
-                ];
+                userPrompt = `Rewrite this:\n${prompt}\n\nInstructions: ${context?.instructions || 'Make it more professional'}`;
                 break;
-
-            default:
-                return Response.json({ error: 'Invalid action' }, { status: 400 });
         }
 
         const needsJSON = ["draft_email", "generate_task_list"].includes(action);
 
         const requestOptions = {
             model: model,
-            messages: messages,
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt }
+            ],
             temperature: 0.7,
             max_tokens: 2000
         };
@@ -126,8 +92,7 @@ Deno.serve(async (req) => {
 
         if (!response || !response.choices || !response.choices[0]) {
             return Response.json({ 
-                error: 'Invalid response from OpenAI',
-                details: 'The API returned an unexpected response format.'
+                error: 'Invalid response from OpenAI'
             }, { status: 500 });
         }
 
@@ -156,14 +121,14 @@ Deno.serve(async (req) => {
         console.error('AI Assistant Error:', error);
         
         let errorMessage = 'Failed to process AI request';
-        let errorDetails = error.toString();
+        let errorDetails = error.message || error.toString();
         
         if (error.message?.includes('API key')) {
             errorMessage = 'Invalid OpenAI API key';
-            errorDetails = 'Please check that your OPENAI_API_KEY is valid and has sufficient credits.';
+            errorDetails = 'Please check that your OPENAI_API_KEY is valid.';
         } else if (error.message?.includes('rate_limit')) {
             errorMessage = 'Rate limit exceeded';
-            errorDetails = 'Please wait a moment and try again.';
+            errorDetails = 'Please wait and try again.';
         } else if (error.message?.includes('insufficient_quota')) {
             errorMessage = 'Insufficient OpenAI credits';
             errorDetails = 'Please add credits to your OpenAI account.';
@@ -171,8 +136,7 @@ Deno.serve(async (req) => {
         
         return Response.json({ 
             error: errorMessage,
-            details: errorDetails,
-            originalError: error.message
+            details: errorDetails
         }, { status: 500 });
     }
 });
