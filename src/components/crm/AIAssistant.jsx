@@ -129,8 +129,8 @@ export default function AIAssistant() {
   return (
     <div className="fixed bottom-6 right-6 z-50" style={{ width: "420px", maxWidth: "calc(100vw - 48px)" }}>
       <NeuroCard className="flex flex-col" style={{ height: "600px", maxHeight: "calc(100vh - 100px)" }}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+        {/* Header - Fixed at top */}
+        <div className="flex items-center justify-between p-4 border-b flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
           <div className="flex items-center gap-3">
             <div className="ampvibe-button-primary p-2 rounded-lg">
               <Sparkles className="w-5 h-5" />
@@ -150,8 +150,8 @@ export default function AIAssistant() {
           </div>
         </div>
 
-        {/* Action Selector */}
-        <div className="p-3 border-b overflow-x-auto" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+        {/* Action Selector - Fixed below header */}
+        <div className="p-3 border-b overflow-x-auto flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
           <div className="flex gap-2">
             {aiActions.map(action => {
               const Icon = action.icon;
@@ -172,8 +172,8 @@ export default function AIAssistant() {
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Messages - Scrollable area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {messages.length === 0 && (
             <div className="text-center py-8">
               <Sparkles className="w-12 h-12 mx-auto mb-4" style={{ color: "#00A86B" }} />
@@ -233,8 +233,8 @@ export default function AIAssistant() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-4 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+        {/* Input - Fixed at bottom */}
+        <div className="p-4 border-t flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
           <div className="flex gap-2">
             <textarea
               value={inputValue}
