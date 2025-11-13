@@ -1,14 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useNavigate } from "react-router-dom";
 import { 
   Sparkles, Send, Loader2, Plus, Trash2, Download,
-  MessageSquare, Bot, User, Copy, Check, RotateCcw
+  MessageSquare, Bot, User, Copy, Check, RotateCcw, X
 } from "lucide-react";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { createPageUrl } from "@/utils";
 
 export default function AmplifyAI() {
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState([
     { id: 1, name: "New Chat", messages: [] }
   ]);
@@ -54,14 +57,12 @@ export default function AmplifyAI() {
       timestamp: new Date().toISOString()
     };
 
-    // Update conversation with user message
     setConversations(prev => prev.map(conv => 
       conv.id === activeConversationId 
         ? { ...conv, messages: [...conv.messages, userMessage] }
         : conv
     ));
 
-    // Update conversation name if it's the first message
     if (activeConversation.messages.length === 0) {
       const conversationName = inputValue.slice(0, 50) + (inputValue.length > 50 ? "..." : "");
       setConversations(prev => prev.map(conv =>
@@ -168,6 +169,10 @@ export default function AmplifyAI() {
     URL.revokeObjectURL(url);
   };
 
+  const handleClose = () => {
+    navigate(createPageUrl("Dashboard"));
+  };
+
   return (
     <div className="h-screen flex" style={{ background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)' }}>
       {/* Sidebar */}
@@ -178,14 +183,23 @@ export default function AmplifyAI() {
       }}>
         {/* Header */}
         <div className="p-4 border-b" style={{ borderColor: 'rgba(30, 58, 138, 0.1)' }}>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="ampvibe-button-primary p-3 rounded-xl">
-              <Sparkles className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="ampvibe-button-primary p-3 rounded-xl">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold" style={{ color: "#666" }}>Amplify AI</h2>
+                <p className="text-xs" style={{ color: "#aaa" }}>Powered by ChatGPT</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold" style={{ color: "#666" }}>Amplify AI</h2>
-              <p className="text-xs" style={{ color: "#aaa" }}>Powered by ChatGPT</p>
-            </div>
+            <button
+              onClick={handleClose}
+              className="ampvibe-button p-2 hover:bg-red-50 transition-colors"
+              title="Close"
+            >
+              <X className="w-5 h-5" style={{ color: "#666" }} />
+            </button>
           </div>
           <NeuroButton onClick={createNewConversation} className="w-full flex items-center justify-center gap-2">
             <Plus className="w-4 h-4" />
@@ -304,7 +318,6 @@ export default function AmplifyAI() {
                   key={msg.id}
                   className="flex gap-4 items-start"
                 >
-                  {/* Avatar */}
                   <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
                     msg.role === 'user' 
                       ? 'ampvibe-inset' 
@@ -317,7 +330,6 @@ export default function AmplifyAI() {
                     )}
                   </div>
 
-                  {/* Message Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-bold text-sm" style={{ color: "#666" }}>
