@@ -10,15 +10,24 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Check if API key is set
+        const apiKey = Deno.env.get("OPENAI_API_KEY");
+        if (!apiKey) {
+            return Response.json({ 
+                error: 'OpenAI API key not configured',
+                details: 'Please set the OPENAI_API_KEY environment variable in your app settings.'
+            }, { status: 500 });
+        }
+
         const body = await req.json();
-        const { action, prompt, context, model = "gpt-4o-mini" } = body;
+        const { action = "chat", prompt, context, model = "gpt-4o-mini" } = body;
 
         if (!prompt) {
             return Response.json({ error: 'Prompt is required' }, { status: 400 });
         }
 
         const openai = new OpenAI({
-            apiKey: Deno.env.get("OPENAI_API_KEY"),
+            apiKey: apiKey,
         });
 
         let systemPrompt = "You are an AI assistant integrated into AmplifyCRM. You help users with CRM tasks, data analysis, email writing, and business insights.";
@@ -26,7 +35,6 @@ Deno.serve(async (req) => {
 
         switch (action) {
             case "chat":
-                // General chat assistant
                 messages = [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: prompt }
@@ -34,7 +42,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "draft_email":
-                // Draft email based on context
                 systemPrompt = "You are a professional email writer. Create clear, concise, and professional emails based on the user's requirements. Format the output as JSON with 'subject' and 'body' fields.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -43,7 +50,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "summarize_contact":
-                // Summarize contact information
                 systemPrompt = "You are a CRM data analyst. Analyze contact information and provide a concise, actionable summary highlighting key insights, engagement patterns, and recommended next steps.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -52,7 +58,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "summarize_deal":
-                // Summarize deal information
                 systemPrompt = "You are a sales analyst. Analyze deal information and provide insights on deal health, potential risks, and recommendations to move it forward.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -61,7 +66,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "analyze_data":
-                // Analyze data patterns
                 systemPrompt = "You are a business intelligence analyst. Analyze the provided data and generate insights, trends, and actionable recommendations.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -70,7 +74,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "generate_task_list":
-                // Generate task list based on context
                 systemPrompt = "You are a productivity expert. Based on the provided context, generate a prioritized list of tasks. Format as a JSON array of objects with 'task_name', 'priority', and 'description' fields.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -79,7 +82,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "extract_insights":
-                // Extract insights from conversation or notes
                 systemPrompt = "You are a conversation analyst. Extract key insights, action items, and important details from the provided text.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -88,7 +90,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "suggest_next_steps":
-                // Suggest next steps for a deal or contact
                 systemPrompt = "You are a sales strategist. Based on the current situation, suggest specific next steps to advance the relationship or close the deal.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -97,7 +98,6 @@ Deno.serve(async (req) => {
                 break;
 
             case "rewrite_content":
-                // Rewrite content in a different tone
                 systemPrompt = "You are a professional copywriter. Rewrite the provided content according to the user's specifications while maintaining the core message.";
                 messages = [
                     { role: "system", content: systemPrompt },
@@ -109,7 +109,6 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'Invalid action' }, { status: 400 });
         }
 
-        // Check if we need JSON response
         const needsJSON = ["draft_email", "generate_task_list"].includes(action);
 
         const requestOptions = {
@@ -125,15 +124,20 @@ Deno.serve(async (req) => {
 
         const response = await openai.chat.completions.create(requestOptions);
 
+        if (!response || !response.choices || !response.choices[0]) {
+            return Response.json({ 
+                error: 'Invalid response from OpenAI',
+                details: 'The API returned an unexpected response format.'
+            }, { status: 500 });
+        }
+
         const aiResponse = response.choices[0].message.content;
 
-        // Parse JSON if needed
         let parsedResponse = aiResponse;
         if (needsJSON) {
             try {
                 parsedResponse = JSON.parse(aiResponse);
             } catch (e) {
-                // If JSON parsing fails, return as text
                 parsedResponse = { content: aiResponse };
             }
         }
@@ -142,18 +146,33 @@ Deno.serve(async (req) => {
             success: true,
             response: parsedResponse,
             usage: {
-                prompt_tokens: response.usage.prompt_tokens,
-                completion_tokens: response.usage.completion_tokens,
-                total_tokens: response.usage.total_tokens
+                prompt_tokens: response.usage?.prompt_tokens || 0,
+                completion_tokens: response.usage?.completion_tokens || 0,
+                total_tokens: response.usage?.total_tokens || 0
             }
         });
 
     } catch (error) {
         console.error('AI Assistant Error:', error);
+        
+        let errorMessage = 'Failed to process AI request';
+        let errorDetails = error.toString();
+        
+        if (error.message?.includes('API key')) {
+            errorMessage = 'Invalid OpenAI API key';
+            errorDetails = 'Please check that your OPENAI_API_KEY is valid and has sufficient credits.';
+        } else if (error.message?.includes('rate_limit')) {
+            errorMessage = 'Rate limit exceeded';
+            errorDetails = 'Please wait a moment and try again.';
+        } else if (error.message?.includes('insufficient_quota')) {
+            errorMessage = 'Insufficient OpenAI credits';
+            errorDetails = 'Please add credits to your OpenAI account.';
+        }
+        
         return Response.json({ 
-            error: error.message || 'Failed to process AI request',
-            details: error.toString(),
-            stack: error.stack
+            error: errorMessage,
+            details: errorDetails,
+            originalError: error.message
         }, { status: 500 });
     }
 });
