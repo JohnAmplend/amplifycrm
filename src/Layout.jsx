@@ -40,6 +40,7 @@ import {
   User as UserIcon // Added UserIcon for profile
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import AIAssistant from "../components/crm/AIAssistant";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -425,6 +426,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">{children}</div>
+
+      {/* AI Assistant - Global */}
+      <AIAssistant />
     </div>
   );
 }
