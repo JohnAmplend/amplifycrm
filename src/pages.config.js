@@ -57,6 +57,7 @@ import CustomReportBuilder from './pages/CustomReportBuilder';
 import RolesPermissions from './pages/RolesPermissions';
 import DataEnrichment from './pages/DataEnrichment';
 import UserProfile from './pages/UserProfile';
+import AmplifyAI from './pages/AmplifyAI';
 import Layout from './Layout.jsx';
 
 
@@ -120,6 +121,7 @@ export const PAGES = {
     "RolesPermissions": RolesPermissions,
     "DataEnrichment": DataEnrichment,
     "UserProfile": UserProfile,
+    "AmplifyAI": AmplifyAI,
 }
 
 export const pagesConfig = {

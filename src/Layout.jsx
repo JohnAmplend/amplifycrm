@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -134,6 +135,12 @@ export default function Layout({ children, currentPageName }) {
           items: [
             { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
             { name: "SLA Policies", icon: Clock, page: "SLAPolicies" }
+          ]
+        },
+        {
+          title: 'AI Assistant',
+          items: [
+            { name: "Amplify AI", icon: Sparkles, page: "AmplifyAI" }
           ]
         }
       ]
