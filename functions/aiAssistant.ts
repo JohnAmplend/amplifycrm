@@ -1,9 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-import OpenAI from 'npm:openai';
-
-const openai = new OpenAI({
-    apiKey: Deno.env.get("OPENAI_API_KEY"),
-});
+import OpenAI from 'npm:openai@4.47.1';
 
 Deno.serve(async (req) => {
     try {
@@ -14,7 +10,16 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { action, prompt, context, model = "gpt-4o-mini" } = await req.json();
+        const body = await req.json();
+        const { action, prompt, context, model = "gpt-4o-mini" } = body;
+
+        if (!prompt) {
+            return Response.json({ error: 'Prompt is required' }, { status: 400 });
+        }
+
+        const openai = new OpenAI({
+            apiKey: Deno.env.get("OPENAI_API_KEY"),
+        });
 
         let systemPrompt = "You are an AI assistant integrated into AmplifyCRM. You help users with CRM tasks, data analysis, email writing, and business insights.";
         let messages = [];
@@ -107,15 +112,18 @@ Deno.serve(async (req) => {
         // Check if we need JSON response
         const needsJSON = ["draft_email", "generate_task_list"].includes(action);
 
-        const response = await openai.chat.completions.create({
+        const requestOptions = {
             model: model,
             messages: messages,
             temperature: 0.7,
-            max_tokens: 2000,
-            ...(needsJSON && {
-                response_format: { type: "json_object" }
-            })
-        });
+            max_tokens: 2000
+        };
+
+        if (needsJSON) {
+            requestOptions.response_format = { type: "json_object" };
+        }
+
+        const response = await openai.chat.completions.create(requestOptions);
 
         const aiResponse = response.choices[0].message.content;
 
@@ -144,7 +152,8 @@ Deno.serve(async (req) => {
         console.error('AI Assistant Error:', error);
         return Response.json({ 
             error: error.message || 'Failed to process AI request',
-            details: error.toString()
+            details: error.toString(),
+            stack: error.stack
         }, { status: 500 });
     }
 });
