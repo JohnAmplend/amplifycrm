@@ -174,7 +174,10 @@ export default function AmplifyAI() {
   };
 
   return (
-    <div className="h-screen flex" style={{ background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)' }}>
+    <div className="fixed inset-0 flex" style={{ 
+      background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)',
+      zIndex: 50
+    }}>
       {/* Sidebar */}
       <div className="w-80 border-r flex flex-col" style={{ 
         background: 'rgba(255, 255, 255, 0.5)',
@@ -253,9 +256,9 @@ export default function AmplifyAI() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <div className="ampvibe-card m-4 mb-0 p-4 flex items-center justify-between">
+        <div className="ampvibe-card m-4 mb-0 p-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <Bot className="w-5 h-5" style={{ color: "#00A86B" }} />
             <div>
@@ -395,7 +398,7 @@ export default function AmplifyAI() {
         </div>
 
         {/* Input Area */}
-        <div className="p-6 border-t" style={{ 
+        <div className="p-6 border-t flex-shrink-0" style={{ 
           borderColor: 'rgba(30, 58, 138, 0.1)',
           background: 'rgba(255, 255, 255, 0.5)',
           backdropFilter: 'blur(20px)'
