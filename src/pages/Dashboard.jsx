@@ -3,12 +3,18 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Users, Building2, DollarSign, UserPlus, Plus, ArrowRight } from "lucide-react";
+import { Users, Building2, DollarSign, UserPlus, Plus, ArrowRight, Sparkles, TrendingUp, DollarSignIcon } from "lucide-react";
 import StatCard from "../components/crm/StatCard";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 
 export default function Dashboard() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
   const { data: contacts = [] } = useQuery({
     queryKey: ['contacts'],
     queryFn: () => base44.entities.Contact.list()
@@ -39,6 +45,13 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Task.list()
   });
 
+  // Fetch token usage data - only for admin users
+  const { data: tokenUsage = [] } = useQuery({
+    queryKey: ['token-usage'],
+    queryFn: () => base44.entities.Token_Usage.list('-created_date', 100),
+    enabled: user?.role === 'admin'
+  });
+
   const totalDealValue = deals.reduce((sum, deal) => sum + (deal.deal_amount || 0), 0);
   const todaysTasks = tasks.filter(task => {
     if (!task.due_date) return false;
@@ -51,6 +64,61 @@ export default function Dashboard() {
     acc[deal.deal_stage] = (acc[deal.deal_stage] || 0) + 1;
     return acc;
   }, {});
+
+  // Calculate token usage statistics
+  const tokenStats = {
+    totalTokens: tokenUsage.reduce((sum, usage) => sum + (usage.total_tokens || 0), 0),
+    totalCost: tokenUsage.reduce((sum, usage) => sum + (usage.estimated_cost || 0), 0),
+    todayTokens: tokenUsage
+      .filter(usage => new Date(usage.created_date).toDateString() === new Date().toDateString())
+      .reduce((sum, usage) => sum + (usage.total_tokens || 0), 0),
+    todayCost: tokenUsage
+      .filter(usage => new Date(usage.created_date).toDateString() === new Date().toDateString())
+      .reduce((sum, usage) => sum + (usage.estimated_cost || 0), 0),
+    thisMonthTokens: tokenUsage
+      .filter(usage => {
+        const date = new Date(usage.created_date);
+        const now = new Date();
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, usage) => sum + (usage.total_tokens || 0), 0),
+    thisMonthCost: tokenUsage
+      .filter(usage => {
+        const date = new Date(usage.created_date);
+        const now = new Date();
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, usage) => sum + (usage.estimated_cost || 0), 0),
+    byUser: tokenUsage.reduce((acc, usage) => {
+      const email = usage.user_email;
+      if (!acc[email]) {
+        acc[email] = {
+          name: usage.user_name || email,
+          tokens: 0,
+          cost: 0,
+          requests: 0
+        };
+      }
+      acc[email].tokens += usage.total_tokens || 0;
+      acc[email].cost += usage.estimated_cost || 0;
+      acc[email].requests += 1;
+      return acc;
+    }, {}),
+    byModel: tokenUsage.reduce((acc, usage) => {
+      const model = usage.model || 'unknown';
+      if (!acc[model]) {
+        acc[model] = { tokens: 0, cost: 0, requests: 0 };
+      }
+      acc[model].tokens += usage.total_tokens || 0;
+      acc[model].cost += usage.estimated_cost || 0;
+      acc[model].requests += 1;
+      return acc;
+    }, {})
+  };
+
+  const topUsers = Object.entries(tokenStats.byUser)
+    .sort((a, b) => b[1].tokens - a[1].tokens)
+    .slice(0, 5);
 
   return (
     <div className="p-8">
@@ -94,6 +162,181 @@ export default function Dashboard() {
             color="#eb2f96"
           />
         </div>
+
+        {/* AI Token Usage - Admin Only */}
+        {user?.role === 'admin' && tokenUsage.length > 0 && (
+          <div className="mb-8">
+            <NeuroCard>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="ampvibe-button-primary p-3 rounded-xl">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold" style={{ color: "#666" }}>
+                    AI Usage Analytics
+                  </h2>
+                  <p className="text-sm" style={{ color: "#888" }}>
+                    Track ChatGPT API usage across your organization
+                  </p>
+                </div>
+              </div>
+
+              {/* Overview Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="ampvibe-inset p-4 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4" style={{ color: "#00A86B" }} />
+                    <p className="text-xs font-medium" style={{ color: "#888" }}>Today</p>
+                  </div>
+                  <p className="text-2xl font-bold mb-1" style={{ color: "#666" }}>
+                    {tokenStats.todayTokens.toLocaleString()}
+                  </p>
+                  <p className="text-xs" style={{ color: "#aaa" }}>
+                    ${tokenStats.todayCost.toFixed(4)}
+                  </p>
+                </div>
+
+                <div className="ampvibe-inset p-4 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4" style={{ color: "#4a90e2" }} />
+                    <p className="text-xs font-medium" style={{ color: "#888" }}>This Month</p>
+                  </div>
+                  <p className="text-2xl font-bold mb-1" style={{ color: "#666" }}>
+                    {tokenStats.thisMonthTokens.toLocaleString()}
+                  </p>
+                  <p className="text-xs" style={{ color: "#aaa" }}>
+                    ${tokenStats.thisMonthCost.toFixed(4)}
+                  </p>
+                </div>
+
+                <div className="ampvibe-inset p-4 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4" style={{ color: "#fa8c16" }} />
+                    <p className="text-xs font-medium" style={{ color: "#888" }}>Total Tokens</p>
+                  </div>
+                  <p className="text-2xl font-bold mb-1" style={{ color: "#666" }}>
+                    {tokenStats.totalTokens.toLocaleString()}
+                  </p>
+                  <p className="text-xs" style={{ color: "#aaa" }}>
+                    All time usage
+                  </p>
+                </div>
+
+                <div className="ampvibe-inset p-4 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-4 h-4" style={{ color: "#eb2f96" }} />
+                    <p className="text-xs font-medium" style={{ color: "#888" }}>Total Cost</p>
+                  </div>
+                  <p className="text-2xl font-bold mb-1" style={{ color: "#666" }}>
+                    ${tokenStats.totalCost.toFixed(2)}
+                  </p>
+                  <p className="text-xs" style={{ color: "#aaa" }}>
+                    Estimated spend
+                  </p>
+                </div>
+              </div>
+
+              {/* Top Users & Models */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Top Users */}
+                <div>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: "#666" }}>
+                    Top Users by Token Usage
+                  </h3>
+                  <div className="space-y-2">
+                    {topUsers.length === 0 ? (
+                      <p className="text-sm text-center py-4" style={{ color: "#aaa" }}>
+                        No usage data yet
+                      </p>
+                    ) : (
+                      topUsers.map(([email, stats]) => (
+                        <div key={email} className="ampvibe-inset p-3 rounded-lg">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-medium text-sm" style={{ color: "#666" }}>
+                              {stats.name}
+                            </p>
+                            <span className="ampvibe-button px-2 py-1 text-xs font-bold">
+                              {stats.tokens.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs" style={{ color: "#aaa" }}>
+                            <span>{stats.requests} requests</span>
+                            <span>${stats.cost.toFixed(4)}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Models */}
+                <div>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: "#666" }}>
+                    Usage by Model
+                  </h3>
+                  <div className="space-y-2">
+                    {Object.keys(tokenStats.byModel).length === 0 ? (
+                      <p className="text-sm text-center py-4" style={{ color: "#aaa" }}>
+                        No usage data yet
+                      </p>
+                    ) : (
+                      Object.entries(tokenStats.byModel).map(([model, stats]) => (
+                        <div key={model} className="ampvibe-inset p-3 rounded-lg">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-medium text-sm" style={{ color: "#666" }}>
+                              {model}
+                            </p>
+                            <span className="ampvibe-button px-2 py-1 text-xs font-bold">
+                              {stats.tokens.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs" style={{ color: "#aaa" }}>
+                            <span>{stats.requests} requests</span>
+                            <span>${stats.cost.toFixed(4)}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Usage */}
+              <div className="mt-6">
+                <h3 className="text-sm font-bold mb-3" style={{ color: "#666" }}>
+                  Recent API Calls
+                </h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {tokenUsage.slice(0, 10).map((usage) => (
+                    <div key={usage.id} className="ampvibe-inset p-3 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium text-sm" style={{ color: "#666" }}>
+                              {usage.user_name || usage.user_email}
+                            </p>
+                            <span className="ampvibe-button px-2 py-0.5 text-xs">
+                              {usage.action_type}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs" style={{ color: "#aaa" }}>
+                            <span>{usage.model}</span>
+                            <span>•</span>
+                            <span>{usage.total_tokens.toLocaleString()} tokens</span>
+                            <span>•</span>
+                            <span>${usage.estimated_cost.toFixed(6)}</span>
+                            <span>•</span>
+                            <span>{new Date(usage.created_date).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </NeuroCard>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="mb-8">
