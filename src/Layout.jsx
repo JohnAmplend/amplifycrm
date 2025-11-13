@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -32,15 +31,15 @@ import {
   Menu,
   X,
   ChevronDown,
-  RefreshCw, // Added RefreshCw icon
-  Plus, // Added Plus icon for new campaign
-  TestTube2, // Added TestTube2 icon for A/B Testing
-  Shield, // Added Shield icon for Roles & Permissions
-  Sparkles, // Added Sparkles icon for Data Enrichment
-  User as UserIcon // Added UserIcon for profile
+  RefreshCw,
+  Plus,
+  TestTube2,
+  Shield,
+  Sparkles,
+  User as UserIcon
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import AIAssistant from "../components/crm/AIAssistant";
+import AIAssistant from "@/components/crm/AIAssistant";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
