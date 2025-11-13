@@ -1,78 +1,52 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-import OpenAI from 'npm:openai@4.47.1';
+import OpenAI from 'npm:openai@4.73.0';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
+        
         const user = await base44.auth.me();
-
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const apiKey = Deno.env.get("OPENAI_API_KEY");
-        if (!apiKey) {
-            return Response.json({ 
-                error: 'OpenAI API key not configured',
-                details: 'Please set the OPENAI_API_KEY environment variable.'
-            }, { status: 500 });
+        const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+        if (!openaiApiKey) {
+            return Response.json({ error: 'OpenAI API key not configured' }, { status: 500 });
         }
 
+        const openai = new OpenAI({ apiKey: openaiApiKey });
+        
         const body = await req.json();
-        const { action = "chat", prompt, context, model = "gpt-4o-mini" } = body;
+        const { action = "chat", prompt, context = {}, model = "gpt-4o-mini" } = body;
 
-        if (!prompt) {
-            return Response.json({ error: 'Prompt is required' }, { status: 400 });
-        }
-
-        const openai = new OpenAI({ apiKey: apiKey });
-
-        let systemPrompt = "You are an AI assistant integrated into AmplifyCRM. You help users with CRM tasks, data analysis, email writing, and business insights.";
+        let systemPrompt = "You are a helpful AI assistant for a CRM system. Provide clear, actionable advice.";
         let userPrompt = prompt;
+        let responseFormat = undefined;
 
         switch (action) {
             case "draft_email":
-                systemPrompt = "You are a professional email writer. Create clear, concise, and professional emails based on the user's requirements. Format the output as JSON with 'subject' and 'body' fields.";
-                userPrompt = `Create an email with the following details:\n${prompt}\n\nContext: ${JSON.stringify(context || {})}`;
+                systemPrompt = "You are an expert email writer. Write professional, engaging emails for business communications. Be concise and persuasive.";
+                userPrompt = `Write an email: ${prompt}`;
                 break;
-
             case "summarize_contact":
-                systemPrompt = "You are a CRM data analyst. Analyze contact information and provide a concise, actionable summary highlighting key insights, engagement patterns, and recommended next steps.";
-                userPrompt = `Summarize this contact:\n${JSON.stringify(context)}`;
+                systemPrompt = "You are a data analyst. Summarize information clearly and highlight key insights.";
+                userPrompt = `Summarize the following: ${prompt}`;
                 break;
-
-            case "summarize_deal":
-                systemPrompt = "You are a sales analyst. Analyze deal information and provide insights on deal health, potential risks, and recommendations to move it forward.";
-                userPrompt = `Analyze this deal:\n${JSON.stringify(context)}`;
-                break;
-
             case "analyze_data":
-                systemPrompt = "You are a business intelligence analyst. Analyze the provided data and generate insights, trends, and actionable recommendations.";
-                userPrompt = `Analyze this data:\n${JSON.stringify(context)}\n\nUser question: ${prompt}`;
+                systemPrompt = "You are a business analyst. Analyze data and provide actionable insights with specific recommendations.";
+                userPrompt = `Analyze: ${prompt}`;
                 break;
-
             case "generate_task_list":
-                systemPrompt = "You are a productivity expert. Based on the provided context, generate a prioritized list of tasks. Format as a JSON array of objects with 'task_name', 'priority', and 'description' fields.";
-                userPrompt = `Generate tasks for:\n${prompt}\n\nContext: ${JSON.stringify(context || {})}`;
+                systemPrompt = "You are a productivity expert. Generate clear, actionable task lists with priorities.";
+                userPrompt = `Create a task list for: ${prompt}`;
+                responseFormat = { type: "json_object" };
                 break;
-
-            case "extract_insights":
-                systemPrompt = "You are a conversation analyst. Extract key insights, action items, and important details from the provided text.";
-                userPrompt = `Extract insights from:\n${prompt}`;
-                break;
-
             case "suggest_next_steps":
-                systemPrompt = "You are a sales strategist. Based on the current situation, suggest specific next steps to advance the relationship or close the deal.";
-                userPrompt = `Current situation:\n${JSON.stringify(context)}\n\nAdditional info: ${prompt}`;
-                break;
-
-            case "rewrite_content":
-                systemPrompt = "You are a professional copywriter. Rewrite the provided content according to the user's specifications while maintaining the core message.";
-                userPrompt = `Rewrite this:\n${prompt}\n\nInstructions: ${context?.instructions || 'Make it more professional'}`;
+                systemPrompt = "You are a strategic advisor. Suggest next steps and action items based on the situation.";
+                userPrompt = `Suggest next steps for: ${prompt}`;
                 break;
         }
-
-        const needsJSON = ["draft_email", "generate_task_list"].includes(action);
 
         const requestOptions = {
             model: model,
@@ -81,62 +55,60 @@ Deno.serve(async (req) => {
                 { role: "user", content: userPrompt }
             ],
             temperature: 0.7,
-            max_tokens: 2000
         };
 
-        if (needsJSON) {
-            requestOptions.response_format = { type: "json_object" };
+        if (responseFormat) {
+            requestOptions.response_format = responseFormat;
         }
 
-        const response = await openai.chat.completions.create(requestOptions);
+        const completion = await openai.chat.completions.create(requestOptions);
+        
+        const response = completion.choices[0].message.content;
+        const usage = completion.usage;
 
-        if (!response || !response.choices || !response.choices[0]) {
-            return Response.json({ 
-                error: 'Invalid response from OpenAI'
-            }, { status: 500 });
-        }
+        // Calculate estimated cost (pricing as of 2024)
+        const costPerMillionPromptTokens = model === "gpt-4o" ? 5.00 : 
+                                          model === "gpt-4-turbo" ? 10.00 : 0.15; // gpt-4o-mini
+        const costPerMillionCompletionTokens = model === "gpt-4o" ? 15.00 : 
+                                                model === "gpt-4-turbo" ? 30.00 : 0.60; // gpt-4o-mini
+        
+        const estimatedCost = (
+            (usage.prompt_tokens / 1000000) * costPerMillionPromptTokens +
+            (usage.completion_tokens / 1000000) * costPerMillionCompletionTokens
+        );
 
-        const aiResponse = response.choices[0].message.content;
-
-        let parsedResponse = aiResponse;
-        if (needsJSON) {
-            try {
-                parsedResponse = JSON.parse(aiResponse);
-            } catch (e) {
-                parsedResponse = { content: aiResponse };
-            }
+        // Log token usage using service role
+        try {
+            await base44.asServiceRole.entities.Token_Usage.create({
+                user_email: user.email,
+                user_name: user.full_name || user.email,
+                action_type: action,
+                model: model,
+                prompt_tokens: usage.prompt_tokens,
+                completion_tokens: usage.completion_tokens,
+                total_tokens: usage.total_tokens,
+                estimated_cost: estimatedCost,
+                source: "AI Assistant"
+            });
+        } catch (logError) {
+            console.error("Failed to log token usage:", logError);
         }
 
         return Response.json({
-            success: true,
-            response: parsedResponse,
+            response: responseFormat ? JSON.parse(response) : response,
             usage: {
-                prompt_tokens: response.usage?.prompt_tokens || 0,
-                completion_tokens: response.usage?.completion_tokens || 0,
-                total_tokens: response.usage?.total_tokens || 0
+                prompt_tokens: usage.prompt_tokens,
+                completion_tokens: usage.completion_tokens,
+                total_tokens: usage.total_tokens,
+                estimated_cost: estimatedCost.toFixed(6)
             }
         });
 
     } catch (error) {
-        console.error('AI Assistant Error:', error);
-        
-        let errorMessage = 'Failed to process AI request';
-        let errorDetails = error.message || error.toString();
-        
-        if (error.message?.includes('API key')) {
-            errorMessage = 'Invalid OpenAI API key';
-            errorDetails = 'Please check that your OPENAI_API_KEY is valid.';
-        } else if (error.message?.includes('rate_limit')) {
-            errorMessage = 'Rate limit exceeded';
-            errorDetails = 'Please wait and try again.';
-        } else if (error.message?.includes('insufficient_quota')) {
-            errorMessage = 'Insufficient OpenAI credits';
-            errorDetails = 'Please add credits to your OpenAI account.';
-        }
-        
+        console.error('AI Assistant error:', error);
         return Response.json({ 
-            error: errorMessage,
-            details: errorDetails
+            error: error.message || 'An unexpected error occurred',
+            details: error.toString()
         }, { status: 500 });
     }
 });
