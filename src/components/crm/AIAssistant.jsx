@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { 
   Sparkles, X, Send, Loader2, MessageSquare, 
   Mail, FileText, TrendingUp, CheckSquare, Lightbulb,
-  MinusCircle, Maximize2
+  Minus, Maximize2
 } from "lucide-react";
 import NeuroButton from "./NeuroButton";
 import NeuroCard from "./NeuroCard";
@@ -118,7 +118,13 @@ export default function AIAssistant() {
         <NeuroCard className="p-3 flex items-center gap-3 cursor-pointer" onClick={() => setIsMinimized(false)}>
           <Sparkles className="w-5 h-5" style={{ color: "#00A86B" }} />
           <span className="font-medium" style={{ color: "#666" }}>AI Assistant</span>
-          <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="ampvibe-button p-1">
+          <button 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              setIsOpen(false); 
+            }} 
+            className="ampvibe-button p-1 hover:bg-red-100"
+          >
             <X className="w-4 h-4" />
           </button>
         </NeuroCard>
@@ -128,9 +134,18 @@ export default function AIAssistant() {
 
   return (
     <div className="fixed bottom-6 right-6 z-50" style={{ width: "420px", maxWidth: "calc(100vw - 48px)" }}>
-      <NeuroCard className="flex flex-col" style={{ height: "600px", maxHeight: "calc(100vh - 100px)" }}>
-        {/* Header - Fixed at top */}
-        <div className="flex items-center justify-between p-4 border-b flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+      <NeuroCard className="flex flex-col overflow-hidden" style={{ height: "600px", maxHeight: "calc(100vh - 100px)" }}>
+        {/* Header - ALWAYS VISIBLE at top with prominent buttons */}
+        <div 
+          className="flex items-center justify-between p-4 border-b flex-shrink-0" 
+          style={{ 
+            borderColor: "rgba(30, 58, 138, 0.1)",
+            background: "rgba(255, 255, 255, 0.95)",
+            position: "sticky",
+            top: 0,
+            zIndex: 10
+          }}
+        >
           <div className="flex items-center gap-3">
             <div className="ampvibe-button-primary p-2 rounded-lg">
               <Sparkles className="w-5 h-5" />
@@ -141,11 +156,27 @@ export default function AIAssistant() {
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setIsMinimized(true)} className="ampvibe-button p-2">
-              <MinusCircle className="w-4 h-4" />
+            <button 
+              onClick={() => setIsMinimized(true)} 
+              className="ampvibe-button p-2.5 hover:scale-110 transition-transform"
+              title="Minimize"
+              style={{
+                background: "rgba(255, 255, 255, 0.8)",
+                border: "2px solid rgba(0, 168, 107, 0.3)"
+              }}
+            >
+              <Minus className="w-5 h-5" style={{ color: "#00A86B" }} />
             </button>
-            <button onClick={() => setIsOpen(false)} className="ampvibe-button p-2">
-              <X className="w-4 h-4" />
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="ampvibe-button p-2.5 hover:scale-110 transition-transform hover:bg-red-50"
+              title="Close"
+              style={{
+                background: "rgba(255, 255, 255, 0.8)",
+                border: "2px solid rgba(239, 68, 68, 0.3)"
+              }}
+            >
+              <X className="w-5 h-5" style={{ color: "#ef4444" }} />
             </button>
           </div>
         </div>
@@ -215,7 +246,7 @@ export default function AIAssistant() {
                 </div>
                 {msg.usage && (
                   <div className="text-xs mt-2 opacity-50">
-                    {msg.usage.total_tokens} tokens
+                    {msg.usage.total_tokens} tokens • ${msg.usage.estimated_cost}
                   </div>
                 )}
               </div>
