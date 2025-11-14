@@ -6,7 +6,6 @@ import {
   Minus, Maximize2
 } from "lucide-react";
 import NeuroButton from "./NeuroButton";
-import NeuroCard from "./NeuroCard";
 
 export default function AIAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -115,7 +114,7 @@ export default function AIAssistant() {
   if (isMinimized) {
     return (
       <div className="fixed bottom-6 right-6 z-50">
-        <NeuroCard className="p-3 flex items-center gap-3 cursor-pointer" onClick={() => setIsMinimized(false)}>
+        <div className="ampvibe-card p-3 flex items-center gap-3 cursor-pointer" onClick={() => setIsMinimized(false)}>
           <Sparkles className="w-5 h-5" style={{ color: "#00A86B" }} />
           <span className="font-medium" style={{ color: "#666" }}>AI Assistant</span>
           <button 
@@ -127,165 +126,174 @@ export default function AIAssistant() {
           >
             <X className="w-4 h-4" />
           </button>
-        </NeuroCard>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50" style={{ width: "420px", maxWidth: "calc(100vw - 48px)" }}>
-      <NeuroCard className="flex flex-col overflow-hidden" style={{ height: "600px", maxHeight: "calc(100vh - 100px)" }}>
-        {/* Header - ALWAYS VISIBLE at top with prominent buttons */}
-        <div 
-          className="flex items-center justify-between p-4 border-b flex-shrink-0" 
-          style={{ 
-            borderColor: "rgba(30, 58, 138, 0.1)",
-            background: "rgba(255, 255, 255, 0.95)",
-            position: "sticky",
-            top: 0,
-            zIndex: 10
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="ampvibe-button-primary p-2 rounded-lg">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold" style={{ color: "#666" }}>AI Assistant</h3>
-              <p className="text-xs" style={{ color: "#aaa" }}>Powered by ChatGPT</p>
-            </div>
+    <div 
+      className="fixed bottom-6 right-6 z-[9999] flex flex-col ampvibe-card" 
+      style={{ 
+        width: "420px", 
+        maxWidth: "calc(100vw - 48px)",
+        height: "600px",
+        maxHeight: "calc(100vh - 100px)",
+        overflow: "hidden"
+      }}
+    >
+      {/* Header - ALWAYS VISIBLE at top with prominent buttons */}
+      <div 
+        className="flex items-center justify-between p-4 border-b flex-shrink-0" 
+        style={{ 
+          borderColor: "rgba(30, 58, 138, 0.1)",
+          background: "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)"
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="ampvibe-button-primary p-2 rounded-lg">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setIsMinimized(true)} 
-              className="ampvibe-button p-2.5 hover:scale-110 transition-transform"
-              title="Minimize"
-              style={{
-                background: "rgba(255, 255, 255, 0.8)",
-                border: "2px solid rgba(0, 168, 107, 0.3)"
-              }}
-            >
-              <Minus className="w-5 h-5" style={{ color: "#00A86B" }} />
-            </button>
-            <button 
-              onClick={() => setIsOpen(false)} 
-              className="ampvibe-button p-2.5 hover:scale-110 transition-transform hover:bg-red-50"
-              title="Close"
-              style={{
-                background: "rgba(255, 255, 255, 0.8)",
-                border: "2px solid rgba(239, 68, 68, 0.3)"
-              }}
-            >
-              <X className="w-5 h-5" style={{ color: "#ef4444" }} />
-            </button>
+          <div>
+            <h3 className="font-bold" style={{ color: "#666" }}>AI Assistant</h3>
+            <p className="text-xs" style={{ color: "#aaa" }}>Powered by ChatGPT</p>
           </div>
         </div>
-
-        {/* Action Selector - Fixed below header */}
-        <div className="p-3 border-b overflow-x-auto flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-          <div className="flex gap-2">
-            {aiActions.map(action => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.id}
-                  onClick={() => setSelectedAction(action.id)}
-                  className={`ampvibe-button px-3 py-2 flex items-center gap-2 whitespace-nowrap ${
-                    selectedAction === action.id ? 'active' : ''
-                  }`}
-                  title={action.description}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-xs">{action.label}</span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex gap-2 flex-shrink-0">
+          <button 
+            onClick={() => setIsMinimized(true)} 
+            className="ampvibe-button p-2.5 hover:scale-110 transition-transform flex-shrink-0"
+            title="Minimize"
+            style={{
+              background: "rgba(255, 255, 255, 0.9)",
+              border: "2px solid rgba(0, 168, 107, 0.4)",
+              boxShadow: "0 2px 8px rgba(0, 168, 107, 0.15)"
+            }}
+          >
+            <Minus className="w-5 h-5" style={{ color: "#00A86B", strokeWidth: 2.5 }} />
+          </button>
+          <button 
+            onClick={() => setIsOpen(false)} 
+            className="ampvibe-button p-2.5 hover:scale-110 transition-transform hover:bg-red-50 flex-shrink-0"
+            title="Close"
+            style={{
+              background: "rgba(255, 255, 255, 0.9)",
+              border: "2px solid rgba(239, 68, 68, 0.4)",
+              boxShadow: "0 2px 8px rgba(239, 68, 68, 0.15)"
+            }}
+          >
+            <X className="w-5 h-5" style={{ color: "#ef4444", strokeWidth: 2.5 }} />
+          </button>
         </div>
+      </div>
 
-        {/* Messages - Scrollable area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
-          {messages.length === 0 && (
-            <div className="text-center py-8">
-              <Sparkles className="w-12 h-12 mx-auto mb-4" style={{ color: "#00A86B" }} />
-              <h4 className="font-bold mb-2" style={{ color: "#666" }}>
-                Hi! I'm your AI Assistant
-              </h4>
-              <p className="text-sm mb-4" style={{ color: "#888" }}>
-                I can help with emails, summaries, data analysis, and more.
-              </p>
-              <div className="space-y-2">
-                <p className="text-xs font-medium" style={{ color: "#aaa" }}>Try asking:</p>
-                {(quickPrompts[selectedAction] || quickPrompts.chat).map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setInputValue(prompt)}
-                    className="ampvibe-inset w-full text-left px-3 py-2 rounded-lg text-sm hover:opacity-80 transition-opacity"
-                    style={{ color: "#666" }}
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {messages.map((msg, idx) => (
-            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  msg.role === 'user'
-                    ? 'ampvibe-button-primary text-white'
-                    : msg.isError
-                    ? 'ampvibe-inset border border-red-300'
-                    : 'ampvibe-inset'
+      {/* Action Selector - Fixed below header */}
+      <div className="p-3 border-b overflow-x-auto flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+        <div className="flex gap-2">
+          {aiActions.map(action => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.id}
+                onClick={() => setSelectedAction(action.id)}
+                className={`ampvibe-button px-3 py-2 flex items-center gap-2 whitespace-nowrap ${
+                  selectedAction === action.id ? 'active' : ''
                 }`}
+                title={action.description}
               >
-                <div className="text-sm whitespace-pre-wrap" style={msg.role === 'assistant' && !msg.isError ? { color: "#666" } : {}}>
-                  {msg.content}
-                </div>
-                {msg.usage && (
-                  <div className="text-xs mt-2 opacity-50">
-                    {msg.usage.total_tokens} tokens • ${msg.usage.estimated_cost}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="ampvibe-inset rounded-lg p-3">
-                <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00A86B" }} />
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
+                <Icon className="w-4 h-4" />
+                <span className="text-xs">{action.label}</span>
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Input - Fixed at bottom */}
-        <div className="p-4 border-t flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-          <div className="flex gap-2">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={`Ask me to ${aiActions.find(a => a.id === selectedAction)?.description.toLowerCase()}...`}
-              className="ampvibe-input flex-1 resize-none"
-              rows="2"
-              disabled={isLoading}
-            />
-            <NeuroButton
-              variant="primary"
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
-            >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-            </NeuroButton>
+      {/* Messages - Scrollable area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+        {messages.length === 0 && (
+          <div className="text-center py-8">
+            <Sparkles className="w-12 h-12 mx-auto mb-4" style={{ color: "#00A86B" }} />
+            <h4 className="font-bold mb-2" style={{ color: "#666" }}>
+              Hi! I'm your AI Assistant
+            </h4>
+            <p className="text-sm mb-4" style={{ color: "#888" }}>
+              I can help with emails, summaries, data analysis, and more.
+            </p>
+            <div className="space-y-2">
+              <p className="text-xs font-medium" style={{ color: "#aaa" }}>Try asking:</p>
+              {(quickPrompts[selectedAction] || quickPrompts.chat).map((prompt, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setInputValue(prompt)}
+                  className="ampvibe-inset w-full text-left px-3 py-2 rounded-lg text-sm hover:opacity-80 transition-opacity"
+                  style={{ color: "#666" }}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              className={`max-w-[80%] rounded-lg p-3 ${
+                msg.role === 'user'
+                  ? 'ampvibe-button-primary text-white'
+                  : msg.isError
+                  ? 'ampvibe-inset border border-red-300'
+                  : 'ampvibe-inset'
+              }`}
+            >
+              <div className="text-sm whitespace-pre-wrap" style={msg.role === 'assistant' && !msg.isError ? { color: "#666" } : {}}>
+                {msg.content}
+              </div>
+              {msg.usage && (
+                <div className="text-xs mt-2 opacity-50">
+                  {msg.usage.total_tokens} tokens • ${msg.usage.estimated_cost}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="ampvibe-inset rounded-lg p-3">
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00A86B" }} />
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input - Fixed at bottom */}
+      <div className="p-4 border-t flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)", background: "rgba(255, 255, 255, 0.98)" }}>
+        <div className="flex gap-2">
+          <textarea
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={`Ask me to ${aiActions.find(a => a.id === selectedAction)?.description.toLowerCase()}...`}
+            className="ampvibe-input flex-1 resize-none"
+            rows="2"
+            disabled={isLoading}
+          />
+          <NeuroButton
+            variant="primary"
+            onClick={handleSendMessage}
+            disabled={!inputValue.trim() || isLoading}
+          >
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+          </NeuroButton>
         </div>
-      </NeuroCard>
+      </div>
     </div>
   );
 }
