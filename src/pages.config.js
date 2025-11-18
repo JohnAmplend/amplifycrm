@@ -60,6 +60,7 @@ import UserProfile from './pages/UserProfile';
 import AmplifyAI from './pages/AmplifyAI';
 import AITokenAnalytics from './pages/AITokenAnalytics';
 import CRMCalendar from './pages/CRMCalendar';
+import GoogleOAuthCallback from './pages/GoogleOAuthCallback';
 import __Layout from './Layout.jsx';
 
 
@@ -126,6 +127,7 @@ export const PAGES = {
     "AmplifyAI": AmplifyAI,
     "AITokenAnalytics": AITokenAnalytics,
     "CRMCalendar": CRMCalendar,
+    "GoogleOAuthCallback": GoogleOAuthCallback,
 }
 
 export const pagesConfig = {
