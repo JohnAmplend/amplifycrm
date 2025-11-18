@@ -4,11 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Calendar as CalendarIcon, RefreshCw, Plus, Filter, 
   Search, AlertCircle, CheckCircle, Loader2, 
-  ExternalLink, Database, Bug, Download
+  ExternalLink, Database, Bug, Download, X, Save
 } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
+import NeuroSelect from "../components/crm/NeuroSelect";
+import CalendarView from "../components/crm/CalendarView";
 
 export default function CRMCalendar() {
   const queryClient = useQueryClient();
@@ -20,6 +22,19 @@ export default function CRMCalendar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [lastSyncResult, setLastSyncResult] = useState(null);
   const [dbVerification, setDbVerification] = useState(null);
+  const [calendarView, setCalendarView] = useState('month');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [eventForm, setEventForm] = useState({
+    subject: '',
+    description: '',
+    activity_type: 'Meeting',
+    activity_date: '',
+    end_date: '',
+    all_day: false,
+    status: 'Scheduled'
+  });
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -97,6 +112,45 @@ export default function CRMCalendar() {
       }
     }
   });
+
+  // Create event mutation
+  const createEventMutation = useMutation({
+    mutationFn: (data) => base44.entities.Activity.create({
+      ...data,
+      assigned_to: user.email,
+      google_source: 'crm'
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['calendar-activities']);
+      setShowEventModal(false);
+      setEventForm({
+        subject: '',
+        description: '',
+        activity_type: 'Meeting',
+        activity_date: '',
+        end_date: '',
+        all_day: false,
+        status: 'Scheduled'
+      });
+    }
+  });
+
+  const openEventModal = (date = null) => {
+    if (date) {
+      const dateStr = date.toISOString().slice(0, 16);
+      const endDate = new Date(date.getTime() + 60 * 60 * 1000);
+      setEventForm({
+        ...eventForm,
+        activity_date: dateStr,
+        end_date: endDate.toISOString().slice(0, 16)
+      });
+    }
+    setShowEventModal(true);
+  };
+
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+  };
 
   const verifyDatabase = async () => {
     try {
@@ -182,9 +236,16 @@ export default function CRMCalendar() {
           </div>
 
           <div className="flex gap-2">
+            <NeuroButton 
+              variant="primary" 
+              onClick={() => openEventModal()}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Event
+            </NeuroButton>
+
             {!user.google_connected ? (
               <NeuroButton 
-                variant="primary" 
                 onClick={() => connectGoogleMutation.mutate()}
                 disabled={connectGoogleMutation.isLoading}
               >
@@ -202,32 +263,7 @@ export default function CRMCalendar() {
                   ) : (
                     <RefreshCw className="w-4 h-4 mr-2" />
                   )}
-                  Sync from Google
-                </NeuroButton>
-
-                <NeuroButton 
-                  onClick={() => pushToGoogleMutation.mutate()}
-                  disabled={pushToGoogleMutation.isLoading}
-                >
-                  {pushToGoogleMutation.isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Download className="w-4 h-4 mr-2" />
-                  )}
-                  Push to Google
-                </NeuroButton>
-
-                <NeuroButton 
-                  variant="primary"
-                  onClick={() => fullSyncMutation.mutate()}
-                  disabled={fullSyncMutation.isLoading}
-                >
-                  {fullSyncMutation.isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                  )}
-                  Full Sync
+                  Sync
                 </NeuroButton>
               </>
             )}
@@ -250,6 +286,46 @@ export default function CRMCalendar() {
             </div>
           </NeuroCard>
         )}
+
+        {/* View Selector */}
+        <div className="flex gap-2 mb-6">
+          <NeuroButton 
+            onClick={() => setCalendarView('day')}
+            className={calendarView === 'day' ? 'active' : ''}
+          >
+            Day
+          </NeuroButton>
+          <NeuroButton 
+            onClick={() => setCalendarView('week')}
+            className={calendarView === 'week' ? 'active' : ''}
+          >
+            Week
+          </NeuroButton>
+          <NeuroButton 
+            onClick={() => setCalendarView('month')}
+            className={calendarView === 'month' ? 'active' : ''}
+          >
+            Month
+          </NeuroButton>
+          <NeuroButton 
+            onClick={() => setCalendarView('year')}
+            className={calendarView === 'year' ? 'active' : ''}
+          >
+            Year
+          </NeuroButton>
+        </div>
+
+        {/* Calendar */}
+        <NeuroCard className="mb-6 p-6">
+          <CalendarView
+            view={calendarView}
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            activities={activities}
+            onEventClick={handleEventClick}
+            onTimeSlotClick={openEventModal}
+          />
+        </NeuroCard>
 
         {/* Stats */}
         <div className="grid md:grid-cols-4 gap-4 mb-6">
@@ -480,6 +556,176 @@ export default function CRMCalendar() {
             )}
           </div>
         </NeuroCard>
+
+        {/* Event Creation Modal */}
+        {showEventModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="ampvibe-card max-w-2xl w-full">
+              <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold" style={{ color: "#666" }}>
+                    Create Event
+                  </h2>
+                  <button onClick={() => setShowEventModal(false)} className="ampvibe-button p-2">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <NeuroInput
+                  label="Title"
+                  value={eventForm.subject}
+                  onChange={(e) => setEventForm({ ...eventForm, subject: e.target.value })}
+                  placeholder="Event title"
+                  required
+                />
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block" style={{ color: "#888" }}>
+                    Description
+                  </label>
+                  <textarea
+                    value={eventForm.description}
+                    onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                    placeholder="Event description"
+                    className="ampvibe-input w-full h-24 resize-none"
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <NeuroSelect
+                    label="Type"
+                    value={eventForm.activity_type}
+                    onChange={(e) => setEventForm({ ...eventForm, activity_type: e.target.value })}
+                    options={[
+                      { value: 'Meeting', label: 'Meeting' },
+                      { value: 'Call', label: 'Call' },
+                      { value: 'Email', label: 'Email' },
+                      { value: 'Task', label: 'Task' }
+                    ]}
+                  />
+
+                  <NeuroSelect
+                    label="Status"
+                    value={eventForm.status}
+                    onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
+                    options={[
+                      { value: 'Scheduled', label: 'Scheduled' },
+                      { value: 'Completed', label: 'Completed' },
+                      { value: 'Cancelled', label: 'Cancelled' }
+                    ]}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <NeuroInput
+                    label="Start Date & Time"
+                    type="datetime-local"
+                    value={eventForm.activity_date}
+                    onChange={(e) => setEventForm({ ...eventForm, activity_date: e.target.value })}
+                    required
+                  />
+
+                  <NeuroInput
+                    label="End Date & Time"
+                    type="datetime-local"
+                    value={eventForm.end_date}
+                    onChange={(e) => setEventForm({ ...eventForm, end_date: e.target.value })}
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eventForm.all_day}
+                    onChange={(e) => setEventForm({ ...eventForm, all_day: e.target.checked })}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: "#00A86B" }}
+                  />
+                  <span className="text-sm" style={{ color: "#666" }}>
+                    All-day event
+                  </span>
+                </label>
+              </div>
+
+              <div className="p-6 border-t flex justify-end gap-2" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                <NeuroButton onClick={() => setShowEventModal(false)}>
+                  Cancel
+                </NeuroButton>
+                <NeuroButton
+                  variant="primary"
+                  onClick={() => createEventMutation.mutate(eventForm)}
+                  disabled={!eventForm.subject || !eventForm.activity_date || createEventMutation.isLoading}
+                >
+                  {createEventMutation.isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Create Event
+                </NeuroButton>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Event Detail Modal */}
+        {selectedEvent && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="ampvibe-card max-w-lg w-full">
+              <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold" style={{ color: "#666" }}>
+                    {selectedEvent.subject}
+                  </h2>
+                  <button onClick={() => setSelectedEvent(null)} className="ampvibe-button p-2">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {selectedEvent.description && (
+                  <div>
+                    <p className="text-sm font-medium mb-1" style={{ color: "#888" }}>Description</p>
+                    <p style={{ color: "#666" }}>{selectedEvent.description}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium mb-1" style={{ color: "#888" }}>Type</p>
+                    <span className="ampvibe-button px-3 py-1 text-sm">{selectedEvent.activity_type}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium mb-1" style={{ color: "#888" }}>Status</p>
+                    <span className="ampvibe-button px-3 py-1 text-sm">{selectedEvent.status}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium mb-1" style={{ color: "#888" }}>Start</p>
+                  <p style={{ color: "#666" }}>{new Date(selectedEvent.activity_date).toLocaleString()}</p>
+                </div>
+
+                {selectedEvent.end_date && (
+                  <div>
+                    <p className="text-sm font-medium mb-1" style={{ color: "#888" }}>End</p>
+                    <p style={{ color: "#666" }}>{new Date(selectedEvent.end_date).toLocaleString()}</p>
+                  </div>
+                )}
+
+                {selectedEvent.google_event_id && (
+                  <div className="ampvibe-inset p-3 rounded-lg">
+                    <CheckCircle className="w-4 h-4 inline mr-2" style={{ color: "#00A86B" }} />
+                    <span className="text-sm" style={{ color: "#666" }}>Synced with Google Calendar</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Sync Logs */}
         <NeuroCard className="mt-6">
