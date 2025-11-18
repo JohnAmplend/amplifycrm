@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -41,6 +40,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import AIAssistant from "@/components/crm/AIAssistant";
+import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -435,6 +435,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* AI Assistant - Global */}
       <AIAssistant />
+      
+      {/* Onboarding Assistant - Shows for new users */}
+      <OnboardingAssistant />
     </div>
   );
 }
