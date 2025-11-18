@@ -36,7 +36,8 @@ import {
   TestTube2,
   Shield,
   Sparkles,
-  User as UserIcon
+  User as UserIcon,
+  Calendar
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import AIAssistant from "@/components/crm/AIAssistant";
@@ -169,6 +170,16 @@ export default function Layout({ children, currentPageName }) {
             { name: "Sync Status", icon: BarChart3, page: "SyncStatus" },
             { name: "HubSpot Sync", icon: RefreshCw, page: "HubSpotSync" },
             { name: "RingCentral", icon: Phone, page: "RingCentral" }
+          ]
+        }
+      ]
+    },
+    'Calendar': {
+      sections: [
+        {
+          title: 'Calendar & Events',
+          items: [
+            { name: "CRM Calendar", icon: Calendar, page: "CRMCalendar" }
           ]
         }
       ]
