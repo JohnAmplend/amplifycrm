@@ -59,6 +59,7 @@ import DataEnrichment from './pages/DataEnrichment';
 import UserProfile from './pages/UserProfile';
 import AmplifyAI from './pages/AmplifyAI';
 import AITokenAnalytics from './pages/AITokenAnalytics';
+import CRMCalendar from './pages/CRMCalendar';
 import __Layout from './Layout.jsx';
 
 
@@ -124,6 +125,7 @@ export const PAGES = {
     "UserProfile": UserProfile,
     "AmplifyAI": AmplifyAI,
     "AITokenAnalytics": AITokenAnalytics,
+    "CRMCalendar": CRMCalendar,
 }
 
 export const pagesConfig = {
