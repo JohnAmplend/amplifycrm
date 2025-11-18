@@ -61,6 +61,7 @@ import AmplifyAI from './pages/AmplifyAI';
 import AITokenAnalytics from './pages/AITokenAnalytics';
 import CRMCalendar from './pages/CRMCalendar';
 import authGoogleCallback from './pages/auth-google-callback';
+import AuthGoogleCallback from './pages/AuthGoogleCallback';
 import __Layout from './Layout.jsx';
 
 
@@ -128,6 +129,7 @@ export const PAGES = {
     "AITokenAnalytics": AITokenAnalytics,
     "CRMCalendar": CRMCalendar,
     "auth-google-callback": authGoogleCallback,
+    "AuthGoogleCallback": AuthGoogleCallback,
 }
 
 export const pagesConfig = {
