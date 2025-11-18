@@ -108,7 +108,21 @@ export default function CRMCalendar() {
     mutationFn: () => base44.functions.invoke('gcal/connectGoogle', {}),
     onSuccess: (response) => {
       if (response.data.auth_url) {
-        window.open(response.data.auth_url, '_blank');
+        const popup = window.open(
+          response.data.auth_url, 
+          'GoogleOAuth', 
+          'width=600,height=700,left=100,top=100'
+        );
+        
+        // Poll to check if popup closed
+        const pollTimer = setInterval(() => {
+          if (popup && popup.closed) {
+            clearInterval(pollTimer);
+            // Refresh data after OAuth completes
+            queryClient.invalidateQueries(['calendar-activities']);
+            base44.auth.me().then(setUser);
+          }
+        }, 500);
       }
     }
   });
