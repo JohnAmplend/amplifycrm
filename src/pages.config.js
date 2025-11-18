@@ -58,7 +58,8 @@ import RolesPermissions from './pages/RolesPermissions';
 import DataEnrichment from './pages/DataEnrichment';
 import UserProfile from './pages/UserProfile';
 import AmplifyAI from './pages/AmplifyAI';
-import Layout from './Layout.jsx';
+import AITokenAnalytics from './pages/AITokenAnalytics';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -122,10 +123,11 @@ export const PAGES = {
     "DataEnrichment": DataEnrichment,
     "UserProfile": UserProfile,
     "AmplifyAI": AmplifyAI,
+    "AITokenAnalytics": AITokenAnalytics,
 }
 
 export const pagesConfig = {
     mainPage: "Dashboard",
     Pages: PAGES,
-    Layout: Layout,
+    Layout: __Layout,
 };
