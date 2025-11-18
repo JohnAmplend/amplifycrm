@@ -50,18 +50,10 @@ export default function AuthGoogleCallback() {
         setStatus('success');
         setMessage('Your Google Calendar is now connected!');
 
-        // Close popup window if opened in popup
-        if (window.opener) {
-          window.opener.postMessage({ type: 'google-oauth-success' }, window.location.origin);
-          setTimeout(() => {
-            window.close();
-          }, 2000);
-        } else {
-          // Redirect to CRM Calendar after 2-3 seconds
-          setTimeout(() => {
-            navigate(createPageUrl('CRMCalendar'));
-          }, 2500);
-        }
+        // Redirect to CRM Calendar after 2-3 seconds
+        setTimeout(() => {
+          navigate(createPageUrl('CRMCalendar'));
+        }, 2500);
 
       } catch (error) {
         console.error('OAuth callback error:', error);
@@ -98,7 +90,7 @@ export default function AuthGoogleCallback() {
               </h2>
               <p className="mb-4" style={{ color: "#888" }}>{message}</p>
               <p className="text-sm" style={{ color: "#aaa" }}>
-                {window.opener ? 'Closing this window...' : 'Redirecting you to the calendar...'}
+                Redirecting you to the calendar...
               </p>
             </>
           )}
@@ -121,20 +113,12 @@ export default function AuthGoogleCallback() {
               )}
 
               <div className="flex gap-2 justify-center">
-                {window.opener ? (
-                  <NeuroButton onClick={() => window.close()}>
-                    Close Window
-                  </NeuroButton>
-                ) : (
-                  <>
-                    <NeuroButton onClick={() => navigate(createPageUrl('CRMCalendar'))}>
-                      Go to Calendar
-                    </NeuroButton>
-                    <NeuroButton onClick={() => navigate(createPageUrl('UserProfile'))}>
-                      Go to Settings
-                    </NeuroButton>
-                  </>
-                )}
+                <NeuroButton onClick={() => navigate(createPageUrl('CRMCalendar'))}>
+                  Go to Calendar
+                </NeuroButton>
+                <NeuroButton onClick={() => navigate(createPageUrl('UserProfile'))}>
+                  Go to Settings
+                </NeuroButton>
               </div>
             </>
           )}
