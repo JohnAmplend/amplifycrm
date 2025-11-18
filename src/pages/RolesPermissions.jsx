@@ -82,7 +82,11 @@ export default function RolesPermissions() {
       workflows_edit: false,
       import_data: false,
       export_data: false,
-      bulk_operations: false
+      bulk_operations: false,
+      
+      // Analytics & AI
+      analytics_view_token_usage: false,
+      ai_view_usage_analytics: false
     }
   });
 
@@ -91,12 +95,8 @@ export default function RolesPermissions() {
   }, []);
 
   const { data: roles = [] } = useQuery({
-    queryKey: ['custom-roles'],
-    queryFn: async () => {
-      // Use Custom_Object_Records to store roles
-      const records = await base44.entities.Custom_Object_Records.list();
-      return records.filter(r => r.record_data?.type === 'role');
-    }
+    queryKey: ['roles'],
+    queryFn: () => base44.entities.Role.list()
   });
 
   const { data: users = [] } = useQuery({
@@ -106,30 +106,49 @@ export default function RolesPermissions() {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      const roleObject = await base44.entities.Custom_Objects.filter({ object_name: 'Role' });
-      const objectId = roleObject[0]?.id;
-
-      if (!objectId) {
-        throw new Error('Role object not found');
-      }
-
-      const recordData = {
-        object_id: objectId,
-        record_name: data.role_name,
-        record_data: {
-          type: 'role',
-          description: data.description,
-          permissions: data.permissions
+      const roleData = {
+        role_name: data.role_name,
+        description: data.description,
+        permissions: {
+          crm: {
+            contacts: { view: data.permissions.crm_contacts_view, create: data.permissions.crm_contacts_create, edit: data.permissions.crm_contacts_edit, delete: data.permissions.crm_contacts_delete },
+            companies: { view: data.permissions.crm_companies_view, create: data.permissions.crm_companies_create, edit: data.permissions.crm_companies_edit, delete: data.permissions.crm_companies_delete },
+            deals: { view: data.permissions.crm_deals_view, create: data.permissions.crm_deals_create, edit: data.permissions.crm_deals_edit, delete: data.permissions.crm_deals_delete },
+            leads: { view: data.permissions.crm_leads_view, create: data.permissions.crm_leads_create, edit: data.permissions.crm_leads_edit, delete: data.permissions.crm_leads_delete }
+          },
+          analytics: {
+            view_token_usage: data.permissions.analytics_view_token_usage || false,
+            view_reports: data.permissions.reports_view || true,
+            create_reports: data.permissions.reports_create || false,
+            view_dashboards: data.permissions.dashboards_view || true
+          },
+          marketing: {
+            campaigns: { view: data.permissions.marketing_campaigns_view, create: data.permissions.marketing_campaigns_create, edit: data.permissions.marketing_campaigns_edit, delete: data.permissions.marketing_campaigns_delete },
+            templates: { view: data.permissions.marketing_templates_view, create: data.permissions.marketing_templates_create, edit: data.permissions.marketing_templates_edit, delete: false }
+          },
+          service: {
+            tickets: { view: data.permissions.service_tickets_view, create: data.permissions.service_tickets_create, edit: data.permissions.service_tickets_edit, delete: data.permissions.service_tickets_delete }
+          },
+          ai_assistant: {
+            use_ai: true,
+            view_usage_analytics: data.permissions.ai_view_usage_analytics || false
+          },
+          settings: {
+            manage_users: data.permissions.settings_users || false,
+            manage_roles: data.permissions.settings_roles || false,
+            manage_integrations: data.permissions.settings_integrations || false,
+            view_audit_log: false
+          }
         }
       };
 
       if (editingRole) {
-        return base44.entities.Custom_Object_Records.update(editingRole.id, recordData);
+        return base44.entities.Role.update(editingRole.id, roleData);
       }
-      return base44.entities.Custom_Object_Records.create(recordData);
+      return base44.entities.Role.create(roleData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['custom-roles']);
+      queryClient.invalidateQueries(['roles']);
       setShowRoleModal(false);
       setEditingRole(null);
       setRoleData({
@@ -141,18 +160,78 @@ export default function RolesPermissions() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Custom_Object_Records.delete(id),
+    mutationFn: (id) => base44.entities.Role.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['custom-roles']);
+      queryClient.invalidateQueries(['roles']);
     }
   });
 
   const openEditModal = (role) => {
     setEditingRole(role);
+    const flatPerms = {
+      crm_contacts_view: role.permissions?.crm?.contacts?.view || false,
+      crm_contacts_create: role.permissions?.crm?.contacts?.create || false,
+      crm_contacts_edit: role.permissions?.crm?.contacts?.edit || false,
+      crm_contacts_delete: role.permissions?.crm?.contacts?.delete || false,
+      crm_companies_view: role.permissions?.crm?.companies?.view || false,
+      crm_companies_create: role.permissions?.crm?.companies?.create || false,
+      crm_companies_edit: role.permissions?.crm?.companies?.edit || false,
+      crm_companies_delete: role.permissions?.crm?.companies?.delete || false,
+      crm_deals_view: role.permissions?.crm?.deals?.view || false,
+      crm_deals_create: role.permissions?.crm?.deals?.create || false,
+      crm_deals_edit: role.permissions?.crm?.deals?.edit || false,
+      crm_deals_delete: role.permissions?.crm?.deals?.delete || false,
+      crm_leads_view: role.permissions?.crm?.leads?.view || false,
+      crm_leads_create: role.permissions?.crm?.leads?.create || false,
+      crm_leads_edit: role.permissions?.crm?.leads?.edit || false,
+      crm_leads_delete: role.permissions?.crm?.leads?.delete || false,
+      marketing_campaigns_view: role.permissions?.marketing?.campaigns?.view || false,
+      marketing_campaigns_create: role.permissions?.marketing?.campaigns?.create || false,
+      marketing_campaigns_edit: role.permissions?.marketing?.campaigns?.edit || false,
+      marketing_campaigns_delete: role.permissions?.marketing?.campaigns?.delete || false,
+      marketing_campaigns_send: false,
+      marketing_templates_view: role.permissions?.marketing?.templates?.view || false,
+      marketing_templates_create: role.permissions?.marketing?.templates?.create || false,
+      marketing_templates_edit: role.permissions?.marketing?.templates?.edit || false,
+      marketing_lists_view: false,
+      marketing_lists_create: false,
+      marketing_lists_edit: false,
+      marketing_forms_view: false,
+      marketing_forms_create: false,
+      marketing_forms_edit: false,
+      service_tickets_view: role.permissions?.service?.tickets?.view || false,
+      service_tickets_create: role.permissions?.service?.tickets?.create || false,
+      service_tickets_edit: role.permissions?.service?.tickets?.edit || false,
+      service_tickets_delete: role.permissions?.service?.tickets?.delete || false,
+      service_tickets_assign: false,
+      reports_view: role.permissions?.analytics?.view_reports || false,
+      reports_create: role.permissions?.analytics?.create_reports || false,
+      reports_edit: false,
+      reports_delete: false,
+      reports_export: false,
+      dashboards_view: role.permissions?.analytics?.view_dashboards || false,
+      dashboards_create: false,
+      dashboards_edit: false,
+      settings_general: false,
+      settings_users: role.permissions?.settings?.manage_users || false,
+      settings_roles: role.permissions?.settings?.manage_roles || false,
+      settings_integrations: role.permissions?.settings?.manage_integrations || false,
+      settings_api_keys: false,
+      settings_payment_gateways: false,
+      settings_data_enrichment: false,
+      workflows_view: false,
+      workflows_create: false,
+      workflows_edit: false,
+      import_data: false,
+      export_data: false,
+      bulk_operations: false,
+      analytics_view_token_usage: role.permissions?.analytics?.view_token_usage || false,
+      ai_view_usage_analytics: role.permissions?.ai_assistant?.view_usage_analytics || false
+    };
     setRoleData({
-      role_name: role.record_name,
-      description: role.record_data.description,
-      permissions: role.record_data.permissions
+      role_name: role.role_name,
+      description: role.description,
+      permissions: flatPerms
     });
     setShowRoleModal(true);
   };
@@ -214,12 +293,23 @@ export default function RolesPermissions() {
       { group: 'Import Data', key: 'import_data' },
       { group: 'Export Data', key: 'export_data' },
       { group: 'Bulk Operations', key: 'bulk_operations' }
+    ],
+    'Analytics & AI': [
+      { group: 'View Token Usage Analytics', key: 'analytics_view_token_usage' },
+      { group: 'View AI Usage Analytics', key: 'ai_view_usage_analytics' }
     ]
   };
 
   const getPermissionCount = (role) => {
-    const perms = role.record_data.permissions || {};
-    return Object.values(perms).filter(Boolean).length;
+    let count = 0;
+    const countObj = (obj) => {
+      Object.values(obj || {}).forEach(val => {
+        if (typeof val === 'boolean') count += val ? 1 : 0;
+        else if (typeof val === 'object') countObj(val);
+      });
+    };
+    countObj(role.permissions);
+    return count;
   };
 
   if (!currentUser || currentUser.role !== 'admin') {
@@ -271,7 +361,7 @@ export default function RolesPermissions() {
                     <Shield className="w-6 h-6" style={{ color: "#0066cc" }} />
                   </div>
                   <div>
-                    <h3 className="font-bold" style={{ color: "#111827" }}>{role.record_name}</h3>
+                    <h3 className="font-bold" style={{ color: "#111827" }}>{role.role_name}</h3>
                     <p className="text-xs" style={{ color: "#6b7280" }}>
                       {getPermissionCount(role)} permissions
                     </p>
@@ -287,7 +377,7 @@ export default function RolesPermissions() {
                 </div>
               </div>
               <p className="text-sm mb-4" style={{ color: "#6b7280" }}>
-                {role.record_data.description}
+                {role.description}
               </p>
               <div className="flex items-center justify-between text-xs">
                 <span style={{ color: "#9ca3af" }}>
