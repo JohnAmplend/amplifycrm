@@ -226,11 +226,6 @@ export default function BulkActionsToolbar({
               Smart Select
             </NeuroButton>
           )}
-
-          {/* More Actions */}
-          <NeuroButton size="sm">
-            <MoreHorizontal className="w-4 h-4" />
-          </NeuroButton>
         </div>
 
         {/* Right: Undo & History Buttons */}
