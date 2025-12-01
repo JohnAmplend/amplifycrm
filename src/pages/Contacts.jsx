@@ -53,7 +53,7 @@ export default function Contacts() {
     toggleSelectAll,
     selectAllMode,
     setSelectAllMode
-  } = useBulkSelection(paginatedContacts, 'id', 'contacts');
+  } = useBulkSelection(contacts, 'id', 'contacts');
 
   // Bulk action modals
   const [bulkActionModal, setBulkActionModal] = useState({ isOpen: false, action: null });
