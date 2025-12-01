@@ -12,6 +12,8 @@ import ContactForm from "../components/crm/ContactForm";
 import ActivityTimeline from "../components/crm/ActivityTimeline.jsx";
 import TaskList from "../components/crm/TaskList.jsx";
 import ViewLayoutEditor from "../components/crm/ViewLayoutEditor.jsx";
+import ActivityFeed from "../components/crm/ActivityFeed";
+import TaskManager from "../components/crm/TaskManager";
 
 export default function ContactDetail() {
   const navigate = useNavigate();
@@ -573,6 +575,20 @@ export default function ContactDetail() {
                 </div>
               )}
             </NeuroCard>
+
+            {/* Task Manager */}
+            <TaskManager
+              relatedToType="Contact"
+              relatedToId={contactId}
+              relatedToName={`${contact.first_name} ${contact.last_name}`}
+            />
+
+            {/* Activity Feed */}
+            <ActivityFeed
+              recordType="Contact"
+              recordId={contactId}
+              recordName={`${contact.first_name} ${contact.last_name}`}
+            />
 
             {/* Activity Timeline */}
             <ActivityTimeline

@@ -190,7 +190,8 @@ export default function Layout({ children, currentPageName }) {
           title: 'System',
           items: [
             { name: "Roles & Permissions", icon: Shield, page: "RolesPermissions" },
-            { name: "Data Enrichment", icon: Sparkles, page: "DataEnrichment" }
+            { name: "Data Enrichment", icon: Sparkles, page: "DataEnrichment" },
+            { name: "Data Quality", icon: CheckSquare, page: "DataQuality" }
           ]
         },
         {
