@@ -38,23 +38,6 @@ export default function Contacts() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [customPage, setCustomPage] = useState('');
 
-  // Bulk selection
-  const {
-    selectedIds,
-    isSelected,
-    toggleSelection,
-    selectAll,
-    selectAllAcrossPages,
-    clearSelection,
-    getSelectedCount,
-    getSelectedItems,
-    areAllSelected,
-    areSomeSelected,
-    toggleSelectAll,
-    selectAllMode,
-    setSelectAllMode
-  } = useBulkSelection(contacts, 'id', 'contacts');
-
   // Bulk action modals
   const [bulkActionModal, setBulkActionModal] = useState({ isOpen: false, action: null });
   const [lastOperation, setLastOperation] = useState(null);
@@ -81,6 +64,23 @@ export default function Contacts() {
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list()
   });
+
+  // Bulk selection
+  const {
+    selectedIds,
+    isSelected,
+    toggleSelection,
+    selectAll,
+    selectAllAcrossPages,
+    clearSelection,
+    getSelectedCount,
+    getSelectedItems,
+    areAllSelected,
+    areSomeSelected,
+    toggleSelectAll,
+    selectAllMode,
+    setSelectAllMode
+  } = useBulkSelection(contacts, 'id', 'contacts');
 
   const { data: bulkOperations = [] } = useQuery({
     queryKey: ['bulk-operations', currentUser?.email],
