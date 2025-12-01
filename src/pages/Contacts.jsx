@@ -18,6 +18,7 @@ import SmartSelectionMenu from "../components/crm/SmartSelectionMenu";
 import BulkOperationHistory from "../components/crm/BulkOperationHistory";
 import useKeyboardShortcuts from "../components/crm/useKeyboardShortcuts";
 import KeyboardShortcutsHelp from "../components/crm/KeyboardShortcutsHelp";
+import ViewManager from "../components/crm/ViewManager";
 
 export default function Contacts() {
   const navigate = useNavigate();
@@ -32,6 +33,31 @@ export default function Contacts() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState([]);
   const [filterLogic, setFilterLogic] = useState('AND');
+  
+  // View management
+  const [currentView, setCurrentView] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState([
+    'name', 'email', 'phone', 'job_title', 'stage', 'status', 'owner'
+  ]);
+
+  const availableColumns = [
+    { id: 'name', label: 'Name', defaultVisible: true },
+    { id: 'email', label: 'Email', defaultVisible: true },
+    { id: 'phone', label: 'Phone', defaultVisible: true },
+    { id: 'mobile', label: 'Mobile', defaultVisible: false },
+    { id: 'job_title', label: 'Job Title', defaultVisible: true },
+    { id: 'department', label: 'Department', defaultVisible: false },
+    { id: 'stage', label: 'Stage', defaultVisible: true },
+    { id: 'status', label: 'Status', defaultVisible: true },
+    { id: 'owner', label: 'Owner', defaultVisible: true },
+    { id: 'company', label: 'Company', defaultVisible: false },
+    { id: 'city', label: 'City', defaultVisible: false },
+    { id: 'state', label: 'State', defaultVisible: false },
+    { id: 'country', label: 'Country', defaultVisible: false },
+    { id: 'lead_source', label: 'Lead Source', defaultVisible: false },
+    { id: 'created_date', label: 'Created Date', defaultVisible: false },
+    { id: 'last_contacted', label: 'Last Contacted', defaultVisible: false }
+  ];
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,6 +78,16 @@ export default function Contacts() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'new') {
       setShowForm(true);
+    }
+
+    // Load current view from localStorage
+    const savedView = localStorage.getItem('crm_current_view_Contact');
+    if (savedView) {
+      const view = JSON.parse(savedView);
+      setCurrentView(view);
+      if (view.columns) {
+        setVisibleColumns(view.columns);
+      }
     }
   }, []);
 
@@ -423,6 +459,102 @@ export default function Contacts() {
     });
   };
 
+  const handleViewChange = (view) => {
+    setCurrentView(view);
+    localStorage.setItem('crm_current_view_Contact', JSON.stringify(view));
+    if (view.columns) {
+      setVisibleColumns(view.columns);
+    }
+  };
+
+  const handleColumnsChange = (columns) => {
+    setVisibleColumns(columns);
+    if (currentView) {
+      const updatedView = { ...currentView, columns };
+      setCurrentView(updatedView);
+      localStorage.setItem('crm_current_view_Contact', JSON.stringify(updatedView));
+    }
+  };
+
+  const renderTableHeader = (columnId) => {
+    const column = availableColumns.find(c => c.id === columnId);
+    if (!column) return null;
+
+    return (
+      <th key={columnId} className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>
+        {column.label}
+      </th>
+    );
+  };
+
+  const renderTableCell = (contact, columnId, index) => {
+    const baseStyle = { color: "#888" };
+    const handleClick = () => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`);
+
+    switch (columnId) {
+      case 'name':
+        return (
+          <td key={columnId} className="py-3 px-4" onClick={handleClick}>
+            <p className="font-medium" style={{ color: "#666" }}>
+              {contact.first_name} {contact.last_name}
+            </p>
+          </td>
+        );
+      case 'email':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.email}</td>;
+      case 'phone':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.phone}</td>;
+      case 'mobile':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.mobile}</td>;
+      case 'job_title':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.job_title}</td>;
+      case 'department':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.department}</td>;
+      case 'stage':
+        return (
+          <td key={columnId} className="py-3 px-4" onClick={handleClick}>
+            <span className="neuro-button px-2 py-1 text-xs">{contact.lifecycle_stage}</span>
+          </td>
+        );
+      case 'status':
+        return (
+          <td key={columnId} className="py-3 px-4" onClick={handleClick}>
+            <span className="neuro-button px-2 py-1 text-xs">{contact.lead_status}</span>
+          </td>
+        );
+      case 'owner':
+        return (
+          <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>
+            {users.find(u => u.email === contact.contact_owner)?.full_name || contact.contact_owner}
+          </td>
+        );
+      case 'company':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.company_id}</td>;
+      case 'city':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.city}</td>;
+      case 'state':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.state}</td>;
+      case 'country':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.country}</td>;
+      case 'lead_source':
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>{contact.lead_source}</td>;
+      case 'created_date':
+        return (
+          <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>
+            {contact.created_date ? new Date(contact.created_date).toLocaleDateString() : ''}
+          </td>
+        );
+      case 'last_contacted':
+        return (
+          <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}>
+            {contact.last_contacted ? new Date(contact.last_contacted).toLocaleDateString() : ''}
+          </td>
+        );
+      default:
+        return <td key={columnId} className="py-3 px-4" style={baseStyle} onClick={handleClick}></td>;
+    }
+  };
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onSelectAll: () => {
@@ -652,6 +784,18 @@ export default function Contacts() {
           </NeuroCard>
         )}
 
+        {/* View Manager */}
+        <NeuroCard className="mb-6">
+          <ViewManager
+            objectType="Contact"
+            currentView={currentView}
+            onViewChange={handleViewChange}
+            availableColumns={availableColumns}
+            currentColumns={visibleColumns}
+            onColumnsChange={handleColumnsChange}
+          />
+        </NeuroCard>
+
         {/* Filters */}
         <NeuroCard className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -834,13 +978,7 @@ export default function Contacts() {
                         style={{ accentColor: "#00A86B" }}
                       />
                     </th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Name</th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Email</th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Phone</th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Job Title</th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Stage</th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Status</th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Owner</th>
+                    {visibleColumns.map(columnId => renderTableHeader(columnId))}
                   </tr>
                 </thead>
                 <tbody>
@@ -871,58 +1009,7 @@ export default function Contacts() {
                           style={{ accentColor: "#00A86B" }}
                         />
                       </td>
-                      <td 
-                        className="py-3 px-4"
-                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      >
-                        <p className="font-medium" style={{ color: "#666" }}>
-                          {contact.first_name} {contact.last_name}
-                        </p>
-                      </td>
-                      <td 
-                        className="py-3 px-4" 
-                        style={{ color: "#888" }}
-                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      >
-                        {contact.email}
-                      </td>
-                      <td 
-                        className="py-3 px-4" 
-                        style={{ color: "#888" }}
-                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      >
-                        {contact.phone}
-                      </td>
-                      <td 
-                        className="py-3 px-4" 
-                        style={{ color: "#888" }}
-                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      >
-                        {contact.job_title}
-                      </td>
-                      <td 
-                        className="py-3 px-4"
-                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      >
-                        <span className="neuro-button px-2 py-1 text-xs">
-                          {contact.lifecycle_stage}
-                        </span>
-                      </td>
-                      <td 
-                        className="py-3 px-4"
-                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      >
-                        <span className="neuro-button px-2 py-1 text-xs">
-                          {contact.lead_status}
-                        </span>
-                      </td>
-                      <td 
-                        className="py-3 px-4" 
-                        style={{ color: "#888" }}
-                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      >
-                        {users.find(u => u.email === contact.contact_owner)?.full_name || contact.contact_owner}
-                      </td>
+                      {visibleColumns.map(columnId => renderTableCell(contact, columnId, index))}
                     </tr>
                   ))}
                 </tbody>
