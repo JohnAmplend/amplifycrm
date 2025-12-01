@@ -13,6 +13,7 @@ import AdvancedFilters from "../components/crm/AdvancedFilters";
 import BulkActionsToolbar from "../components/crm/BulkActionsToolbar";
 import SelectAllBanner from "../components/crm/SelectAllBanner";
 import useBulkSelection from "../components/crm/useBulkSelection";
+import BulkActionModal from "../components/crm/BulkActionModal";
 
 export default function Contacts() {
   const navigate = useNavigate();
@@ -49,6 +50,11 @@ export default function Contacts() {
     selectAllMode,
     setSelectAllMode
   } = useBulkSelection(paginatedContacts, 'id');
+
+  // Bulk action modals
+  const [bulkActionModal, setBulkActionModal] = useState({ isOpen: false, action: null });
+  const [lastOperation, setLastOperation] = useState(null);
+  const [undoTimeRemaining, setUndoTimeRemaining] = useState(0);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -306,6 +312,95 @@ export default function Contacts() {
     setCurrentPage(1);
   }, [searchTerm, filterOwner, filterStage, filterStatus, activeStatFilter, advancedFilters, filterLogic]);
 
+  // Undo timer
+  useEffect(() => {
+    if (!lastOperation?.canUndo || !lastOperation?.undoExpiresAt) return;
+
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((new Date(lastOperation.undoExpiresAt) - new Date()) / 1000));
+      setUndoTimeRemaining(remaining);
+      
+      if (remaining === 0) {
+        setLastOperation(null);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [lastOperation]);
+
+  // Bulk action handlers
+  const getSelectedRecordIds = () => {
+    if (selectAllMode) {
+      return filteredContacts.map(c => c.id);
+    }
+    return Array.from(selectedIds);
+  };
+
+  const handleBulkDelete = async () => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkDelete', {
+      objectType: 'Contact',
+      recordIds
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['contacts']);
+      clearSelection();
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
+  const handleBulkChangeOwner = async ({ newOwner }) => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkUpdateOwner', {
+      objectType: 'Contact',
+      recordIds,
+      newOwner
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['contacts']);
+      clearSelection();
+      setLastOperation(response.data);
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
+  const handleBulkAddTags = async ({ tags }) => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkAddTags', {
+      objectType: 'Contact',
+      recordIds,
+      tags
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['contacts']);
+      clearSelection();
+      setLastOperation(response.data);
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
+  const handleUndo = async () => {
+    if (!lastOperation?.operationId) return;
+
+    const response = await base44.functions.invoke('bulkOperations/bulkUndoOperation', {
+      operationId: lastOperation.operationId
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['contacts']);
+      setLastOperation(null);
+      setUndoTimeRemaining(0);
+    }
+  };
+
+  const existingTags = [...new Set(contacts.flatMap(c => c.tags || []))];
+
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -561,15 +656,17 @@ export default function Contacts() {
           selectedCount={getSelectedCount()}
           objectType="Contact"
           onClearSelection={clearSelection}
-          onDelete={() => alert('Delete functionality coming in Phase 3')}
-          onChangeOwner={() => alert('Change Owner functionality coming in Phase 3')}
-          onAddTags={() => alert('Add Tags functionality coming in Phase 3')}
-          onRemoveTags={() => alert('Remove Tags functionality coming in Phase 3')}
-          onExport={() => alert('Export functionality coming in Phase 3')}
-          onSendEmail={() => alert('Send Email functionality coming in Phase 3')}
-          onAddToList={() => alert('Add to List functionality coming in Phase 3')}
-          onUpdateStage={() => alert('Update Stage functionality coming in Phase 3')}
-          onUpdateStatus={() => alert('Update Status functionality coming in Phase 3')}
+          onDelete={() => setBulkActionModal({ isOpen: true, action: 'delete' })}
+          onChangeOwner={() => setBulkActionModal({ isOpen: true, action: 'changeOwner' })}
+          onAddTags={() => setBulkActionModal({ isOpen: true, action: 'addTags' })}
+          onRemoveTags={() => alert('Remove Tags functionality coming soon')}
+          onExport={() => alert('Export functionality coming soon')}
+          onSendEmail={() => alert('Send Email functionality coming soon')}
+          onAddToList={() => alert('Add to List functionality coming soon')}
+          onUpdateStage={() => alert('Update Stage functionality coming soon')}
+          onUpdateStatus={() => alert('Update Status functionality coming soon')}
+          onUndo={lastOperation?.canUndo ? handleUndo : null}
+          undoTimeRemaining={undoTimeRemaining}
         />
 
         {/* Select All Banner */}
@@ -812,6 +909,29 @@ export default function Contacts() {
           </NeuroCard>
         )}
       </div>
+
+      {/* Bulk Action Modal */}
+      <BulkActionModal
+        isOpen={bulkActionModal.isOpen}
+        onClose={() => setBulkActionModal({ isOpen: false, action: null })}
+        action={bulkActionModal.action}
+        selectedCount={selectAllMode ? filteredContacts.length : getSelectedCount()}
+        objectType="Contact"
+        onConfirm={async (payload) => {
+          switch (bulkActionModal.action) {
+            case 'delete':
+              return await handleBulkDelete();
+            case 'changeOwner':
+              return await handleBulkChangeOwner(payload);
+            case 'addTags':
+              return await handleBulkAddTags(payload);
+            default:
+              throw new Error('Unknown action');
+          }
+        }}
+        users={users}
+        existingTags={existingTags}
+      />
 
       {/* Advanced Filters Modal */}
       <AdvancedFilters
