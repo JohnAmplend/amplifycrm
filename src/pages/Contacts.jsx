@@ -16,6 +16,8 @@ import useBulkSelection from "../components/crm/useBulkSelection";
 import BulkActionModal from "../components/crm/BulkActionModal";
 import SmartSelectionMenu from "../components/crm/SmartSelectionMenu";
 import BulkOperationHistory from "../components/crm/BulkOperationHistory";
+import useKeyboardShortcuts from "../components/crm/useKeyboardShortcuts";
+import KeyboardShortcutsHelp from "../components/crm/KeyboardShortcutsHelp";
 
 export default function Contacts() {
   const navigate = useNavigate();
@@ -59,6 +61,7 @@ export default function Contacts() {
   const [undoTimeRemaining, setUndoTimeRemaining] = useState(0);
   const [showSmartSelection, setShowSmartSelection] = useState(false);
   const [showOperationHistory, setShowOperationHistory] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -420,6 +423,31 @@ export default function Contacts() {
     });
   };
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSelectAll: () => {
+      if (paginatedContacts.length > 0) {
+        toggleSelectAll();
+      }
+    },
+    onDelete: () => {
+      if (getSelectedCount() > 0) {
+        setBulkActionModal({ isOpen: true, action: 'delete' });
+      }
+    },
+    onEscape: () => {
+      if (getSelectedCount() > 0) {
+        clearSelection();
+      }
+    },
+    onUndo: () => {
+      if (lastOperation?.canUndo && undoTimeRemaining > 0) {
+        handleUndo();
+      }
+    },
+    enabled: !showForm && !bulkActionModal.isOpen && !showAdvancedFilters && !showSmartSelection && !showOperationHistory && !showKeyboardHelp
+  });
+
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -486,20 +514,26 @@ export default function Contacts() {
               {filteredContacts.length} {activeStatFilter || advancedFilters.length > 0 ? 'filtered' : 'total'} contacts
             </p>
           </div>
-          <div className="flex gap-3">
-            <NeuroButton onClick={handleExport}>
+          <div className="flex gap-2 md:gap-3">
+            <NeuroButton onClick={handleExport} className="hidden md:flex">
               <Download className="w-4 h-4 mr-2" />
-              Export
+              <span className="hidden lg:inline">Export</span>
             </NeuroButton>
             <Link to={createPageUrl("Import") + "?type=Contacts"}>
-              <NeuroButton>
+              <NeuroButton className="hidden md:flex">
                 <Upload className="w-4 h-4 mr-2" />
-                Import
+                <span className="hidden lg:inline">Import</span>
               </NeuroButton>
             </Link>
+            <NeuroButton 
+              onClick={() => setShowKeyboardHelp(true)}
+              className="hidden md:flex"
+            >
+              <span className="text-sm">?</span>
+            </NeuroButton>
             <NeuroButton variant="primary" onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Contact
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Add Contact</span>
             </NeuroButton>
           </div>
         </div>
@@ -938,6 +972,12 @@ export default function Contacts() {
         items={filteredContacts}
         onSelectItems={handleSmartSelection}
         objectType="Contact"
+      />
+
+      {/* Keyboard Shortcuts Help */}
+      <KeyboardShortcutsHelp
+        isOpen={showKeyboardHelp}
+        onClose={() => setShowKeyboardHelp(false)}
       />
 
       {/* Operation History */}

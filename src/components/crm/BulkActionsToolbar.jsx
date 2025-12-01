@@ -147,31 +147,31 @@ export default function BulkActionsToolbar({
         boxShadow: '0 4px 16px rgba(30, 58, 138, 0.15)'
       }}
     >
-      <div className="p-4 flex flex-wrap items-center gap-3">
+      <div className="p-3 md:p-4 flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center gap-3">
         {/* Left: Selection Info */}
-        <div className="flex items-center gap-3 mr-auto">
+        <div className="flex items-center justify-between md:justify-start gap-3 md:mr-auto">
           <div className="flex items-center gap-2">
             <div 
-              className="w-6 h-6 rounded flex items-center justify-center"
+              className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #00A86B 0%, #00C87A 100%)' }}
             >
               <span className="text-white text-xs font-bold">{selectedCount}</span>
             </div>
-            <span className="font-medium" style={{ color: "#666" }}>
+            <span className="font-medium text-sm md:text-base" style={{ color: "#666" }}>
               {selectedCount} {objectType?.toLowerCase() || 'item'}{selectedCount !== 1 ? 's' : ''} selected
             </span>
           </div>
           <button
             onClick={onClearSelection}
-            className="text-sm underline hover:opacity-70 transition-opacity"
+            className="text-xs md:text-sm underline hover:opacity-70 transition-opacity md:block"
             style={{ color: "#666" }}
           >
-            Clear Selection
+            Clear
           </button>
         </div>
 
         {/* Center: Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Universal Actions */}
           {onDelete && (
             <NeuroButton onClick={onDelete} size="sm" className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200">
@@ -234,28 +234,30 @@ export default function BulkActionsToolbar({
         </div>
 
         {/* Right: Undo & History Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
           {onViewHistory && (
-            <NeuroButton onClick={onViewHistory} size="sm">
+            <NeuroButton onClick={onViewHistory} size="sm" className="md:flex hidden">
               <Clock className="w-4 h-4" />
             </NeuroButton>
           )}
 
-            {onUndo && undoTimeRemaining > 0 && (
+          {onUndo && undoTimeRemaining > 0 && (
             <NeuroButton onClick={onUndo} size="sm">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Undo ({Math.floor(undoTimeRemaining / 60)}:{String(undoTimeRemaining % 60).padStart(2, '0')})
+              <RotateCcw className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">
+                Undo ({Math.floor(undoTimeRemaining / 60)}:{String(undoTimeRemaining % 60).padStart(2, '0')})
+              </span>
             </NeuroButton>
           )}
-        </div>
 
-        {/* Close Button */}
-        <button
-          onClick={onClearSelection}
-          className="ampvibe-button p-2"
-        >
-          <X className="w-4 h-4" />
-        </button>
+          {/* Close Button - Desktop only */}
+          <button
+            onClick={onClearSelection}
+            className="ampvibe-button p-2 hidden md:block"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <style>{`
