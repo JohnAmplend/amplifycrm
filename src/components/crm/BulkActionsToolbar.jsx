@@ -2,7 +2,7 @@ import React from "react";
 import { 
   Trash2, UserCog, Tag, Download, MoreHorizontal, 
   Mail, List, BarChart3, CheckSquare, Calendar,
-  X, RotateCcw, AlertCircle
+  X, RotateCcw, AlertCircle, Sparkles, Clock
 } from "lucide-react";
 import NeuroButton from "./NeuroButton";
 
@@ -24,6 +24,8 @@ export default function BulkActionsToolbar({
   onUpdatePriority,
   onUndo,
   undoTimeRemaining,
+  onSmartSelection,
+  onViewHistory,
   customActions = []
 }) {
   if (selectedCount === 0) return null;
@@ -217,24 +219,40 @@ export default function BulkActionsToolbar({
             </NeuroButton>
           ))}
 
+          {/* Smart Selection */}
+          {onSmartSelection && (
+            <NeuroButton onClick={onSmartSelection} size="sm">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Smart Select
+            </NeuroButton>
+          )}
+
           {/* More Actions */}
           <NeuroButton size="sm">
             <MoreHorizontal className="w-4 h-4" />
           </NeuroButton>
         </div>
 
-        {/* Right: Undo Button */}
-        {onUndo && undoTimeRemaining > 0 && (
-          <NeuroButton onClick={onUndo} size="sm" className="ml-2">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Undo ({Math.floor(undoTimeRemaining / 60)}:{String(undoTimeRemaining % 60).padStart(2, '0')})
-          </NeuroButton>
-        )}
+        {/* Right: Undo & History Buttons */}
+        <div className="flex items-center gap-2">
+          {onViewHistory && (
+            <NeuroButton onClick={onViewHistory} size="sm">
+              <Clock className="w-4 h-4" />
+            </NeuroButton>
+          )}
+
+            {onUndo && undoTimeRemaining > 0 && (
+            <NeuroButton onClick={onUndo} size="sm">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Undo ({Math.floor(undoTimeRemaining / 60)}:{String(undoTimeRemaining % 60).padStart(2, '0')})
+            </NeuroButton>
+          )}
+        </div>
 
         {/* Close Button */}
         <button
           onClick={onClearSelection}
-          className="ampvibe-button p-2 ml-2"
+          className="ampvibe-button p-2"
         >
           <X className="w-4 h-4" />
         </button>

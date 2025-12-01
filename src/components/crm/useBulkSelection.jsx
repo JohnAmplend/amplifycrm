@@ -1,16 +1,37 @@
 import { useState, useCallback, useEffect } from 'react';
 
-export default function useBulkSelection(items = [], itemKey = 'id') {
-  const [selectedIds, setSelectedIds] = useState(new Set());
+export default function useBulkSelection(items = [], itemKey = 'id', persistenceKey = null) {
+  const [selectedIds, setSelectedIds] = useState(() => {
+    if (persistenceKey && typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`bulk-selection-${persistenceKey}`);
+      if (saved) {
+        try {
+          return new Set(JSON.parse(saved));
+        } catch (e) {
+          return new Set();
+        }
+      }
+    }
+    return new Set();
+  });
   const [selectAllMode, setSelectAllMode] = useState(false);
   const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
 
-  // Clear selection when items change significantly
+  // Persist selection
   useEffect(() => {
-    setSelectedIds(new Set());
-    setSelectAllMode(false);
-    setLastSelectedIndex(null);
-  }, [items.length]);
+    if (persistenceKey && typeof window !== 'undefined') {
+      localStorage.setItem(`bulk-selection-${persistenceKey}`, JSON.stringify(Array.from(selectedIds)));
+    }
+  }, [selectedIds, persistenceKey]);
+
+  // Clear invalid selections when items change
+  useEffect(() => {
+    const validIds = new Set(items.map(item => item[itemKey]));
+    setSelectedIds(prev => {
+      const filtered = new Set([...prev].filter(id => validIds.has(id)));
+      return filtered.size === prev.size ? prev : filtered;
+    });
+  }, [items, itemKey]);
 
   const isSelected = useCallback((id) => {
     return selectedIds.has(id);

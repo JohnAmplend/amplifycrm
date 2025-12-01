@@ -14,6 +14,8 @@ import BulkActionsToolbar from "../components/crm/BulkActionsToolbar";
 import SelectAllBanner from "../components/crm/SelectAllBanner";
 import useBulkSelection from "../components/crm/useBulkSelection";
 import BulkActionModal from "../components/crm/BulkActionModal";
+import SmartSelectionMenu from "../components/crm/SmartSelectionMenu";
+import BulkOperationHistory from "../components/crm/BulkOperationHistory";
 
 export default function Contacts() {
   const navigate = useNavigate();
@@ -49,12 +51,14 @@ export default function Contacts() {
     toggleSelectAll,
     selectAllMode,
     setSelectAllMode
-  } = useBulkSelection(paginatedContacts, 'id');
+  } = useBulkSelection(paginatedContacts, 'id', 'contacts');
 
   // Bulk action modals
   const [bulkActionModal, setBulkActionModal] = useState({ isOpen: false, action: null });
   const [lastOperation, setLastOperation] = useState(null);
   const [undoTimeRemaining, setUndoTimeRemaining] = useState(0);
+  const [showSmartSelection, setShowSmartSelection] = useState(false);
+  const [showOperationHistory, setShowOperationHistory] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -73,6 +77,15 @@ export default function Contacts() {
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list()
+  });
+
+  const { data: bulkOperations = [] } = useQuery({
+    queryKey: ['bulk-operations', currentUser?.email],
+    queryFn: () => base44.entities.Bulk_Operations.filter({ 
+      performed_by: currentUser.email,
+      object_type: 'Contact'
+    }).then(ops => ops.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))),
+    enabled: !!currentUser
   });
 
   const { data: leads = [] } = useQuery({
@@ -401,6 +414,12 @@ export default function Contacts() {
 
   const existingTags = [...new Set(contacts.flatMap(c => c.tags || []))];
 
+  const handleSmartSelection = (selectedItems) => {
+    selectedItems.forEach((item, index) => {
+      toggleSelection(item.id, index);
+    });
+  };
+
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -667,6 +686,8 @@ export default function Contacts() {
           onUpdateStatus={() => alert('Update Status functionality coming soon')}
           onUndo={lastOperation?.canUndo ? handleUndo : null}
           undoTimeRemaining={undoTimeRemaining}
+          onSmartSelection={() => setShowSmartSelection(true)}
+          onViewHistory={() => setShowOperationHistory(true)}
         />
 
         {/* Select All Banner */}
@@ -909,6 +930,23 @@ export default function Contacts() {
           </NeuroCard>
         )}
       </div>
+
+      {/* Smart Selection Menu */}
+      <SmartSelectionMenu
+        isOpen={showSmartSelection}
+        onClose={() => setShowSmartSelection(false)}
+        items={filteredContacts}
+        onSelectItems={handleSmartSelection}
+        objectType="Contact"
+      />
+
+      {/* Operation History */}
+      <BulkOperationHistory
+        isOpen={showOperationHistory}
+        onClose={() => setShowOperationHistory(false)}
+        operations={bulkOperations}
+        onUndo={handleUndo}
+      />
 
       {/* Bulk Action Modal */}
       <BulkActionModal
