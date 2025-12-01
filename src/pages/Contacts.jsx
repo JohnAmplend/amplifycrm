@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +10,9 @@ import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import ContactForm from "../components/crm/ContactForm";
 import AdvancedFilters from "../components/crm/AdvancedFilters";
+import BulkActionsToolbar from "../components/crm/BulkActionsToolbar";
+import SelectAllBanner from "../components/crm/SelectAllBanner";
+import useBulkSelection from "../components/crm/useBulkSelection";
 
 export default function Contacts() {
   const navigate = useNavigate();
@@ -30,6 +32,23 @@ export default function Contacts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [customPage, setCustomPage] = useState('');
+
+  // Bulk selection
+  const {
+    selectedIds,
+    isSelected,
+    toggleSelection,
+    selectAll,
+    selectAllAcrossPages,
+    clearSelection,
+    getSelectedCount,
+    getSelectedItems,
+    areAllSelected,
+    areSomeSelected,
+    toggleSelectAll,
+    selectAllMode,
+    setSelectAllMode
+  } = useBulkSelection(paginatedContacts, 'id');
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -537,6 +556,32 @@ export default function Contacts() {
           </div>
         </NeuroCard>
 
+        {/* Bulk Actions Toolbar */}
+        <BulkActionsToolbar
+          selectedCount={getSelectedCount()}
+          objectType="Contact"
+          onClearSelection={clearSelection}
+          onDelete={() => alert('Delete functionality coming in Phase 3')}
+          onChangeOwner={() => alert('Change Owner functionality coming in Phase 3')}
+          onAddTags={() => alert('Add Tags functionality coming in Phase 3')}
+          onRemoveTags={() => alert('Remove Tags functionality coming in Phase 3')}
+          onExport={() => alert('Export functionality coming in Phase 3')}
+          onSendEmail={() => alert('Send Email functionality coming in Phase 3')}
+          onAddToList={() => alert('Add to List functionality coming in Phase 3')}
+          onUpdateStage={() => alert('Update Stage functionality coming in Phase 3')}
+          onUpdateStatus={() => alert('Update Status functionality coming in Phase 3')}
+        />
+
+        {/* Select All Banner */}
+        {areAllSelected() && !selectAllMode && filteredContacts.length > paginatedContacts.length && (
+          <SelectAllBanner
+            visibleCount={paginatedContacts.length}
+            totalCount={filteredContacts.length}
+            onSelectAll={selectAllAcrossPages}
+            onDismiss={() => {}}
+          />
+        )}
+
         {/* Pagination Controls - Top */}
         {totalPages > 1 && (
           <NeuroCard className="mb-6">
@@ -623,6 +668,20 @@ export default function Contacts() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b" style={{ borderColor: "#d0d0d0" }}>
+                    <th className="py-3 px-4" style={{ width: '40px' }}>
+                      <input
+                        type="checkbox"
+                        checked={areAllSelected()}
+                        ref={(input) => {
+                          if (input) {
+                            input.indeterminate = areSomeSelected();
+                          }
+                        }}
+                        onChange={toggleSelectAll}
+                        className="w-5 h-5 cursor-pointer"
+                        style={{ accentColor: "#00A86B" }}
+                      />
+                    </th>
                     <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Name</th>
                     <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Email</th>
                     <th className="text-left py-3 px-4 font-semibold" style={{ color: "#666" }}>Phone</th>
@@ -633,32 +692,83 @@ export default function Contacts() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedContacts.map((contact) => (
+                  {paginatedContacts.map((contact, index) => (
                     <tr
                       key={contact.id}
-                      onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
-                      className="border-b cursor-pointer hover:bg-gray-100 transition-colors"
+                      className={`border-b cursor-pointer transition-colors ${
+                        isSelected(contact.id) ? 'bg-blue-50' : 'hover:bg-gray-50'
+                      }`}
                       style={{ borderColor: "#d8d8d8" }}
                     >
-                      <td className="py-3 px-4">
+                      <td 
+                        className="py-3 px-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSelection(contact.id, index, e);
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected(contact.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSelection(contact.id, index, e);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-5 h-5 cursor-pointer"
+                          style={{ accentColor: "#00A86B" }}
+                        />
+                      </td>
+                      <td 
+                        className="py-3 px-4"
+                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
+                      >
                         <p className="font-medium" style={{ color: "#666" }}>
                           {contact.first_name} {contact.last_name}
                         </p>
                       </td>
-                      <td className="py-3 px-4" style={{ color: "#888" }}>{contact.email}</td>
-                      <td className="py-3 px-4" style={{ color: "#888" }}>{contact.phone}</td>
-                      <td className="py-3 px-4" style={{ color: "#888" }}>{contact.job_title}</td>
-                      <td className="py-3 px-4">
+                      <td 
+                        className="py-3 px-4" 
+                        style={{ color: "#888" }}
+                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
+                      >
+                        {contact.email}
+                      </td>
+                      <td 
+                        className="py-3 px-4" 
+                        style={{ color: "#888" }}
+                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
+                      >
+                        {contact.phone}
+                      </td>
+                      <td 
+                        className="py-3 px-4" 
+                        style={{ color: "#888" }}
+                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
+                      >
+                        {contact.job_title}
+                      </td>
+                      <td 
+                        className="py-3 px-4"
+                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
+                      >
                         <span className="neuro-button px-2 py-1 text-xs">
                           {contact.lifecycle_stage}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td 
+                        className="py-3 px-4"
+                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
+                      >
                         <span className="neuro-button px-2 py-1 text-xs">
                           {contact.lead_status}
                         </span>
                       </td>
-                      <td className="py-3 px-4" style={{ color: "#888" }}>
+                      <td 
+                        className="py-3 px-4" 
+                        style={{ color: "#888" }}
+                        onClick={() => navigate(createPageUrl("ContactDetail") + `?id=${contact.id}`)}
+                      >
                         {users.find(u => u.email === contact.contact_owner)?.full_name || contact.contact_owner}
                       </td>
                     </tr>
