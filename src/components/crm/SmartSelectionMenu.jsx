@@ -123,7 +123,7 @@ export default function SmartSelectionMenu({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
       <div className="ampvibe-card max-w-lg w-full">
         {/* Header */}
         <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
