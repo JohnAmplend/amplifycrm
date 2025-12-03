@@ -9,6 +9,8 @@ import NeuroButton from "../components/crm/NeuroButton";
 import DealForm from "../components/crm/DealForm";
 import ActivityTimeline from "../components/crm/ActivityTimeline.jsx";
 import TaskList from "../components/crm/TaskList.jsx";
+import ActivityTimelinePanel from "../components/crm/ActivityTimelinePanel";
+import TaskManager from "../components/crm/TaskManager";
 
 export default function DealDetail() {
   const navigate = useNavigate();
@@ -225,19 +227,23 @@ export default function DealDetail() {
               </NeuroCard>
             )}
 
-            <ActivityTimeline
-              activities={activities}
-              relatedType="Deal"
-              relatedId={dealId}
+            {/* Comprehensive Activity Timeline */}
+            <ActivityTimelinePanel
+              objectType="Deal"
+              objectId={dealId}
+              objectName={deal.deal_name}
+            />
+
+            {/* Task Manager */}
+            <TaskManager
+              relatedToType="Deal"
+              relatedToId={dealId}
+              relatedToName={deal.deal_name}
             />
           </div>
 
           <div className="space-y-6">
-            <TaskList
-              tasks={tasks}
-              relatedType="Deal"
-              relatedId={dealId}
-            />
+            {/* Sidebar can include quick actions or summary cards */}
           </div>
         </div>
       </div>
