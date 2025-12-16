@@ -155,7 +155,8 @@ export default function Layout({ children, currentPageName }) {
             { name: "Custom Reports", icon: FileText, page: "CustomReportBuilder" },
             { name: "Dashboards", icon: LayoutDashboard, page: "Dashboards" },
             { name: "Reports", icon: BarChart, page: "Reports" },
-            { name: "Goals", icon: Target, page: "Goals" }
+            { name: "Goals", icon: Target, page: "Goals" },
+            { name: "Funnels", icon: Target, page: "Funnels" }
           ]
         },
         {
