@@ -62,6 +62,8 @@ import AITokenAnalytics from './pages/AITokenAnalytics';
 import CRMCalendar from './pages/CRMCalendar';
 import AuthGoogleCallback from './pages/AuthGoogleCallback';
 import DataQuality from './pages/DataQuality';
+import Funnels from './pages/Funnels';
+import FunnelBoard from './pages/FunnelBoard';
 import __Layout from './Layout.jsx';
 
 
@@ -130,6 +132,8 @@ export const PAGES = {
     "CRMCalendar": CRMCalendar,
     "AuthGoogleCallback": AuthGoogleCallback,
     "DataQuality": DataQuality,
+    "Funnels": Funnels,
+    "FunnelBoard": FunnelBoard,
 }
 
 export const pagesConfig = {
