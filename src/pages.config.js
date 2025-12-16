@@ -64,6 +64,8 @@ import AuthGoogleCallback from './pages/AuthGoogleCallback';
 import DataQuality from './pages/DataQuality';
 import Funnels from './pages/Funnels';
 import FunnelBoard from './pages/FunnelBoard';
+import ChatInbox from './pages/ChatInbox';
+import ChatWidget from './pages/ChatWidget';
 import __Layout from './Layout.jsx';
 
 
@@ -134,6 +136,8 @@ export const PAGES = {
     "DataQuality": DataQuality,
     "Funnels": Funnels,
     "FunnelBoard": FunnelBoard,
+    "ChatInbox": ChatInbox,
+    "ChatWidget": ChatWidget,
 }
 
 export const pagesConfig = {

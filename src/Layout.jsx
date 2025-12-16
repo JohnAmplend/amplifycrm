@@ -135,7 +135,8 @@ export default function Layout({ children, currentPageName }) {
           title: 'Support Tools',
           items: [
             { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
-            { name: "SLA Policies", icon: Clock, page: "SLAPolicies" }
+            { name: "SLA Policies", icon: Clock, page: "SLAPolicies" },
+            { name: "Chat Inbox", icon: MessageSquare, page: "ChatInbox" }
           ]
         },
         {
