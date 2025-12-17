@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, Send, X, Minimize2, Maximize2 } from "lucide-react";
 import moment from "moment";
 
+// Force standalone rendering - no CRM shell
+if (typeof window !== 'undefined') {
+  window.__BYPASS_LAYOUT__ = true;
+}
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(true);
   const [isMinimized, setIsMinimized] = useState(true);
