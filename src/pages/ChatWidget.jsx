@@ -3,8 +3,8 @@ import { MessageSquare, Send, X, Minimize2, Maximize2 } from "lucide-react";
 import moment from "moment";
 
 export default function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [sessionId, setSessionId] = useState(null);
   const [visitorId, setVisitorId] = useState(null);
   const [messages, setMessages] = useState([]);
