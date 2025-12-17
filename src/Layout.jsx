@@ -45,7 +45,7 @@ import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
 
 export default function Layout({ children, currentPageName }) {
   // Skip layout for ChatWidget - render standalone
-  if (currentPageName === "ChatWidget" || (typeof window !== 'undefined' && window.__BYPASS_LAYOUT__)) {
+  if (currentPageName === "ChatWidget") {
     return children;
   }
 
