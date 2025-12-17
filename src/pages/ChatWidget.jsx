@@ -148,19 +148,11 @@ export default function ChatWidget() {
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; overflow: hidden; background: transparent !important; width: 100%; height: 100%; }
         #root { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: transparent !important; }
-        body * { max-width: 100%; }
       `}</style>
       <div style={{
         position: 'fixed',
-        bottom: 0,
-        right: 0,
-        width: isOpen ? (isMinimized ? '320px' : '400px') : '80px',
-        height: isOpen ? (isMinimized ? '80px' : '620px') : '80px',
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'flex-end',
-        padding: '20px',
-        pointerEvents: 'none',
+        bottom: '20px',
+        right: '20px',
         zIndex: 9999,
         fontFamily: 'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
       }}>
@@ -178,8 +170,7 @@ export default function ChatWidget() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'transform 0.3s ease',
-            pointerEvents: 'auto'
+            transition: 'transform 0.3s ease'
           }}
           onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
           onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -197,8 +188,7 @@ export default function ChatWidget() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          transition: 'all 0.3s ease',
-          pointerEvents: 'auto'
+          transition: 'all 0.3s ease'
         }}>
           {/* Header */}
           <div style={{
