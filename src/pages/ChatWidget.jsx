@@ -8,8 +8,8 @@ if (typeof window !== 'undefined') {
 }
 
 export default function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isMinimized, setIsMinimized] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [visitorId, setVisitorId] = useState(null);
   const [messages, setMessages] = useState([]);
