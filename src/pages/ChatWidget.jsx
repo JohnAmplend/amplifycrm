@@ -10,6 +10,22 @@ if (typeof window !== 'undefined') {
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  // Notify parent window of size changes
+  useEffect(() => {
+    const sendResize = () => {
+      if (window.parent !== window) {
+        const width = isOpen ? (isMinimized ? '300px' : '400px') : '80px';
+        const height = isOpen ? (isMinimized ? '80px' : '600px') : '80px';
+        window.parent.postMessage({ 
+          type: 'chat-resize', 
+          width, 
+          height 
+        }, '*');
+      }
+    };
+    sendResize();
+  }, [isOpen, isMinimized]);
   const [sessionId, setSessionId] = useState(null);
   const [visitorId, setVisitorId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -134,7 +150,7 @@ export default function ChatWidget() {
   return (
     <>
       <style>{`
-        body { margin: 0; padding: 0; overflow: hidden; }
+        body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
         #root { margin: 0; padding: 0; }
       `}</style>
       <div style={{
