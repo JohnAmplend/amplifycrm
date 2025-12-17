@@ -66,6 +66,7 @@ import Funnels from './pages/Funnels';
 import FunnelBoard from './pages/FunnelBoard';
 import ChatInbox from './pages/ChatInbox';
 import ChatWidget from './pages/ChatWidget';
+import ChatSettings from './pages/ChatSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -138,6 +139,7 @@ export const PAGES = {
     "FunnelBoard": FunnelBoard,
     "ChatInbox": ChatInbox,
     "ChatWidget": ChatWidget,
+    "ChatSettings": ChatSettings,
 }
 
 export const pagesConfig = {
