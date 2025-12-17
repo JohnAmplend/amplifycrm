@@ -127,13 +127,18 @@ export default function ChatWidget() {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '20px',
-      right: '20px',
-      zIndex: 9999,
-      fontFamily: 'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    }}>
+    <>
+      <style>{`
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #root { margin: 0; padding: 0; }
+      `}</style>
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 9999,
+        fontFamily: 'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+      }}>
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
@@ -398,5 +403,6 @@ export default function ChatWidget() {
         </div>
       )}
     </div>
+    </>
   );
 }
