@@ -141,7 +141,8 @@ export default function Layout({ children, currentPageName }) {
           items: [
             { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
             { name: "SLA Policies", icon: Clock, page: "SLAPolicies" },
-            { name: "Chat Inbox", icon: MessageSquare, page: "ChatInbox" }
+            { name: "Chat Inbox", icon: MessageSquare, page: "ChatInbox" },
+            { name: "Chat Settings", icon: Settings, page: "ChatSettings" }
           ]
         },
         {
