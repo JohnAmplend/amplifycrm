@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { MessageSquare, Send, X, Minimize2, Maximize2 } from "lucide-react";
 import moment from "moment";
 
@@ -48,11 +47,14 @@ export default function ChatWidget() {
 
   const loadMessages = async (sid) => {
     try {
-      const response = await base44.functions.invoke('chat/getChatMessages', {
-        session_id: sid
+      const response = await fetch(`https://amplify-crm-7b3d7a85.base44.app/api/functions/chat/getChatMessages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sid })
       });
-      if (response.data?.messages) {
-        setMessages(response.data.messages);
+      const data = await response.json();
+      if (data?.messages) {
+        setMessages(data.messages);
       }
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -67,18 +69,23 @@ export default function ChatWidget() {
 
     setLoading(true);
     try {
-      const response = await base44.functions.invoke('chat/initiateChatSession', {
-        website_url: window.location.href,
-        visitor_id: visitorId,
-        visitor_name: visitorInfo.name,
-        visitor_email: visitorInfo.email
+      const response = await fetch(`https://amplify-crm-7b3d7a85.base44.app/api/functions/chat/initiateChatSession`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          website_url: window.location.href,
+          visitor_id: visitorId,
+          visitor_name: visitorInfo.name,
+          visitor_email: visitorInfo.email
+        })
       });
+      const data = await response.json();
 
-      if (response.data?.session_id) {
-        setSessionId(response.data.session_id);
-        localStorage.setItem('chat_session_id', response.data.session_id);
+      if (data?.session_id) {
+        setSessionId(data.session_id);
+        localStorage.setItem('chat_session_id', data.session_id);
         setHasProvidedInfo(true);
-        loadMessages(response.data.session_id);
+        loadMessages(data.session_id);
       }
     } catch (error) {
       alert('Failed to start chat: ' + error.message);
@@ -102,12 +109,16 @@ export default function ChatWidget() {
     setMessageText('');
 
     try {
-      await base44.functions.invoke('chat/sendChatMessage', {
-        session_id: sessionId,
-        sender_type: 'Visitor',
-        sender_id: visitorId,
-        sender_name: visitorInfo.name,
-        message_content: tempMessage.message_content
+      await fetch(`https://amplify-crm-7b3d7a85.base44.app/api/functions/chat/sendChatMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          sender_type: 'Visitor',
+          sender_id: visitorId,
+          sender_name: visitorInfo.name,
+          message_content: tempMessage.message_content
+        })
       });
       loadMessages(sessionId);
     } catch (error) {
