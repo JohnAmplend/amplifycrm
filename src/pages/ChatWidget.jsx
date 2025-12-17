@@ -146,14 +146,16 @@ export default function ChatWidget() {
     <>
       <style>{`
         body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
-        #root { margin: 0; padding: 0; }
+        #root { margin: 0; padding: 0; overflow: hidden; }
+        html, body, #root { width: 100%; height: 100%; }
       `}</style>
       <div style={{
         position: 'fixed',
         bottom: '20px',
         right: '20px',
         zIndex: 9999,
-        fontFamily: 'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+        fontFamily: 'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        overflow: 'hidden'
       }}>
       {!isOpen ? (
         <button
