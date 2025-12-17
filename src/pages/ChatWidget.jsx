@@ -169,7 +169,7 @@ export default function ChatWidget() {
         <div style={{
           width: isMinimized ? '300px' : '380px',
           height: isMinimized ? '60px' : '550px',
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'rgba(255, 255, 255, 0.75)',
           backdropFilter: 'blur(20px)',
           borderRadius: '16px',
           boxShadow: '0 8px 32px rgba(30, 58, 138, 0.2)',
