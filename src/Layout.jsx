@@ -44,6 +44,11 @@ import AIAssistant from "@/components/crm/AIAssistant";
 import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
 
 export default function Layout({ children, currentPageName }) {
+  // Skip layout for ChatWidget - render standalone
+  if (currentPageName === "ChatWidget") {
+    return children;
+  }
+
   const location = useLocation();
   const [user, setUser] = React.useState(null);
   const [unreadNotifications, setUnreadNotifications] = React.useState(0);
