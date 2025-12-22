@@ -147,14 +147,19 @@ export default function Activities() {
                             </p>
                           </div>
                         </div>
-                        <p className="mb-3" style={{ color: "#888" }}>
-                          {activity.description}
-                        </p>
+                        {activity.description && (
+                          <p className="mb-3" style={{ color: "#888" }}>
+                            {activity.description.replace(/<[^>]*>/g, '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').substring(0, 200)}
+                            {activity.description.length > 200 ? '...' : ''}
+                          </p>
+                        )}
                         <div className="flex items-center gap-4 text-sm" style={{ color: "#aaa" }}>
                           {activity.duration_minutes && (
                             <span>Duration: {activity.duration_minutes} min</span>
                           )}
-                          <span>By: {users.find(u => u.email === activity.created_by)?.full_name || activity.created_by}</span>
+                          {activity.created_by && !activity.created_by.includes('service+7ecffa00') && (
+                            <span>By: {users.find(u => u.email === activity.created_by)?.full_name || activity.created_by}</span>
+                          )}
                         </div>
                       </div>
                     </div>
