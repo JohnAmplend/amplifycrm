@@ -79,12 +79,12 @@ export default function Home() {
               © 2025 AmplifyCRM. All rights reserved.
             </p>
             <div className="flex justify-center gap-6">
-              <Link to={createPageUrl("Privacy")} className="text-sm hover:opacity-70 transition-opacity" style={{ color: "#00A86B" }}>
+              <a href="https://crm.amplend.net/privacy" className="text-sm hover:opacity-70 transition-opacity" style={{ color: "#00A86B" }}>
                 Privacy Policy
-              </Link>
-              <Link to={createPageUrl("Terms")} className="text-sm hover:opacity-70 transition-opacity" style={{ color: "#00A86B" }}>
+              </a>
+              <a href="https://crm.amplend.net/terms" className="text-sm hover:opacity-70 transition-opacity" style={{ color: "#00A86B" }}>
                 Terms of Service
-              </Link>
+              </a>
             </div>
           </div>
         </div>
