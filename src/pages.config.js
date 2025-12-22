@@ -69,6 +69,7 @@ import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
 import RingCentralRecordingSync from './pages/RingCentralRecordingSync';
+import Email from './pages/Email';
 import __Layout from './Layout.jsx';
 
 
@@ -144,6 +145,7 @@ export const PAGES = {
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
     "RingCentralRecordingSync": RingCentralRecordingSync,
+    "Email": Email,
 }
 
 export const pagesConfig = {
