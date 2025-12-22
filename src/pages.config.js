@@ -8,6 +8,7 @@ import AllTickets from './pages/AllTickets';
 import AmplifyAI from './pages/AmplifyAI';
 import AppSync from './pages/AppSync';
 import AuthGoogleCallback from './pages/AuthGoogleCallback';
+import AuthGoogleGmailCallback from './pages/AuthGoogleGmailCallback';
 import CRMCalendar from './pages/CRMCalendar';
 import CallDetail from './pages/CallDetail';
 import Campaigns from './pages/Campaigns';
@@ -34,6 +35,7 @@ import DealDetail from './pages/DealDetail';
 import Deals from './pages/Deals';
 import Documents from './pages/Documents';
 import DuplicateManagement from './pages/DuplicateManagement';
+import Email from './pages/Email';
 import EmailCampaignBuilder from './pages/EmailCampaignBuilder';
 import EmailSequences from './pages/EmailSequences';
 import EmailTemplates from './pages/EmailTemplates';
@@ -56,6 +58,7 @@ import ReportBuilder from './pages/ReportBuilder';
 import ReportViewer from './pages/ReportViewer';
 import Reports from './pages/Reports';
 import RingCentral from './pages/RingCentral';
+import RingCentralRecordingSync from './pages/RingCentralRecordingSync';
 import RolesPermissions from './pages/RolesPermissions';
 import SLAPolicies from './pages/SLAPolicies';
 import SyncLogs from './pages/SyncLogs';
@@ -68,9 +71,8 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import RingCentralRecordingSync from './pages/RingCentralRecordingSync';
-import Email from './pages/Email';
-import AuthGoogleGmailCallback from './pages/AuthGoogleGmailCallback';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import __Layout from './Layout.jsx';
 
 
@@ -85,6 +87,7 @@ export const PAGES = {
     "AmplifyAI": AmplifyAI,
     "AppSync": AppSync,
     "AuthGoogleCallback": AuthGoogleCallback,
+    "AuthGoogleGmailCallback": AuthGoogleGmailCallback,
     "CRMCalendar": CRMCalendar,
     "CallDetail": CallDetail,
     "Campaigns": Campaigns,
@@ -111,6 +114,7 @@ export const PAGES = {
     "Deals": Deals,
     "Documents": Documents,
     "DuplicateManagement": DuplicateManagement,
+    "Email": Email,
     "EmailCampaignBuilder": EmailCampaignBuilder,
     "EmailSequences": EmailSequences,
     "EmailTemplates": EmailTemplates,
@@ -133,6 +137,7 @@ export const PAGES = {
     "ReportViewer": ReportViewer,
     "Reports": Reports,
     "RingCentral": RingCentral,
+    "RingCentralRecordingSync": RingCentralRecordingSync,
     "RolesPermissions": RolesPermissions,
     "SLAPolicies": SLAPolicies,
     "SyncLogs": SyncLogs,
@@ -145,9 +150,8 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "RingCentralRecordingSync": RingCentralRecordingSync,
-    "Email": Email,
-    "AuthGoogleGmailCallback": AuthGoogleGmailCallback,
+    "Privacy": Privacy,
+    "Terms": Terms,
 }
 
 export const pagesConfig = {
