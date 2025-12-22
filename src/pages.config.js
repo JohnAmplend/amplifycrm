@@ -1,145 +1,147 @@
-import Dashboard from './pages/Dashboard';
-import Contacts from './pages/Contacts';
-import ContactDetail from './pages/ContactDetail';
+import ABTesting from './pages/ABTesting';
+import AITokenAnalytics from './pages/AITokenAnalytics';
+import APISettings from './pages/APISettings';
+import Activities from './pages/Activities';
+import AddConnection from './pages/AddConnection';
+import AdvancedReports from './pages/AdvancedReports';
+import AllTickets from './pages/AllTickets';
+import AmplifyAI from './pages/AmplifyAI';
+import AppSync from './pages/AppSync';
+import AuthGoogleCallback from './pages/AuthGoogleCallback';
+import CRMCalendar from './pages/CRMCalendar';
+import CallDetail from './pages/CallDetail';
+import Campaigns from './pages/Campaigns';
+import CannedResponses from './pages/CannedResponses';
+import ChatInbox from './pages/ChatInbox';
+import ChatSettings from './pages/ChatSettings';
+import ChatWidget from './pages/ChatWidget';
 import Companies from './pages/Companies';
 import CompanyDetail from './pages/CompanyDetail';
-import Deals from './pages/Deals';
-import DealDetail from './pages/DealDetail';
-import Leads from './pages/Leads';
-import LeadDetail from './pages/LeadDetail';
-import Activities from './pages/Activities';
-import Tasks from './pages/Tasks';
-import Import from './pages/Import';
-import RingCentral from './pages/RingCentral';
-import CallDetail from './pages/CallDetail';
-import AppSync from './pages/AppSync';
-import AddConnection from './pages/AddConnection';
-import SyncLogs from './pages/SyncLogs';
-import APISettings from './pages/APISettings';
-import EmailTemplates from './pages/EmailTemplates';
-import TemplateBuilder from './pages/TemplateBuilder';
-import Campaigns from './pages/Campaigns';
-import CreateCampaign from './pages/CreateCampaign';
+import ContactDetail from './pages/ContactDetail';
 import ContactLists from './pages/ContactLists';
+import Contacts from './pages/Contacts';
+import CreateCampaign from './pages/CreateCampaign';
 import CreateList from './pages/CreateList';
-import EmailSequences from './pages/EmailSequences';
-import TicketsDashboard from './pages/TicketsDashboard';
-import AllTickets from './pages/AllTickets';
-import MyTickets from './pages/MyTickets';
 import CreateTicket from './pages/CreateTicket';
-import TicketDetail from './pages/TicketDetail';
-import CannedResponses from './pages/CannedResponses';
-import SLAPolicies from './pages/SLAPolicies';
-import Forms from './pages/Forms';
-import FormBuilder from './pages/FormBuilder';
+import CustomObjects from './pages/CustomObjects';
+import CustomReportBuilder from './pages/CustomReportBuilder';
+import Dashboard from './pages/Dashboard';
+import DashboardViewer from './pages/DashboardViewer';
+import Dashboards from './pages/Dashboards';
+import DataEnrichment from './pages/DataEnrichment';
+import DataQuality from './pages/DataQuality';
+import DealDetail from './pages/DealDetail';
+import Deals from './pages/Deals';
 import Documents from './pages/Documents';
 import DuplicateManagement from './pages/DuplicateManagement';
-import CustomObjects from './pages/CustomObjects';
+import EmailCampaignBuilder from './pages/EmailCampaignBuilder';
+import EmailSequences from './pages/EmailSequences';
+import EmailTemplates from './pages/EmailTemplates';
+import FormBuilder from './pages/FormBuilder';
 import FormSubmissions from './pages/FormSubmissions';
-import WebsiteTracking from './pages/WebsiteTracking';
-import KnowledgeBase from './pages/KnowledgeBase';
-import Reports from './pages/Reports';
-import Workflows from './pages/Workflows';
+import Forms from './pages/Forms';
+import FunnelBoard from './pages/FunnelBoard';
+import Funnels from './pages/Funnels';
 import Goals from './pages/Goals';
+import Home from './pages/Home';
+import HubSpotSync from './pages/HubSpotSync';
+import Import from './pages/Import';
+import KnowledgeBase from './pages/KnowledgeBase';
+import LeadDetail from './pages/LeadDetail';
+import LeadScoring from './pages/LeadScoring';
+import Leads from './pages/Leads';
+import MyTickets from './pages/MyTickets';
 import Notifications from './pages/Notifications';
-import Dashboards from './pages/Dashboards';
-import WorkflowBuilder from './pages/WorkflowBuilder';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportViewer from './pages/ReportViewer';
-import DashboardViewer from './pages/DashboardViewer';
-import HubSpotSync from './pages/HubSpotSync';
-import SyncStatus from './pages/SyncStatus';
-import EmailCampaignBuilder from './pages/EmailCampaignBuilder';
-import LeadScoring from './pages/LeadScoring';
-import AdvancedReports from './pages/AdvancedReports';
-import ABTesting from './pages/ABTesting';
-import CustomReportBuilder from './pages/CustomReportBuilder';
+import Reports from './pages/Reports';
+import RingCentral from './pages/RingCentral';
 import RolesPermissions from './pages/RolesPermissions';
-import DataEnrichment from './pages/DataEnrichment';
+import SLAPolicies from './pages/SLAPolicies';
+import SyncLogs from './pages/SyncLogs';
+import SyncStatus from './pages/SyncStatus';
+import Tasks from './pages/Tasks';
+import TemplateBuilder from './pages/TemplateBuilder';
+import TicketDetail from './pages/TicketDetail';
+import TicketsDashboard from './pages/TicketsDashboard';
 import UserProfile from './pages/UserProfile';
-import AmplifyAI from './pages/AmplifyAI';
-import AITokenAnalytics from './pages/AITokenAnalytics';
-import CRMCalendar from './pages/CRMCalendar';
-import AuthGoogleCallback from './pages/AuthGoogleCallback';
-import DataQuality from './pages/DataQuality';
-import Funnels from './pages/Funnels';
-import FunnelBoard from './pages/FunnelBoard';
-import ChatInbox from './pages/ChatInbox';
-import ChatWidget from './pages/ChatWidget';
-import ChatSettings from './pages/ChatSettings';
+import WebsiteTracking from './pages/WebsiteTracking';
+import WorkflowBuilder from './pages/WorkflowBuilder';
+import Workflows from './pages/Workflows';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Contacts": Contacts,
-    "ContactDetail": ContactDetail,
+    "ABTesting": ABTesting,
+    "AITokenAnalytics": AITokenAnalytics,
+    "APISettings": APISettings,
+    "Activities": Activities,
+    "AddConnection": AddConnection,
+    "AdvancedReports": AdvancedReports,
+    "AllTickets": AllTickets,
+    "AmplifyAI": AmplifyAI,
+    "AppSync": AppSync,
+    "AuthGoogleCallback": AuthGoogleCallback,
+    "CRMCalendar": CRMCalendar,
+    "CallDetail": CallDetail,
+    "Campaigns": Campaigns,
+    "CannedResponses": CannedResponses,
+    "ChatInbox": ChatInbox,
+    "ChatSettings": ChatSettings,
+    "ChatWidget": ChatWidget,
     "Companies": Companies,
     "CompanyDetail": CompanyDetail,
-    "Deals": Deals,
-    "DealDetail": DealDetail,
-    "Leads": Leads,
-    "LeadDetail": LeadDetail,
-    "Activities": Activities,
-    "Tasks": Tasks,
-    "Import": Import,
-    "RingCentral": RingCentral,
-    "CallDetail": CallDetail,
-    "AppSync": AppSync,
-    "AddConnection": AddConnection,
-    "SyncLogs": SyncLogs,
-    "APISettings": APISettings,
-    "EmailTemplates": EmailTemplates,
-    "TemplateBuilder": TemplateBuilder,
-    "Campaigns": Campaigns,
-    "CreateCampaign": CreateCampaign,
+    "ContactDetail": ContactDetail,
     "ContactLists": ContactLists,
+    "Contacts": Contacts,
+    "CreateCampaign": CreateCampaign,
     "CreateList": CreateList,
-    "EmailSequences": EmailSequences,
-    "TicketsDashboard": TicketsDashboard,
-    "AllTickets": AllTickets,
-    "MyTickets": MyTickets,
     "CreateTicket": CreateTicket,
-    "TicketDetail": TicketDetail,
-    "CannedResponses": CannedResponses,
-    "SLAPolicies": SLAPolicies,
-    "Forms": Forms,
-    "FormBuilder": FormBuilder,
+    "CustomObjects": CustomObjects,
+    "CustomReportBuilder": CustomReportBuilder,
+    "Dashboard": Dashboard,
+    "DashboardViewer": DashboardViewer,
+    "Dashboards": Dashboards,
+    "DataEnrichment": DataEnrichment,
+    "DataQuality": DataQuality,
+    "DealDetail": DealDetail,
+    "Deals": Deals,
     "Documents": Documents,
     "DuplicateManagement": DuplicateManagement,
-    "CustomObjects": CustomObjects,
+    "EmailCampaignBuilder": EmailCampaignBuilder,
+    "EmailSequences": EmailSequences,
+    "EmailTemplates": EmailTemplates,
+    "FormBuilder": FormBuilder,
     "FormSubmissions": FormSubmissions,
-    "WebsiteTracking": WebsiteTracking,
-    "KnowledgeBase": KnowledgeBase,
-    "Reports": Reports,
-    "Workflows": Workflows,
+    "Forms": Forms,
+    "FunnelBoard": FunnelBoard,
+    "Funnels": Funnels,
     "Goals": Goals,
+    "Home": Home,
+    "HubSpotSync": HubSpotSync,
+    "Import": Import,
+    "KnowledgeBase": KnowledgeBase,
+    "LeadDetail": LeadDetail,
+    "LeadScoring": LeadScoring,
+    "Leads": Leads,
+    "MyTickets": MyTickets,
     "Notifications": Notifications,
-    "Dashboards": Dashboards,
-    "WorkflowBuilder": WorkflowBuilder,
     "ReportBuilder": ReportBuilder,
     "ReportViewer": ReportViewer,
-    "DashboardViewer": DashboardViewer,
-    "HubSpotSync": HubSpotSync,
-    "SyncStatus": SyncStatus,
-    "EmailCampaignBuilder": EmailCampaignBuilder,
-    "LeadScoring": LeadScoring,
-    "AdvancedReports": AdvancedReports,
-    "ABTesting": ABTesting,
-    "CustomReportBuilder": CustomReportBuilder,
+    "Reports": Reports,
+    "RingCentral": RingCentral,
     "RolesPermissions": RolesPermissions,
-    "DataEnrichment": DataEnrichment,
+    "SLAPolicies": SLAPolicies,
+    "SyncLogs": SyncLogs,
+    "SyncStatus": SyncStatus,
+    "Tasks": Tasks,
+    "TemplateBuilder": TemplateBuilder,
+    "TicketDetail": TicketDetail,
+    "TicketsDashboard": TicketsDashboard,
     "UserProfile": UserProfile,
-    "AmplifyAI": AmplifyAI,
-    "AITokenAnalytics": AITokenAnalytics,
-    "CRMCalendar": CRMCalendar,
-    "AuthGoogleCallback": AuthGoogleCallback,
-    "DataQuality": DataQuality,
-    "Funnels": Funnels,
-    "FunnelBoard": FunnelBoard,
-    "ChatInbox": ChatInbox,
-    "ChatWidget": ChatWidget,
-    "ChatSettings": ChatSettings,
+    "WebsiteTracking": WebsiteTracking,
+    "WorkflowBuilder": WorkflowBuilder,
+    "Workflows": Workflows,
 }
 
 export const pagesConfig = {

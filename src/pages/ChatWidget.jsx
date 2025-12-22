@@ -146,8 +146,20 @@ export default function ChatWidget() {
     <>
       <style>{`
         * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; overflow: hidden; background: transparent !important; width: 100%; height: 100%; }
-        #root { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: transparent !important; }
+        html, body {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          width: 100%;
+          overflow: auto;
+          background-color: transparent !important;
+        }
+        #root {
+          height: 100%;
+          width: 100%;
+          background-color: transparent !important;
+          overflow: hidden;
+        }
       `}</style>
       <div style={{
         position: 'fixed',
