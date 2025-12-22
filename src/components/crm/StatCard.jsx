@@ -1,8 +1,9 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import NeuroCard from "./NeuroCard";
 
-export default function StatCard({ icon: Icon, title, value, subtitle, color = "#333" }) {
-  return (
+export default function StatCard({ icon: Icon, title, value, subtitle, color = "#333", linkTo }) {
+  const content = (
     <NeuroCard>
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -24,4 +25,14 @@ export default function StatCard({ icon: Icon, title, value, subtitle, color = "
       </div>
     </NeuroCard>
   );
+
+  if (linkTo) {
+    return (
+      <Link to={linkTo} style={{ textDecoration: 'none' }}>
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }

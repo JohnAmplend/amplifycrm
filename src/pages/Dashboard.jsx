@@ -139,6 +139,7 @@ export default function Dashboard() {
             value={contacts.length}
             subtitle={`${contacts.filter(c => c.lifecycle_stage === 'Customer').length} customers`}
             color="#4a90e2"
+            linkTo={createPageUrl("Contacts")}
           />
           <StatCard
             icon={Building2}
@@ -146,6 +147,7 @@ export default function Dashboard() {
             value={companies.length}
             subtitle={`${companies.filter(c => c.lifecycle_stage === 'Customer').length} customers`}
             color="#52c41a"
+            linkTo={createPageUrl("Companies")}
           />
           <StatCard
             icon={DollarSign}
@@ -153,6 +155,7 @@ export default function Dashboard() {
             value={`$${(totalDealValue / 1000).toFixed(1)}k`}
             subtitle={`${deals.length} active deals`}
             color="#fa8c16"
+            linkTo={createPageUrl("Deals")}
           />
           <StatCard
             icon={UserPlus}
@@ -160,6 +163,7 @@ export default function Dashboard() {
             value={leads.filter(l => !l.converted_contact_id).length}
             subtitle={`${leads.filter(l => l.lead_status === 'Qualified').length} qualified`}
             color="#eb2f96"
+            linkTo={createPageUrl("Leads")}
           />
         </div>
 
