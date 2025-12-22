@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Phone, Mail, Users as MeetingIcon, FileText, CheckSquare, Plus } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import ActivityForm from "../components/crm/ActivityForm";
+import ActivityDetail from "../components/crm/ActivityDetail";
 
 export default function Activities() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterUser, setFilterUser] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const [editingActivity, setEditingActivity] = useState(null);
+  
+  const queryClient = useQueryClient();
 
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ['activities'],
@@ -34,6 +41,14 @@ export default function Activities() {
     return Icon;
   };
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Activity.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['activities']);
+      setSelectedActivity(null);
+    }
+  });
+
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = 
       activity.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,6 +60,28 @@ export default function Activities() {
     return matchesSearch && matchesType && matchesStatus && matchesUser;
   });
 
+  const handleActivityClick = (activity) => {
+    setSelectedActivity(activity);
+  };
+
+  const handleEdit = (activity) => {
+    setEditingActivity(activity);
+    setSelectedActivity(null);
+    setShowForm(true);
+  };
+
+  const handleDelete = (id) => {
+    if (confirm("Are you sure you want to delete this activity?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleFormSuccess = () => {
+    queryClient.invalidateQueries(['activities']);
+    setShowForm(false);
+    setEditingActivity(null);
+  };
+
   return (
     <div className="p-8">
       <div className="max-w-5xl mx-auto">
@@ -55,7 +92,7 @@ export default function Activities() {
             </h1>
             <p style={{ color: "#888" }}>{filteredActivities.length} total activities</p>
           </div>
-          <NeuroButton variant="primary">
+          <NeuroButton variant="primary" onClick={() => { setEditingActivity(null); setShowForm(true); }}>
             <Plus className="w-4 h-4 mr-2" />
             Log Activity
           </NeuroButton>
@@ -118,7 +155,11 @@ export default function Activities() {
               {filteredActivities.map((activity) => {
                 const Icon = getActivityIcon(activity.activity_type);
                 return (
-                  <div key={activity.id} className="neuro-inset p-5 rounded-lg">
+                  <div 
+                    key={activity.id} 
+                    className="neuro-inset p-5 rounded-lg cursor-pointer hover:scale-[1.01] transition-transform"
+                    onClick={() => handleActivityClick(activity)}
+                  >
                     <div className="flex items-start gap-4">
                       <div className="neuro-button p-3 rounded-lg">
                         <Icon className="w-5 h-5" style={{ color: "#666" }} />
@@ -169,6 +210,23 @@ export default function Activities() {
             </div>
           )}
         </NeuroCard>
+
+        {showForm && (
+          <ActivityForm
+            activity={editingActivity}
+            onClose={() => { setShowForm(false); setEditingActivity(null); }}
+            onSuccess={handleFormSuccess}
+          />
+        )}
+
+        {selectedActivity && (
+          <ActivityDetail
+            activity={selectedActivity}
+            onClose={() => setSelectedActivity(null)}
+            onEdit={() => handleEdit(selectedActivity)}
+            onDelete={() => handleDelete(selectedActivity.id)}
+          />
+        )}
       </div>
     </div>
   );
