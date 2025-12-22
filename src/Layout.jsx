@@ -107,6 +107,7 @@ export default function Layout({ children, currentPageName }) {
         {
           title: 'Email Marketing',
           items: [
+            { name: "Email Inbox", icon: Mail, page: "Email" },
             { name: "Campaigns", icon: Send, page: "Campaigns" },
             { name: "Create Campaign", icon: Plus, page: "EmailCampaignBuilder" },
             { name: "Email Templates", icon: Mail, page: "EmailTemplates" },

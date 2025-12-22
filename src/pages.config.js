@@ -70,6 +70,7 @@ import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
 import RingCentralRecordingSync from './pages/RingCentralRecordingSync';
 import Email from './pages/Email';
+import AuthGoogleGmailCallback from './pages/AuthGoogleGmailCallback';
 import __Layout from './Layout.jsx';
 
 
@@ -146,6 +147,7 @@ export const PAGES = {
     "Workflows": Workflows,
     "RingCentralRecordingSync": RingCentralRecordingSync,
     "Email": Email,
+    "AuthGoogleGmailCallback": AuthGoogleGmailCallback,
 }
 
 export const pagesConfig = {
