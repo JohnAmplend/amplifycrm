@@ -9,6 +9,7 @@ import NeuroSelect from "./NeuroSelect";
 export default function ActivityForm({ onClose, onSuccess, activity = null }) {
   const [formData, setFormData] = useState({
     activity_type: activity?.activity_type || "Note",
+    direction: activity?.direction || "N/A",
     subject: activity?.subject || "",
     description: activity?.description || "",
     activity_date: activity?.activity_date ? new Date(activity.activity_date).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
@@ -67,19 +68,34 @@ export default function ActivityForm({ onClose, onSuccess, activity = null }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <NeuroSelect
-            label="Activity Type *"
-            value={formData.activity_type}
-            onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })}
-            options={[
-              { value: 'Call', label: 'Call' },
-              { value: 'Email', label: 'Email' },
-              { value: 'Meeting', label: 'Meeting' },
-              { value: 'Note', label: 'Note' },
-              { value: 'Task', label: 'Task' }
-            ]}
-            required
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <NeuroSelect
+              label="Activity Type *"
+              value={formData.activity_type}
+              onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })}
+              options={[
+                { value: 'Call', label: 'Call' },
+                { value: 'Email', label: 'Email' },
+                { value: 'Meeting', label: 'Meeting' },
+                { value: 'Note', label: 'Note' },
+                { value: 'Task', label: 'Task' }
+              ]}
+              required
+            />
+
+            <NeuroSelect
+              label="Direction *"
+              value={formData.direction}
+              onChange={(e) => setFormData({ ...formData, direction: e.target.value })}
+              options={[
+                { value: 'Inbound', label: 'Inbound' },
+                { value: 'Outbound', label: 'Outbound' },
+                { value: 'Internal', label: 'Internal' },
+                { value: 'N/A', label: 'N/A' }
+              ]}
+              required
+            />
+          </div>
 
           <NeuroInput
             label="Subject *"

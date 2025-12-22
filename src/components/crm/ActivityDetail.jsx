@@ -97,10 +97,23 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
               <h2 className="text-2xl font-bold" style={{ color: "#666" }}>
                 {activity.subject}
               </h2>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="ampvibe-button px-2 py-1 text-xs">
                   {activity.activity_type}
                 </span>
+                {activity.direction && activity.direction !== 'N/A' && (
+                  <span 
+                    className="px-2 py-1 text-xs rounded-lg font-medium"
+                    style={{
+                      background: activity.direction === 'Inbound' ? '#e3f2fd' : 
+                                 activity.direction === 'Outbound' ? '#fff3e0' : '#f3e5f5',
+                      color: activity.direction === 'Inbound' ? '#1976d2' : 
+                             activity.direction === 'Outbound' ? '#e65100' : '#7b1fa2'
+                    }}
+                  >
+                    {activity.direction}
+                  </span>
+                )}
                 <span className="ampvibe-button px-2 py-1 text-xs">
                   {activity.status}
                 </span>

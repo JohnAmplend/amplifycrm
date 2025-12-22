@@ -13,6 +13,7 @@ export default function Activities() {
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterUser, setFilterUser] = useState("");
+  const [filterDirection, setFilterDirection] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
@@ -56,8 +57,9 @@ export default function Activities() {
     const matchesType = !filterType || activity.activity_type === filterType;
     const matchesStatus = !filterStatus || activity.status === filterStatus;
     const matchesUser = !filterUser || activity.created_by === filterUser;
+    const matchesDirection = !filterDirection || activity.direction === filterDirection;
     
-    return matchesSearch && matchesType && matchesStatus && matchesUser;
+    return matchesSearch && matchesType && matchesStatus && matchesUser && matchesDirection;
   });
 
   const handleActivityClick = (activity) => {
@@ -99,7 +101,7 @@ export default function Activities() {
         </div>
 
         <NeuroCard className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: "#aaa" }} />
               <input
@@ -120,6 +122,17 @@ export default function Activities() {
                 { value: 'Meeting', label: 'Meeting' },
                 { value: 'Note', label: 'Note' },
                 { value: 'Task', label: 'Task' }
+              ]}
+            />
+            <NeuroSelect
+              placeholder="Filter by direction"
+              value={filterDirection}
+              onChange={(e) => setFilterDirection(e.target.value)}
+              options={[
+                { value: 'Inbound', label: 'Inbound' },
+                { value: 'Outbound', label: 'Outbound' },
+                { value: 'Internal', label: 'Internal' },
+                { value: 'N/A', label: 'N/A' }
               ]}
             />
             <NeuroSelect
@@ -170,10 +183,23 @@ export default function Activities() {
                             <h3 className="font-bold text-lg mb-1" style={{ color: "#666" }}>
                               {activity.subject}
                             </h3>
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <span className="neuro-button px-2 py-1 text-xs">
                                 {activity.activity_type}
                               </span>
+                              {activity.direction && activity.direction !== 'N/A' && (
+                                <span 
+                                  className="px-2 py-1 text-xs rounded-lg font-medium"
+                                  style={{
+                                    background: activity.direction === 'Inbound' ? '#e3f2fd' : 
+                                               activity.direction === 'Outbound' ? '#fff3e0' : '#f3e5f5',
+                                    color: activity.direction === 'Inbound' ? '#1976d2' : 
+                                           activity.direction === 'Outbound' ? '#e65100' : '#7b1fa2'
+                                  }}
+                                >
+                                  {activity.direction}
+                                </span>
+                              )}
                               <span className="neuro-button px-2 py-1 text-xs">
                                 {activity.status}
                               </span>
