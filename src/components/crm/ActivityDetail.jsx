@@ -97,6 +97,9 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
 
   const { cleanDescription, callInfo, links } = parseActivityMetadata(activity.description);
 
+  // Use Base44-stored recording if available, otherwise fall back to RingCentral URL
+  const recordingUrl = activity.recording_url || callInfo?.recordingLink;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
       <div className="ampvibe-card max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -175,7 +178,7 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
                   </div>
                 )}
                 
-                {callInfo.recordingLink && (
+                {recordingUrl && (
                   <div>
                     <p className="text-xs mb-2" style={{ color: "#888" }}>Recording</p>
                     <audio 
@@ -188,13 +191,13 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
                       preload="metadata"
                       crossOrigin="anonymous"
                     >
-                      <source src={callInfo.recordingLink} type="audio/mpeg" />
-                      <source src={callInfo.recordingLink} type="audio/wav" />
-                      <source src={callInfo.recordingLink} type="audio/mp3" />
+                      <source src={recordingUrl} type="audio/mpeg" />
+                      <source src={recordingUrl} type="audio/wav" />
+                      <source src={recordingUrl} type="audio/mp3" />
                       Your browser does not support the audio element.
                     </audio>
                     <a
-                      href={callInfo.recordingLink}
+                      href={recordingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="ampvibe-button px-4 py-2 rounded-lg inline-flex items-center gap-2 text-sm"
