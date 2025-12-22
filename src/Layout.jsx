@@ -177,7 +177,8 @@ export default function Layout({ children, currentPageName }) {
           items: [
             { name: "Sync Status", icon: BarChart3, page: "SyncStatus" },
             { name: "HubSpot Sync", icon: RefreshCw, page: "HubSpotSync" },
-            { name: "RingCentral", icon: Phone, page: "RingCentral" }
+            { name: "RingCentral", icon: Phone, page: "RingCentral" },
+            { name: "Recording Sync", icon: RefreshCw, page: "RingCentralRecordingSync" }
           ]
         }
       ]
