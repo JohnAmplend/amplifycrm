@@ -79,12 +79,18 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
       .replace(/Recording link:\s*https?:\/\/[^\s]+/, '')
       .replace(/&gt;/g, '')
       .replace(/&lt;/g, '')
+      .replace(/>{2,}/g, '') // Remove multiple > characters
       .trim();
     
     // Extract remaining URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const links = cleanDescription.match(urlRegex) || [];
     cleanDescription = cleanDescription.replace(urlRegex, '').trim();
+    
+    // If description is empty or just whitespace/special chars, set to empty
+    if (!cleanDescription || cleanDescription.match(/^[>\s]*$/)) {
+      cleanDescription = '';
+    }
     
     return { cleanDescription, callInfo, links };
   };
