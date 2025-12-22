@@ -455,11 +455,25 @@ export default function Layout({ children, currentPageName }) {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">{children}</div>
 
+      {/* Footer with Privacy & Terms */}
+      <div className="ampvibe-card m-4 mt-0">
+        <div className="px-6 py-4 text-center border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+          <div className="flex justify-center gap-6 text-sm">
+            <a href="https://crm.amplend.net/privacy" className="hover:opacity-70 transition-opacity" style={{ color: "#00A86B" }}>
+              Privacy Policy
+            </a>
+            <a href="https://crm.amplend.net/terms" className="hover:opacity-70 transition-opacity" style={{ color: "#00A86B" }}>
+              Terms of Service
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* AI Assistant - Global */}
       <AIAssistant />
-      
+
       {/* Onboarding Assistant - Shows for new users */}
       <OnboardingAssistant />
-    </div>
-  );
-}
+      </div>
+      );
+      }
