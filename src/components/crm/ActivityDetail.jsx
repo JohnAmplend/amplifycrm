@@ -44,46 +44,52 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
   const Icon = getActivityIcon(activity.activity_type);
   const creator = users.find(u => u.email === activity.created_by);
 
-  // Extract URLs from description
-  const extractLinks = (text) => {
-    if (!text) return [];
-    const urlRegex = /(https?:\/\/[^\s<]+)/g;
-    return text.match(urlRegex) || [];
-  };
-
-  // Render description with clickable links
-  const renderDescription = (text) => {
-    if (!text) return null;
+  // Parse call/activity metadata from description
+  const parseActivityMetadata = (text) => {
+    if (!text) return { cleanDescription: '', callInfo: null, links: [] };
     
     const cleanText = text.replace(/<[^>]*>/g, '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = cleanText.split(urlRegex);
     
-    return (
-      <div>
-        {parts.map((part, index) => {
-          if (part.match(urlRegex)) {
-            return (
-              <a
-                key={index}
-                href={part}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {part.length > 50 ? part.substring(0, 50) + '...' : part}
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            );
-          }
-          return <span key={index}>{part}</span>;
-        })}
-      </div>
-    );
+    // Extract direction pattern like [Inbound - Accepted] or [Outbound - Call connected]
+    const directionMatch = cleanText.match(/\[(Inbound|Outbound)\s*-\s*([^\]]+)\]/);
+    
+    // Extract phone numbers
+    const phoneMatch = cleanText.match(/(?:Call from|to)\s+([^(]+)\s*\(([+\d]+)\)(?:\s+to\s+)?(?:Caller\s+)?([^(]*)\(([+\d]+)\)?/);
+    
+    // Extract recording link
+    const recordingMatch = cleanText.match(/Recording link:\s*(https?:\/\/[^\s]+)/);
+    
+    let callInfo = null;
+    if (directionMatch || phoneMatch || recordingMatch) {
+      callInfo = {
+        direction: directionMatch ? directionMatch[1] : null,
+        status: directionMatch ? directionMatch[2].trim() : null,
+        fromName: phoneMatch ? phoneMatch[1].trim() : null,
+        fromNumber: phoneMatch ? phoneMatch[2] : null,
+        toName: phoneMatch ? phoneMatch[3].trim() : null,
+        toNumber: phoneMatch ? phoneMatch[4] : null,
+        recordingLink: recordingMatch ? recordingMatch[1] : null
+      };
+    }
+    
+    // Remove metadata from description
+    let cleanDescription = cleanText
+      .replace(/\[(Inbound|Outbound)\s*-\s*[^\]]+\]/, '')
+      .replace(/Call from [^)]+\)[^)]*\([^)]+\)/, '')
+      .replace(/Recording link:\s*https?:\/\/[^\s]+/, '')
+      .replace(/&gt;/g, '')
+      .replace(/&lt;/g, '')
+      .trim();
+    
+    // Extract remaining URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const links = cleanDescription.match(urlRegex) || [];
+    cleanDescription = cleanDescription.replace(urlRegex, '').trim();
+    
+    return { cleanDescription, callInfo, links };
   };
 
-  const links = extractLinks(activity.description);
+  const { cleanDescription, callInfo, links } = parseActivityMetadata(activity.description);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
@@ -126,14 +132,67 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Call Information */}
+          {callInfo && (
+            <div>
+              <h3 className="font-bold mb-2 text-sm" style={{ color: "#888" }}>Call Details</h3>
+              <div className="ampvibe-inset p-4 rounded-lg space-y-3">
+                {callInfo.direction && (
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className="px-3 py-1 text-sm rounded-lg font-medium"
+                      style={{
+                        background: callInfo.direction === 'Inbound' ? '#e3f2fd' : '#fff3e0',
+                        color: callInfo.direction === 'Inbound' ? '#1976d2' : '#e65100'
+                      }}
+                    >
+                      {callInfo.direction} {callInfo.status && `- ${callInfo.status}`}
+                    </span>
+                  </div>
+                )}
+                
+                {callInfo.fromName && (
+                  <div>
+                    <p className="text-xs" style={{ color: "#888" }}>From</p>
+                    <p className="font-medium" style={{ color: "#666" }}>
+                      {callInfo.fromName} {callInfo.fromNumber && `(${callInfo.fromNumber})`}
+                    </p>
+                  </div>
+                )}
+                
+                {callInfo.toName && (
+                  <div>
+                    <p className="text-xs" style={{ color: "#888" }}>To</p>
+                    <p className="font-medium" style={{ color: "#666" }}>
+                      {callInfo.toName} {callInfo.toNumber && `(${callInfo.toNumber})`}
+                    </p>
+                  </div>
+                )}
+                
+                {callInfo.recordingLink && (
+                  <a
+                    href={callInfo.recordingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ampvibe-button-primary px-4 py-2 rounded-lg inline-flex items-center gap-2 text-sm"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Listen to Recording
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Description */}
-          {activity.description && (
+          {cleanDescription && (
             <div>
               <h3 className="font-bold mb-2 text-sm" style={{ color: "#888" }}>Description</h3>
               <div className="ampvibe-inset p-4 rounded-lg">
-                <div style={{ color: "#666", lineHeight: "1.6" }}>
-                  {renderDescription(activity.description)}
-                </div>
+                <p style={{ color: "#666", lineHeight: "1.6" }}>
+                  {cleanDescription}
+                </p>
               </div>
             </div>
           )}
@@ -141,7 +200,7 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
           {/* Links Section */}
           {links.length > 0 && (
             <div>
-              <h3 className="font-bold mb-2 text-sm" style={{ color: "#888" }}>Attachments & Links</h3>
+              <h3 className="font-bold mb-2 text-sm" style={{ color: "#888" }}>Additional Links</h3>
               <div className="space-y-2">
                 {links.map((link, index) => (
                   <a
@@ -153,9 +212,7 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
                   >
                     <ExternalLink className="w-5 h-5" style={{ color: "#4a90e2" }} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate" style={{ color: "#666" }}>
-                        {link.includes('recording') ? 'Call Recording' : link.includes('ringcentral') ? 'RingCentral Link' : 'Link'}
-                      </p>
+                      <p className="font-medium truncate" style={{ color: "#666" }}>Link</p>
                       <p className="text-xs truncate" style={{ color: "#888" }}>{link}</p>
                     </div>
                   </a>
