@@ -180,16 +180,28 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete, on
                     <p className="text-xs mb-2" style={{ color: "#888" }}>Recording</p>
                     <audio 
                       controls 
-                      className="w-full"
+                      className="w-full mb-3"
                       style={{
                         borderRadius: '8px',
                         outline: 'none'
                       }}
+                      preload="metadata"
+                      crossOrigin="anonymous"
                     >
                       <source src={callInfo.recordingLink} type="audio/mpeg" />
                       <source src={callInfo.recordingLink} type="audio/wav" />
+                      <source src={callInfo.recordingLink} type="audio/mp3" />
                       Your browser does not support the audio element.
                     </audio>
+                    <a
+                      href={callInfo.recordingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ampvibe-button px-4 py-2 rounded-lg inline-flex items-center gap-2 text-sm"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Open Recording in New Tab
+                    </a>
                   </div>
                 )}
               </div>
