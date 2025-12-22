@@ -225,6 +225,7 @@ export default function Activities() {
             onClose={() => setSelectedActivity(null)}
             onEdit={() => handleEdit(selectedActivity)}
             onDelete={() => handleDelete(selectedActivity.id)}
+            onAddNew={() => { setSelectedActivity(null); setEditingActivity(null); setShowForm(true); }}
           />
         )}
       </div>

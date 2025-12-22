@@ -1,12 +1,12 @@
 import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { X, Phone, Mail, Users as MeetingIcon, FileText, CheckSquare, Calendar, Clock, User, Building2, DollarSign, Edit, Trash2 } from "lucide-react";
+import { X, Phone, Mail, Users as MeetingIcon, FileText, CheckSquare, Calendar, Clock, User, Building2, DollarSign, Edit, Trash2, Plus, ExternalLink } from "lucide-react";
 import NeuroButton from "./NeuroButton";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-export default function ActivityDetail({ activity, onClose, onEdit, onDelete }) {
+export default function ActivityDetail({ activity, onClose, onEdit, onDelete, onAddNew }) {
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list()
@@ -44,6 +44,47 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete }) 
   const Icon = getActivityIcon(activity.activity_type);
   const creator = users.find(u => u.email === activity.created_by);
 
+  // Extract URLs from description
+  const extractLinks = (text) => {
+    if (!text) return [];
+    const urlRegex = /(https?:\/\/[^\s<]+)/g;
+    return text.match(urlRegex) || [];
+  };
+
+  // Render description with clickable links
+  const renderDescription = (text) => {
+    if (!text) return null;
+    
+    const cleanText = text.replace(/<[^>]*>/g, '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = cleanText.split(urlRegex);
+    
+    return (
+      <div>
+        {parts.map((part, index) => {
+          if (part.match(urlRegex)) {
+            return (
+              <a
+                key={index}
+                href={part}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {part.length > 50 ? part.substring(0, 50) + '...' : part}
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            );
+          }
+          return <span key={index}>{part}</span>;
+        })}
+      </div>
+    );
+  };
+
+  const links = extractLinks(activity.description);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
       <div className="ampvibe-card max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -77,9 +118,35 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete }) 
             <div>
               <h3 className="font-bold mb-2 text-sm" style={{ color: "#888" }}>Description</h3>
               <div className="ampvibe-inset p-4 rounded-lg">
-                <p style={{ color: "#666" }}>
-                  {activity.description.replace(/<[^>]*>/g, '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&')}
-                </p>
+                <div style={{ color: "#666", lineHeight: "1.6" }}>
+                  {renderDescription(activity.description)}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Links Section */}
+          {links.length > 0 && (
+            <div>
+              <h3 className="font-bold mb-2 text-sm" style={{ color: "#888" }}>Attachments & Links</h3>
+              <div className="space-y-2">
+                {links.map((link, index) => (
+                  <a
+                    key={index}
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ampvibe-button p-3 rounded-lg flex items-center gap-3 hover:scale-[1.02] transition-transform"
+                  >
+                    <ExternalLink className="w-5 h-5" style={{ color: "#4a90e2" }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate" style={{ color: "#666" }}>
+                        {link.includes('recording') ? 'Call Recording' : link.includes('ringcentral') ? 'RingCentral Link' : 'Link'}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: "#888" }}>{link}</p>
+                    </div>
+                  </a>
+                ))}
               </div>
             </div>
           )}
@@ -192,11 +259,14 @@ export default function ActivityDetail({ activity, onClose, onEdit, onDelete }) 
           <div className="flex gap-3 pt-4">
             <NeuroButton onClick={onEdit} className="flex-1">
               <Edit className="w-4 h-4 mr-2" />
-              Edit Activity
+              Edit
             </NeuroButton>
-            <NeuroButton onClick={onDelete} className="flex-1 hover:bg-red-50">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
+            <NeuroButton onClick={onAddNew} variant="primary" className="flex-1">
+              <Plus className="w-4 h-4 mr-2" />
+              Log New Activity
+            </NeuroButton>
+            <NeuroButton onClick={onDelete} className="hover:bg-red-50">
+              <Trash2 className="w-4 h-4" />
             </NeuroButton>
           </div>
         </div>
