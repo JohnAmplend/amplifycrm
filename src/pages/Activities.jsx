@@ -7,6 +7,10 @@ import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import ActivityForm from "../components/crm/ActivityForm";
 import ActivityDetail from "../components/crm/ActivityDetail";
+import LoadingState from "../components/crm/LoadingState";
+import EmptyState from "../components/crm/EmptyState";
+import { toast } from "../components/crm/useToast";
+import { Activity as ActivityIcon } from "lucide-react";
 
 export default function Activities() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,7 +50,11 @@ export default function Activities() {
     mutationFn: (id) => base44.entities.Activity.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['activities']);
+      toast.success('Activity deleted successfully');
       setSelectedActivity(null);
+    },
+    onError: (err) => {
+      toast.error('Failed to delete activity: ' + err.message);
     }
   });
 
@@ -156,13 +164,15 @@ export default function Activities() {
 
         <NeuroCard>
           {isLoading ? (
-            <div className="text-center py-12" style={{ color: "#aaa" }}>
-              Loading activities...
-            </div>
+            <LoadingState message="Loading activities..." />
           ) : filteredActivities.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="mb-4" style={{ color: "#aaa" }}>No activities found</p>
-            </div>
+            <EmptyState
+              icon={ActivityIcon}
+              title="No activities yet"
+              message="Get started by logging your first activity"
+              actionLabel="Log Activity"
+              onAction={() => setShowForm(true)}
+            />
           ) : (
             <div className="space-y-4">
               {filteredActivities.map((activity) => {

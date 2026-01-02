@@ -5,8 +5,10 @@ import { AlertCircle } from "lucide-react";
 import NeuroInput from "./NeuroInput";
 import NeuroSelect from "./NeuroSelect";
 import NeuroButton from "./NeuroButton";
+import { toast } from "./useToast";
 
 export default function ContactForm({ contact, onSubmit, onCancel, currentUser }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -39,9 +41,18 @@ export default function ContactForm({ contact, onSubmit, onCancel, currentUser }
     queryFn: () => base44.entities.User.list()
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      toast.error('Failed to save contact');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Show warning if lifecycle stage is Lead
@@ -170,11 +181,11 @@ export default function ContactForm({ contact, onSubmit, onCancel, currentUser }
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
-        <NeuroButton type="button" onClick={onCancel}>
+        <NeuroButton type="button" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </NeuroButton>
-        <NeuroButton type="submit" variant="primary">
-          {contact ? 'Update' : isLeadStage ? 'Create as Lead' : 'Create'} Contact
+        <NeuroButton type="submit" variant="primary" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : contact ? 'Update' : isLeadStage ? 'Create as Lead' : 'Create'} Contact
         </NeuroButton>
       </div>
     </form>

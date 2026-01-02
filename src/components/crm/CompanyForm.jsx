@@ -6,6 +6,7 @@ import NeuroSelect from "./NeuroSelect";
 import NeuroButton from "./NeuroButton";
 
 export default function CompanyForm({ company, onSubmit, onCancel, currentUser }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     company_name: "",
     domain: "",
@@ -28,9 +29,16 @@ export default function CompanyForm({ company, onSubmit, onCancel, currentUser }
     queryFn: () => base44.entities.User.list()
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -116,11 +124,11 @@ export default function CompanyForm({ company, onSubmit, onCancel, currentUser }
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
-        <NeuroButton type="button" onClick={onCancel}>
+        <NeuroButton type="button" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </NeuroButton>
-        <NeuroButton type="submit" variant="primary">
-          {company ? 'Update' : 'Create'} Company
+        <NeuroButton type="submit" variant="primary" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : company ? 'Update' : 'Create'} Company
         </NeuroButton>
       </div>
     </form>

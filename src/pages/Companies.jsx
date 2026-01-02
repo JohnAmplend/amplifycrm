@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +10,9 @@ import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import CompanyForm from "../components/crm/CompanyForm";
 import AdvancedFilters from "../components/crm/AdvancedFilters";
+import LoadingState from "../components/crm/LoadingState";
+import EmptyState from "../components/crm/EmptyState";
+import { toast } from "../components/crm/useToast";
 
 export default function Companies() {
   const navigate = useNavigate();
@@ -82,10 +84,11 @@ export default function Companies() {
       if (context?.previousCompanies) {
         queryClient.setQueryData(['companies'], context.previousCompanies);
       }
-      alert('Failed to create company: ' + err.message);
+      toast.error('Failed to create company: ' + err.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['companies']);
+      toast.success('Company created successfully');
       setShowForm(false);
     }
   });
@@ -574,26 +577,15 @@ export default function Companies() {
         {/* Companies Table */}
         <NeuroCard>
           {isLoading ? (
-            <div className="text-center py-12" style={{ color: "#aaa" }}>
-              Loading companies...
-            </div>
+            <LoadingState message="Loading companies..." />
           ) : filteredCompanies.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="mb-4" style={{ color: "#aaa" }}>
-                {activeStatFilter || advancedFilters.length > 0 ? 'No companies match these filters' : 'No companies found'}
-              </p>
-              {(activeStatFilter || advancedFilters.length > 0) && (
-                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); setFilterLogic('AND'); }}>
-                  Clear Filters
-                </NeuroButton>
-              )}
-              {!activeStatFilter && advancedFilters.length === 0 && (
-                <NeuroButton onClick={() => setShowForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Company
-                </NeuroButton>
-              )}
-            </div>
+            <EmptyState
+              icon={Building2}
+              title={activeStatFilter || advancedFilters.length > 0 ? 'No companies match these filters' : 'No companies yet'}
+              message={activeStatFilter || advancedFilters.length > 0 ? 'Try adjusting your filters' : 'Get started by adding your first company'}
+              actionLabel={!activeStatFilter && advancedFilters.length === 0 ? 'Add Company' : undefined}
+              onAction={!activeStatFilter && advancedFilters.length === 0 ? () => setShowForm(true) : undefined}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

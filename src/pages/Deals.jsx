@@ -8,6 +8,10 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import DealForm from "../components/crm/DealForm";
 import DealKanban from "../components/crm/DealKanban";
+import LoadingState from "../components/crm/LoadingState";
+import EmptyState from "../components/crm/EmptyState";
+import { toast } from "../components/crm/useToast";
+import { DollarSign } from "lucide-react";
 
 export default function Deals() {
   const navigate = useNavigate();
@@ -57,10 +61,11 @@ export default function Deals() {
       if (context?.previousDeals) {
         queryClient.setQueryData(['deals'], context.previousDeals);
       }
-      alert('Failed to create deal: ' + err.message);
+      toast.error('Failed to create deal: ' + err.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['deals']);
+      toast.success('Deal created successfully');
       setShowForm(false);
     }
   });
@@ -272,6 +277,17 @@ export default function Deals() {
             )}
 
             <NeuroCard>
+              {isLoading ? (
+                <LoadingState message="Loading deals..." />
+              ) : paginatedDeals.length === 0 ? (
+                <EmptyState
+                  icon={DollarSign}
+                  title="No deals yet"
+                  message="Get started by creating your first deal"
+                  actionLabel="Add Deal"
+                  onAction={() => setShowForm(true)}
+                />
+              ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -324,6 +340,7 @@ export default function Deals() {
                   </tbody>
                 </table>
               </div>
+              )}
             </NeuroCard>
 
             {/* Pagination Controls - Bottom */}

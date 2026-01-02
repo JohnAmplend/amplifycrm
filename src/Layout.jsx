@@ -42,6 +42,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import AIAssistant from "@/components/crm/AIAssistant";
 import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
+import { Toaster } from "sonner";
 
 export default function Layout({ children, currentPageName }) {
   // Skip layout for ChatWidget - render standalone
@@ -474,6 +475,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Onboarding Assistant - Shows for new users */}
       <OnboardingAssistant />
+
+      {/* Toast Notifications */}
+      <Toaster position="top-right" />
       </div>
       );
       }

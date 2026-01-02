@@ -19,6 +19,9 @@ import BulkOperationHistory from "../components/crm/BulkOperationHistory";
 import useKeyboardShortcuts from "../components/crm/useKeyboardShortcuts";
 import KeyboardShortcutsHelp from "../components/crm/KeyboardShortcutsHelp";
 import ViewManager from "../components/crm/ViewManager";
+import LoadingState from "../components/crm/LoadingState";
+import EmptyState from "../components/crm/EmptyState";
+import { toast } from "../components/crm/useToast";
 
 export default function Contacts() {
   const navigate = useNavigate();
@@ -186,17 +189,18 @@ export default function Contacts() {
       if (context?.previousContacts && !context?.isLead) {
         queryClient.setQueryData(['contacts'], context.previousContacts);
       }
-      alert('Failed to create contact: ' + err.message);
+      toast.error('Failed to create contact: ' + err.message);
     },
     onSuccess: (data, variables, context) => {
       if (context?.isLead) {
         queryClient.invalidateQueries(['leads']);
-        alert('Contact created as Lead because lifecycle stage is "Lead". Redirecting to Leads page...');
+        toast.success('Contact created as Lead. Redirecting...');
         setTimeout(() => {
           navigate(createPageUrl("Leads"));
         }, 1000);
       } else {
         queryClient.invalidateQueries(['contacts']);
+        toast.success('Contact created successfully');
         setShowForm(false);
       }
     }
@@ -939,26 +943,15 @@ export default function Contacts() {
         {/* Contacts Table */}
         <NeuroCard>
           {isLoading ? (
-            <div className="text-center py-12" style={{ color: "#aaa" }}>
-              Loading contacts...
-            </div>
+            <LoadingState message="Loading contacts..." />
           ) : filteredContacts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="mb-4" style={{ color: "#aaa" }}>
-                {activeStatFilter || advancedFilters.length > 0 ? 'No contacts match these filters' : 'No contacts found'}
-              </p>
-              {(activeStatFilter || advancedFilters.length > 0) && (
-                <NeuroButton onClick={() => { setActiveStatFilter(null); setAdvancedFilters([]); setFilterLogic('AND'); }}>
-                  Clear Filters
-                </NeuroButton>
-              )}
-              {!activeStatFilter && advancedFilters.length === 0 && (
-                <NeuroButton onClick={() => setShowForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Contact
-                </NeuroButton>
-              )}
-            </div>
+            <EmptyState
+              icon={Users}
+              title={activeStatFilter || advancedFilters.length > 0 ? 'No contacts match these filters' : 'No contacts yet'}
+              message={activeStatFilter || advancedFilters.length > 0 ? 'Try adjusting your filters' : 'Get started by adding your first contact'}
+              actionLabel={!activeStatFilter && advancedFilters.length === 0 ? 'Add Contact' : undefined}
+              onAction={!activeStatFilter && advancedFilters.length === 0 ? () => setShowForm(true) : undefined}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

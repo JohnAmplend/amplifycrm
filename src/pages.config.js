@@ -54,6 +54,7 @@ import LeadScoring from './pages/LeadScoring';
 import Leads from './pages/Leads';
 import MyTickets from './pages/MyTickets';
 import Notifications from './pages/Notifications';
+import Privacy from './pages/Privacy';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportViewer from './pages/ReportViewer';
 import Reports from './pages/Reports';
@@ -65,14 +66,13 @@ import SyncLogs from './pages/SyncLogs';
 import SyncStatus from './pages/SyncStatus';
 import Tasks from './pages/Tasks';
 import TemplateBuilder from './pages/TemplateBuilder';
+import Terms from './pages/Terms';
 import TicketDetail from './pages/TicketDetail';
 import TicketsDashboard from './pages/TicketsDashboard';
 import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
 import __Layout from './Layout.jsx';
 
 
@@ -133,6 +133,7 @@ export const PAGES = {
     "Leads": Leads,
     "MyTickets": MyTickets,
     "Notifications": Notifications,
+    "Privacy": Privacy,
     "ReportBuilder": ReportBuilder,
     "ReportViewer": ReportViewer,
     "Reports": Reports,
@@ -144,14 +145,13 @@ export const PAGES = {
     "SyncStatus": SyncStatus,
     "Tasks": Tasks,
     "TemplateBuilder": TemplateBuilder,
+    "Terms": Terms,
     "TicketDetail": TicketDetail,
     "TicketsDashboard": TicketsDashboard,
     "UserProfile": UserProfile,
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "Privacy": Privacy,
-    "Terms": Terms,
 }
 
 export const pagesConfig = {
