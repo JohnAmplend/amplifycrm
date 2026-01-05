@@ -345,7 +345,7 @@ export default function SalesTracker() {
               Boards
             </button>
             {showBoardSwitcher && (
-              <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl p-2 min-w-[200px]">
+              <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl p-2 min-w-[200px] z-[1000]">
                 <div className="max-h-[300px] overflow-y-auto">
                   {boards.map((board) => (
                     <button
