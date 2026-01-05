@@ -90,7 +90,8 @@ export default function Layout({ children, currentPageName }) {
           title: 'Activities',
           items: [
             { name: "All Activities", icon: Activity, page: "Activities" },
-            { name: "Tasks", icon: CheckSquare, page: "Tasks" }
+            { name: "Tasks", icon: CheckSquare, page: "Tasks" },
+            { name: "Sales Tracker", icon: Layers, page: "SalesTracker" }
           ]
         },
         {
