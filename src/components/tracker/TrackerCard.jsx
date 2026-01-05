@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2, User, Plus, X } from "lucide-react";
+import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2, User, Plus, X, Paperclip } from "lucide-react";
 import { format } from "date-fns";
 import {
   DropdownMenu,
@@ -258,6 +258,33 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
           <Plus className="w-3 h-3" />
           Add subtask
         </button>
+      )}
+
+      {/* Attachments */}
+      {card.attachments && card.attachments.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <div className="flex flex-wrap gap-1">
+            {card.attachments.map((file, index) => (
+              <a
+                key={index}
+                href={file.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onDoubleClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(file.file_url, '_blank');
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs transition-colors"
+                title={file.file_name}
+              >
+                <Paperclip className="w-3 h-3" />
+                <span className="truncate max-w-[100px]">{file.file_name}</span>
+              </a>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

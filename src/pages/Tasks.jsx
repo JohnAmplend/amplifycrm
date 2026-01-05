@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, CheckSquare, Square, X, UserPlus, Users } from "lucide-react";
+import { Search, Plus, CheckSquare, Square, X, UserPlus, Users, Paperclip, Upload, FileText } from "lucide-react";
 import { toast } from "../components/crm/useToast";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
@@ -26,9 +26,11 @@ export default function Tasks() {
     assigned_to: "",
     collaborators: [],
     related_to_type: "",
-    related_to_id: ""
+    related_to_id: "",
+    attachments: []
   });
   const [showCollaborators, setShowCollaborators] = useState({});
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then((user) => {
@@ -62,7 +64,8 @@ export default function Tasks() {
         assigned_to: currentUser?.email || "",
         collaborators: [],
         related_to_type: "",
-        related_to_id: ""
+        related_to_id: "",
+        attachments: []
       });
     },
     onError: (err) => {
@@ -146,9 +149,42 @@ export default function Tasks() {
       assigned_to: task.assigned_to || "",
       collaborators: task.collaborators || [],
       related_to_type: task.related_to_type || "",
-      related_to_id: task.related_to_id || ""
+      related_to_id: task.related_to_id || "",
+      attachments: task.attachments || []
     });
     setShowForm(true);
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const newAttachment = {
+        file_name: file.name,
+        file_url: file_url,
+        file_type: file.type
+      };
+      setFormData(prev => ({
+        ...prev,
+        attachments: [...(prev.attachments || []), newAttachment]
+      }));
+      toast.success('File uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveAttachment = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -275,6 +311,35 @@ export default function Tasks() {
                     { value: 'Lead', label: 'Lead' }
                   ]}
                 />
+                <div className="md:col-span-2 space-y-2">
+                  <label className="block text-sm font-medium" style={{ color: "#666" }}>
+                    Attachments
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.attachments?.map((file, index) => (
+                      <div key={index} className="neuro-button px-3 py-2 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        <span className="text-sm">{file.file_name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="neuro-button px-4 py-2 cursor-pointer flex items-center gap-2 w-fit">
+                    <Upload className="w-4 h-4" />
+                    <span>{uploadingFile ? 'Uploading...' : 'Upload File'}</span>
+                    <input
+                      type="file"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      disabled={uploadingFile}
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
@@ -318,7 +383,8 @@ export default function Tasks() {
               assigned_to: currentUser?.email || "",
               collaborators: [],
               related_to_type: "",
-              related_to_id: ""
+              related_to_id: "",
+              attachments: []
             });
             setShowForm(true);
           }}>
@@ -516,6 +582,27 @@ export default function Tasks() {
                         </span>
                       )}
                     </div>
+                    {task.attachments && task.attachments.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {task.attachments.map((file, index) => (
+                          <a
+                            key={index}
+                            href={file.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onDoubleClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              window.open(file.file_url, '_blank');
+                            }}
+                            className="neuro-button px-3 py-1 flex items-center gap-2 text-xs hover:scale-105 transition-transform"
+                          >
+                            <Paperclip className="w-3 h-3" />
+                            <span>{file.file_name}</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
