@@ -90,8 +90,7 @@ export default function Layout({ children, currentPageName }) {
           title: 'Activities',
           items: [
             { name: "All Activities", icon: Activity, page: "Activities" },
-            { name: "Tasks", icon: CheckSquare, page: "Tasks" },
-            { name: "Sales Tracker", icon: Layers, page: "SalesTracker" }
+            { name: "Tasks", icon: CheckSquare, page: "Tasks" }
           ]
         },
         {
@@ -145,7 +144,8 @@ export default function Layout({ children, currentPageName }) {
             { name: "Canned Responses", icon: MessageSquare, page: "CannedResponses" },
             { name: "SLA Policies", icon: Clock, page: "SLAPolicies" },
             { name: "Chat Inbox", icon: MessageSquare, page: "ChatInbox" },
-            { name: "Chat Settings", icon: Settings, page: "ChatSettings" }
+            { name: "Chat Settings", icon: Settings, page: "ChatSettings" },
+            { name: "Sales Tracker", icon: Layers, page: "SalesTracker" }
           ]
         },
         {
