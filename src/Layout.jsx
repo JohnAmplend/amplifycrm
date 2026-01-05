@@ -53,6 +53,8 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [user, setUser] = React.useState(null);
   const [unreadNotifications, setUnreadNotifications] = React.useState(0);
+  const [notifications, setNotifications] = React.useState([]);
+  const [showNotifications, setShowNotifications] = React.useState(false);
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
   const [activeMegaMenu, setActiveMegaMenu] = React.useState(null);
 
@@ -60,11 +62,23 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.me().then(async (u) => {
       setUser(u);
       try {
-        const notifications = await base44.entities.Notifications.filter({ user_id: u.email, is_read: false });
-        setUnreadNotifications(notifications.length);
+        const allNotifications = await base44.entities.Notifications.filter({ user_id: u.email }, '-created_date', 5);
+        const unread = allNotifications.filter(n => !n.is_read);
+        setNotifications(allNotifications);
+        setUnreadNotifications(unread.length);
       } catch (e) {}
     }).catch(() => {});
   }, []);
+
+  const markAsRead = async (notificationId) => {
+    try {
+      await base44.entities.Notifications.update(notificationId, { is_read: true });
+      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
+      setUnreadNotifications(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
 
   const handleLogout = () => {
     base44.auth.logout();
@@ -331,8 +345,11 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
-            <Link to={createPageUrl("Notifications")} className="relative">
-              <button className="ampvibe-button p-3 relative">
+            <div className="relative">
+              <button 
+                className="ampvibe-button p-3 relative"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
                 <Bell className="w-5 h-5" />
                 {unreadNotifications > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
@@ -340,7 +357,59 @@ export default function Layout({ children, currentPageName }) {
                   </span>
                 )}
               </button>
-            </Link>
+
+              {showNotifications && (
+                <div className="absolute right-0 top-full mt-2 w-80 ampvibe-card shadow-2xl z-[1100]" style={{
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(30px)',
+                  WebkitBackdropFilter: 'blur(30px)',
+                  maxHeight: '400px',
+                  overflowY: 'auto'
+                }}>
+                  <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                    <h3 className="font-bold text-sm" style={{ color: "#1E3A8A" }}>Notifications</h3>
+                    <Link 
+                      to={createPageUrl("Notifications")}
+                      className="text-xs hover:opacity-70 transition-opacity"
+                      style={{ color: "#00A86B" }}
+                      onClick={() => setShowNotifications(false)}
+                    >
+                      View All
+                    </Link>
+                  </div>
+                  <div className="divide-y" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-sm" style={{ color: "#666" }}>
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div 
+                          key={notif.id}
+                          className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50' : ''}`}
+                          onClick={() => {
+                            if (!notif.is_read) markAsRead(notif.id);
+                            if (notif.link) window.location.href = notif.link;
+                            setShowNotifications(false);
+                          }}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notif.is_read ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate" style={{ color: "#333" }}>{notif.title}</p>
+                              <p className="text-xs truncate" style={{ color: "#666" }}>{notif.message}</p>
+                              <p className="text-xs mt-1" style={{ color: "#999" }}>
+                                {new Date(notif.created_date).toLocaleDateString()} {new Date(notif.created_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {user && (
               <div className="hidden md:flex items-center gap-3">
