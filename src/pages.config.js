@@ -62,6 +62,7 @@ import RingCentral from './pages/RingCentral';
 import RingCentralRecordingSync from './pages/RingCentralRecordingSync';
 import RolesPermissions from './pages/RolesPermissions';
 import SLAPolicies from './pages/SLAPolicies';
+import SalesTracker from './pages/SalesTracker';
 import SyncLogs from './pages/SyncLogs';
 import SyncStatus from './pages/SyncStatus';
 import Tasks from './pages/Tasks';
@@ -73,7 +74,6 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import SalesTracker from './pages/SalesTracker';
 import __Layout from './Layout.jsx';
 
 
@@ -142,6 +142,7 @@ export const PAGES = {
     "RingCentralRecordingSync": RingCentralRecordingSync,
     "RolesPermissions": RolesPermissions,
     "SLAPolicies": SLAPolicies,
+    "SalesTracker": SalesTracker,
     "SyncLogs": SyncLogs,
     "SyncStatus": SyncStatus,
     "Tasks": Tasks,
@@ -153,7 +154,6 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "SalesTracker": SalesTracker,
 }
 
 export const pagesConfig = {
