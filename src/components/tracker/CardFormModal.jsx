@@ -117,7 +117,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto z-[1001]">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{card ? "Edit Card" : "Add New Card"}</DialogTitle>
         </DialogHeader>
@@ -154,7 +154,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
                 <SelectTrigger>
                   <SelectValue placeholder="Select column" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[1100]">
                   {columns.map((col) => (
                     <SelectItem key={col.id} value={col.id}>
                       {col.title}
@@ -173,7 +173,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[1100]">
                   <SelectItem value="Highest">Highest</SelectItem>
                   <SelectItem value="High">High</SelectItem>
                   <SelectItem value="Medium">Medium</SelectItem>
@@ -192,7 +192,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[1100]">
                 <SelectItem value="To do">To do</SelectItem>
                 <SelectItem value="In progress">In progress</SelectItem>
                 <SelectItem value="Approved">Approved</SelectItem>
@@ -231,7 +231,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
               <SelectTrigger>
                 <SelectValue placeholder="Select user..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[1100]">
                 <SelectItem value={null}>Unassigned</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.email}>
