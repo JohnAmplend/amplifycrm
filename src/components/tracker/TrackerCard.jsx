@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2 } from "lucide-react";
+import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2, User } from "lucide-react";
 import { format } from "date-fns";
 import {
   DropdownMenu,
@@ -7,6 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 const priorityColors = {
   Highest: { bg: "bg-red-500", text: "text-white" },
@@ -25,6 +27,15 @@ const statusColors = {
 export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
   const priority = priorityColors[card.priority] || priorityColors.Medium;
   const status = statusColors[card.status] || statusColors["To do"];
+
+  // Fetch user details if assigned
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!card.assigned_to
+  });
+
+  const assignedUser = users.find(u => u.email === card.assigned_to);
 
   return (
     <div 
@@ -75,7 +86,7 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
       )}
 
       {/* Tags */}
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 mb-2">
         <span className={`px-2 py-0.5 rounded text-xs font-medium ${priority.bg} ${priority.text}`}>
           Priority: {card.priority}
         </span>
@@ -83,6 +94,16 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
           Status: {card.status}
         </span>
       </div>
+
+      {/* Assigned User */}
+      {card.assigned_to && (
+        <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+          <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+            <User className="w-3 h-3" />
+            <span>{assignedUser?.full_name || card.assigned_to}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

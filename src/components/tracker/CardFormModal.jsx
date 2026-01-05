@@ -17,6 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CardFormModal({ isOpen, onClose, onSave, card, columns }) {
   const [formData, setFormData] = useState({
@@ -28,7 +30,14 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
     start_date: "",
     end_date: "",
     total_tasks: 0,
-    completed_tasks: 0
+    completed_tasks: 0,
+    assigned_to: ""
+  });
+
+  // Fetch users
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list()
   });
 
   useEffect(() => {
@@ -42,7 +51,8 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         start_date: card.start_date || "",
         end_date: card.end_date || "",
         total_tasks: card.total_tasks || 0,
-        completed_tasks: card.completed_tasks || 0
+        completed_tasks: card.completed_tasks || 0,
+        assigned_to: card.assigned_to || ""
       });
     } else {
       setFormData({
@@ -54,7 +64,8 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         start_date: "",
         end_date: "",
         total_tasks: 0,
-        completed_tasks: 0
+        completed_tasks: 0,
+        assigned_to: ""
       });
     }
   }, [card, columns]);
@@ -193,6 +204,26 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
                 onChange={(e) => setFormData({ ...formData, completed_tasks: parseInt(e.target.value) || 0 })}
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="assigned_to">Assign To</Label>
+            <Select
+              value={formData.assigned_to}
+              onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select user..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={null}>Unassigned</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.email}>
+                    {user.full_name || user.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
