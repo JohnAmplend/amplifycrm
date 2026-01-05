@@ -49,8 +49,8 @@ export default function SalesTracker() {
   useEffect(() => {
     if (!boardsLoading && boards.length === 0) {
       base44.entities.Tracker_Board.create({
-        name: "Sales Team Tracker",
-        description: "Main sales tracking board",
+        name: "Tracker",
+        description: "Main tracking board",
         is_default: true,
         position: 0
       }).then((board) => {
@@ -238,7 +238,7 @@ export default function SalesTracker() {
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <LayoutGrid className="w-5 h-5" />
-            {currentBoard?.name || "Sales Team Tracker"}
+            {currentBoard?.name || "Tracker"}
           </h1>
         </div>
 

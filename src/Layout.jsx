@@ -145,7 +145,7 @@ export default function Layout({ children, currentPageName }) {
             { name: "SLA Policies", icon: Clock, page: "SLAPolicies" },
             { name: "Chat Inbox", icon: MessageSquare, page: "ChatInbox" },
             { name: "Chat Settings", icon: Settings, page: "ChatSettings" },
-            { name: "Sales Tracker", icon: Layers, page: "SalesTracker" }
+            { name: "Tracker", icon: Layers, page: "SalesTracker" }
           ]
         },
         {
