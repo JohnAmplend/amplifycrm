@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2, User, Plus, X, Paperclip } from "lucide-react";
+import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2, User, Plus, X, Paperclip, Users } from "lucide-react";
 import { format } from "date-fns";
 import {
   DropdownMenu,
@@ -163,15 +163,39 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
         </span>
       </div>
 
-      {/* Assigned User */}
-      {card.assigned_to && (
-        <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
-          <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+      {/* Assigned User & Collaborators */}
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        {card.assigned_to && (
+          <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded text-xs text-gray-600">
             <User className="w-3 h-3" />
             <span>{assignedUser?.full_name || card.assigned_to}</span>
           </div>
-        </div>
-      )}
+        )}
+        {card.collaborators && card.collaborators.length > 0 && (
+          <div className="flex items-center gap-1">
+            <Users className="w-3 h-3 text-gray-500" />
+            <div className="flex -space-x-1">
+              {card.collaborators.slice(0, 3).map((email, idx) => {
+                const collaborator = users.find(u => u.email === email);
+                return (
+                  <div
+                    key={idx}
+                    className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center border-2 border-white font-medium"
+                    title={collaborator?.full_name || email}
+                  >
+                    {(collaborator?.full_name || email).charAt(0).toUpperCase()}
+                  </div>
+                );
+              })}
+              {card.collaborators.length > 3 && (
+                <div className="w-6 h-6 rounded-full bg-gray-400 text-white text-xs flex items-center justify-center border-2 border-white font-medium">
+                  +{card.collaborators.length - 3}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Subtasks Section */}
       {showSubtasks && (

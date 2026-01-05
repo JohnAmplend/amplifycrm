@@ -33,6 +33,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
     total_tasks: 0,
     completed_tasks: 0,
     assigned_to: "",
+    collaborators: [],
     attachments: []
   });
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -56,6 +57,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         total_tasks: card.total_tasks || 0,
         completed_tasks: card.completed_tasks || 0,
         assigned_to: card.assigned_to || "",
+        collaborators: card.collaborators || [],
         attachments: card.attachments || []
       });
     } else {
@@ -70,6 +72,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         total_tasks: 0,
         completed_tasks: 0,
         assigned_to: "",
+        collaborators: [],
         attachments: []
       });
     }
@@ -237,6 +240,29 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label>Collaborators</Label>
+            <div className="max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-1">
+              {users.map((user) => (
+                <label key={user.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.collaborators.includes(user.email)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({ ...formData, collaborators: [...formData.collaborators, user.email] });
+                      } else {
+                        setFormData({ ...formData, collaborators: formData.collaborators.filter(c => c !== user.email) });
+                      }
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm">{user.full_name || user.email}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div>
