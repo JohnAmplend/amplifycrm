@@ -142,17 +142,37 @@ export default function SalesTracker() {
     setCardModal({ isOpen: true, card, columnId: card.column_id });
   };
 
-  const handleSaveCard = (formData) => {
+  const handleSaveCard = async (formData) => {
     if (formData.id) {
       updateCardMutation.mutate({ id: formData.id, data: formData });
+      // Notify on update
+      try {
+        await base44.functions.invoke('notifyTaskAssignees', {
+          card_id: formData.id,
+          card_title: formData.title,
+          action: 'updated'
+        });
+      } catch (error) {
+        console.error('Failed to send notifications:', error);
+      }
     } else {
       const columnId = formData.column_id || cardModal.columnId;
       const columnCards = cards.filter(c => c.column_id === columnId);
-      createCardMutation.mutate({
+      const newCard = await createCardMutation.mutateAsync({
         ...formData,
         column_id: columnId,
         position: columnCards.length
       });
+      // Notify on creation
+      try {
+        await base44.functions.invoke('notifyTaskAssignees', {
+          card_id: newCard.id,
+          card_title: formData.title,
+          action: 'created'
+        });
+      } catch (error) {
+        console.error('Failed to send notifications:', error);
+      }
     }
     setCardModal({ isOpen: false, card: null, columnId: null });
   };
