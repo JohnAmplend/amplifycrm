@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "../crm/useToast";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -31,8 +32,10 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
     end_date: "",
     total_tasks: 0,
     completed_tasks: 0,
-    assigned_to: ""
+    assigned_to: "",
+    attachments: []
   });
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   // Fetch users
   const { data: users = [] } = useQuery({
@@ -52,7 +55,8 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         end_date: card.end_date || "",
         total_tasks: card.total_tasks || 0,
         completed_tasks: card.completed_tasks || 0,
-        assigned_to: card.assigned_to || ""
+        assigned_to: card.assigned_to || "",
+        attachments: card.attachments || []
       });
     } else {
       setFormData({
@@ -65,7 +69,8 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         end_date: "",
         total_tasks: 0,
         completed_tasks: 0,
-        assigned_to: ""
+        assigned_to: "",
+        attachments: []
       });
     }
   }, [card, columns]);
@@ -73,6 +78,38 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave({ ...formData, id: card?.id });
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const newAttachment = {
+        file_name: file.name,
+        file_url: file_url,
+        file_type: file.type
+      };
+      setFormData(prev => ({
+        ...prev,
+        attachments: [...(prev.attachments || []), newAttachment]
+      }));
+      toast.success('File uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveAttachment = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
   };
 
   return (
@@ -200,6 +237,36 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label>Attachments</Label>
+            <div className="space-y-2">
+              {formData.attachments?.map((file, index) => (
+                <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm flex-1 truncate">{file.file_name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveAttachment(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded cursor-pointer hover:bg-gray-50">
+                <Upload className="w-4 h-4" />
+                <span className="text-sm">{uploadingFile ? 'Uploading...' : 'Upload File'}</span>
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={uploadingFile}
+                />
+              </label>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
