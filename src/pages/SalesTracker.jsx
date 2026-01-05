@@ -17,6 +17,7 @@ export default function SalesTracker() {
   const [currentBoardId, setCurrentBoardId] = useState(null);
   const [showBoardSwitcher, setShowBoardSwitcher] = useState(false);
   const [viewMode, setViewMode] = useState("board"); // "board" or "list"
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch boards
   const { data: boards = [], isLoading: boardsLoading } = useQuery({
@@ -45,9 +46,10 @@ export default function SalesTracker() {
     queryFn: () => base44.entities.Tracker_Card.list('position')
   });
 
-  // Initialize default board and columns if none exist
+  // Initialize default board and columns if none exist (only once)
   useEffect(() => {
-    if (!boardsLoading && boards.length === 0) {
+    if (!boardsLoading && boards.length === 0 && !hasInitialized) {
+      setHasInitialized(true);
       base44.entities.Tracker_Board.create({
         name: "Tracker",
         description: "Main tracking board",
@@ -69,7 +71,7 @@ export default function SalesTracker() {
         queryClient.invalidateQueries({ queryKey: ['tracker-columns', board.id] });
       });
     }
-  }, [boardsLoading, boards]);
+  }, [boardsLoading, boards, hasInitialized]);
 
   // Mutations
   const createCardMutation = useMutation({
