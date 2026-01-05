@@ -1,5 +1,5 @@
-import React from "react";
-import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2, User } from "lucide-react";
+import React, { useState } from "react";
+import { Calendar, MessageSquare, CheckSquare, MoreHorizontal, Trash2, Edit2, User, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import {
   DropdownMenu,
@@ -7,8 +7,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const priorityColors = {
   Highest: { bg: "bg-red-500", text: "text-white" },
@@ -25,6 +27,11 @@ const statusColors = {
 };
 
 export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
+  const queryClient = useQueryClient();
+  const [showSubtasks, setShowSubtasks] = useState(false);
+  const [newSubtask, setNewSubtask] = useState("");
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+
   const priority = priorityColors[card.priority] || priorityColors.Medium;
   const status = statusColors[card.status] || statusColors["To do"];
 
@@ -36,6 +43,53 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
   });
 
   const assignedUser = users.find(u => u.email === card.assigned_to);
+
+  // Fetch subtasks for this card
+  const { data: subtasks = [] } = useQuery({
+    queryKey: ['tracker-subtasks', card.id],
+    queryFn: () => base44.entities.Tracker_Subtask.filter({ card_id: card.id })
+  });
+
+  const completedCount = subtasks.filter(st => st.completed).length;
+  const totalCount = subtasks.length;
+
+  // Subtask mutations
+  const createSubtaskMutation = useMutation({
+    mutationFn: (data) => base44.entities.Tracker_Subtask.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tracker-subtasks', card.id] });
+      setNewSubtask("");
+      setIsAddingSubtask(false);
+    }
+  });
+
+  const updateSubtaskMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Tracker_Subtask.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-subtasks', card.id] })
+  });
+
+  const deleteSubtaskMutation = useMutation({
+    mutationFn: (id) => base44.entities.Tracker_Subtask.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-subtasks', card.id] })
+  });
+
+  const handleAddSubtask = (e) => {
+    e.preventDefault();
+    if (!newSubtask.trim()) return;
+    createSubtaskMutation.mutate({
+      card_id: card.id,
+      title: newSubtask,
+      completed: false,
+      position: subtasks.length
+    });
+  };
+
+  const handleToggleSubtask = (subtask) => {
+    updateSubtaskMutation.mutate({
+      id: subtask.id,
+      data: { completed: !subtask.completed }
+    });
+  };
 
   return (
     <div 
@@ -66,24 +120,31 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
         </DropdownMenu>
       </div>
 
-      {/* Dates */}
-      {(card.start_date || card.end_date) && (
-        <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-          <Calendar className="w-3 h-3" />
-          <span>
-            {card.start_date && format(new Date(card.start_date), "MMM d")}
-            {card.start_date && card.end_date && " - "}
-            {card.end_date && format(new Date(card.end_date), "MMM d")}
-          </span>
-          {card.total_tasks > 0 && (
-            <>
-              <span className="mx-1">•</span>
+      {/* Dates and Subtask Count */}
+      <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+        {(card.start_date || card.end_date) && (
+          <>
+            <Calendar className="w-3 h-3" />
+            <span>
+              {card.start_date && format(new Date(card.start_date), "MMM d")}
+              {card.start_date && card.end_date && " - "}
+              {card.end_date && format(new Date(card.end_date), "MMM d")}
+            </span>
+          </>
+        )}
+        {totalCount > 0 && (
+          <>
+            {(card.start_date || card.end_date) && <span className="mx-1">•</span>}
+            <button 
+              onClick={() => setShowSubtasks(!showSubtasks)}
+              className="flex items-center gap-1 hover:text-gray-700"
+            >
               <CheckSquare className="w-3 h-3" />
-              <span>{card.completed_tasks || 0}/{card.total_tasks}</span>
-            </>
-          )}
-        </div>
-      )}
+              <span>{completedCount}/{totalCount}</span>
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Tags */}
       <div className="flex flex-wrap gap-1 mb-2">
@@ -103,6 +164,69 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
             <span>{assignedUser?.full_name || card.assigned_to}</span>
           </div>
         </div>
+      )}
+
+      {/* Subtasks Section */}
+      {showSubtasks && (
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <div className="space-y-1 mb-2">
+            {subtasks.map((subtask) => (
+              <div key={subtask.id} className="flex items-center gap-2 group/subtask">
+                <Checkbox
+                  checked={subtask.completed}
+                  onCheckedChange={() => handleToggleSubtask(subtask)}
+                  className="h-3 w-3"
+                />
+                <span className={`text-xs flex-1 ${subtask.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                  {subtask.title}
+                </span>
+                <button
+                  onClick={() => deleteSubtaskMutation.mutate(subtask.id)}
+                  className="opacity-0 group-hover/subtask:opacity-100 p-0.5 hover:bg-gray-100 rounded"
+                >
+                  <X className="w-3 h-3 text-gray-400" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {isAddingSubtask ? (
+            <form onSubmit={handleAddSubtask} className="flex items-center gap-1">
+              <Input
+                value={newSubtask}
+                onChange={(e) => setNewSubtask(e.target.value)}
+                placeholder="Add subtask..."
+                className="h-6 text-xs"
+                autoFocus
+              />
+              <button type="submit" className="p-1 hover:bg-gray-100 rounded">
+                <CheckSquare className="w-3 h-3 text-green-600" />
+              </button>
+              <button type="button" onClick={() => setIsAddingSubtask(false)} className="p-1 hover:bg-gray-100 rounded">
+                <X className="w-3 h-3 text-gray-400" />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setIsAddingSubtask(true)}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 w-full py-1"
+            >
+              <Plus className="w-3 h-3" />
+              Add subtask
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Add Subtask Button (when collapsed) */}
+      {!showSubtasks && (
+        <button
+          onClick={() => setShowSubtasks(true)}
+          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 mt-2 w-full"
+        >
+          <Plus className="w-3 h-3" />
+          Add subtask
+        </button>
       )}
     </div>
   );

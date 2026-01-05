@@ -182,30 +182,6 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="total_tasks">Total Subtasks</Label>
-              <Input
-                id="total_tasks"
-                type="number"
-                min="0"
-                value={formData.total_tasks}
-                onChange={(e) => setFormData({ ...formData, total_tasks: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="completed_tasks">Completed Subtasks</Label>
-              <Input
-                id="completed_tasks"
-                type="number"
-                min="0"
-                max={formData.total_tasks}
-                value={formData.completed_tasks}
-                onChange={(e) => setFormData({ ...formData, completed_tasks: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-
           <div>
             <Label htmlFor="assigned_to">Assign To</Label>
             <Select
