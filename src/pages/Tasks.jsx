@@ -15,6 +15,7 @@ export default function Tasks() {
   const [filterPriority, setFilterPriority] = useState("");
   const [filterAssignee, setFilterAssignee] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
     task_name: "",
@@ -125,7 +126,29 @@ export default function Tasks() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingTask) {
+      updateMutation.mutate({ id: editingTask.id, data: formData });
+      setEditingTask(null);
+      setShowForm(false);
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEditTask = (task) => {
+    setEditingTask(task);
+    setFormData({
+      task_name: task.task_name || "",
+      description: task.description || "",
+      due_date: task.due_date || "",
+      priority: task.priority || "Medium",
+      status: task.status || "Not Started",
+      assigned_to: task.assigned_to || "",
+      collaborators: task.collaborators || [],
+      related_to_type: task.related_to_type || "",
+      related_to_id: task.related_to_id || ""
+    });
+    setShowForm(true);
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -146,7 +169,7 @@ export default function Tasks() {
           <NeuroCard>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold" style={{ color: "#666" }}>
-                New Task
+                {editingTask ? 'Edit Task' : 'New Task'}
               </h2>
               <button
                 onClick={() => setShowForm(false)}
@@ -255,11 +278,14 @@ export default function Tasks() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <NeuroButton type="button" onClick={() => setShowForm(false)}>
+                <NeuroButton type="button" onClick={() => {
+                  setShowForm(false);
+                  setEditingTask(null);
+                }}>
                   Cancel
                 </NeuroButton>
                 <NeuroButton type="submit" variant="primary">
-                  Create Task
+                  {editingTask ? 'Update Task' : 'Create Task'}
                 </NeuroButton>
               </div>
             </form>
@@ -281,7 +307,21 @@ export default function Tasks() {
               {filteredTasks.length} total tasks • {filteredTasks.filter(t => t.status !== 'Completed').length} active
             </p>
           </div>
-          <NeuroButton variant="primary" onClick={() => setShowForm(true)}>
+          <NeuroButton variant="primary" onClick={() => {
+            setEditingTask(null);
+            setFormData({
+              task_name: "",
+              description: "",
+              due_date: "",
+              priority: "Medium",
+              status: "Not Started",
+              assigned_to: currentUser?.email || "",
+              collaborators: [],
+              related_to_type: "",
+              related_to_id: ""
+            });
+            setShowForm(true);
+          }}>
             <Plus className="w-4 h-4 mr-2" />
             Create Task
           </NeuroButton>
@@ -347,11 +387,15 @@ export default function Tasks() {
               {filteredTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="neuro-inset p-4 rounded-lg flex items-start gap-4"
+                  className="neuro-inset p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:scale-[1.01] transition-transform"
+                  onDoubleClick={() => handleEditTask(task)}
                 >
                   <div className="flex flex-col gap-2">
                     <button
-                      onClick={() => handleToggleComplete(task)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleComplete(task);
+                      }}
                       className="neuro-button p-2"
                       title={task.status === 'Completed' ? 'Mark as incomplete' : 'Mark as complete'}
                     >
@@ -363,7 +407,10 @@ export default function Tasks() {
                     </button>
                     <div className="relative">
                       <button
-                        onClick={() => setShowCollaborators(prev => ({ ...prev, [task.id]: !prev[task.id] }))}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowCollaborators(prev => ({ ...prev, [task.id]: !prev[task.id] }));
+                        }}
                         className="neuro-button p-2"
                         title="Manage collaborators"
                       >
@@ -377,10 +424,12 @@ export default function Tasks() {
                           <select
                             className="neuro-input w-full text-sm mb-2"
                             onChange={(e) => {
+                              e.stopPropagation();
                               if (e.target.value) {
                                 handleAddCollaborator(task.id, e.target.value);
                               }
                             }}
+                            onClick={(e) => e.stopPropagation()}
                             value=""
                           >
                             <option value="">Select user...</option>
