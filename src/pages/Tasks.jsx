@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, CheckSquare, Square, X } from "lucide-react";
+import { Search, Plus, CheckSquare, Square, X, UserPlus, Users } from "lucide-react";
+import { toast } from "../components/crm/useToast";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
@@ -22,14 +23,16 @@ export default function Tasks() {
     priority: "Medium",
     status: "Not Started",
     assigned_to: "",
+    collaborators: [],
     related_to_type: "",
     related_to_id: ""
   });
+  const [showCollaborators, setShowCollaborators] = useState({});
 
   useEffect(() => {
     base44.auth.me().then((user) => {
       setCurrentUser(user);
-      setFormData({ ...formData, assigned_to: user.email });
+      setFormData(prev => ({ ...prev, assigned_to: user.email }));
     }).catch(() => {});
   }, []);
 
@@ -47,6 +50,7 @@ export default function Tasks() {
     mutationFn: (data) => base44.entities.Task.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['tasks']);
+      toast.success('Task created successfully');
       setShowForm(false);
       setFormData({
         task_name: "",
@@ -55,9 +59,13 @@ export default function Tasks() {
         priority: "Medium",
         status: "Not Started",
         assigned_to: currentUser?.email || "",
+        collaborators: [],
         related_to_type: "",
         related_to_id: ""
       });
+    },
+    onError: (err) => {
+      toast.error('Failed to create task: ' + err.message);
     }
   });
 
@@ -65,12 +73,54 @@ export default function Tasks() {
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['tasks']);
+      toast.success('Task updated successfully');
+    },
+    onError: (err) => {
+      toast.error('Failed to update task: ' + err.message);
     }
   });
 
   const handleToggleComplete = (task) => {
     const newStatus = task.status === 'Completed' ? 'Not Started' : 'Completed';
-    updateMutation.mutate({ id: task.id, data: { status: newStatus } });
+    const updateData = {
+      status: newStatus,
+      ...(newStatus === 'Completed' ? {
+        completed_at: new Date().toISOString(),
+        completed_by: currentUser?.email
+      } : {
+        completed_at: null,
+        completed_by: null
+      })
+    };
+    updateMutation.mutate({ id: task.id, data: updateData });
+  };
+
+  const handleAddCollaborator = (taskId, userEmail) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const currentCollaborators = task.collaborators || [];
+    if (currentCollaborators.includes(userEmail)) {
+      toast.error('User is already a collaborator');
+      return;
+    }
+    
+    updateMutation.mutate({
+      id: taskId,
+      data: { collaborators: [...currentCollaborators, userEmail] }
+    });
+    setShowCollaborators(prev => ({ ...prev, [taskId]: false }));
+  };
+
+  const handleRemoveCollaborator = (taskId, userEmail) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const currentCollaborators = task.collaborators || [];
+    updateMutation.mutate({
+      id: taskId,
+      data: { collaborators: currentCollaborators.filter(c => c !== userEmail) }
+    });
   };
 
   const handleSubmit = (e) => {
@@ -148,6 +198,49 @@ export default function Tasks() {
                   onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
                   options={users.map(u => ({ value: u.email, label: u.full_name || u.email }))}
                 />
+                <div className="md:col-span-2 space-y-2">
+                  <label className="block text-sm font-medium" style={{ color: "#666" }}>
+                    Collaborators
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.collaborators.map((email) => (
+                      <span key={email} className="neuro-button px-3 py-1 text-xs flex items-center gap-2">
+                        {users.find(u => u.email === email)?.full_name || email}
+                        <button
+                          type="button"
+                          onClick={() => setFormData({
+                            ...formData,
+                            collaborators: formData.collaborators.filter(c => c !== email)
+                          })}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <select
+                    className="neuro-input w-full"
+                    onChange={(e) => {
+                      if (e.target.value && !formData.collaborators.includes(e.target.value)) {
+                        setFormData({
+                          ...formData,
+                          collaborators: [...formData.collaborators, e.target.value]
+                        });
+                      }
+                      e.target.value = '';
+                    }}
+                    value=""
+                  >
+                    <option value="">Add collaborator...</option>
+                    {users
+                      .filter(u => u.email !== formData.assigned_to && !formData.collaborators.includes(u.email))
+                      .map(u => (
+                        <option key={u.email} value={u.email}>
+                          {u.full_name || u.email}
+                        </option>
+                      ))}
+                  </select>
+                </div>
                 <NeuroSelect
                   label="Related To Type"
                   value={formData.related_to_type}
@@ -256,16 +349,56 @@ export default function Tasks() {
                   key={task.id}
                   className="neuro-inset p-4 rounded-lg flex items-start gap-4"
                 >
-                  <button
-                    onClick={() => handleToggleComplete(task)}
-                    className="neuro-button p-2 mt-1"
-                  >
-                    {task.status === 'Completed' ? (
-                      <CheckSquare className="w-5 h-5" style={{ color: "#52c41a" }} />
-                    ) : (
-                      <Square className="w-5 h-5" style={{ color: "#888" }} />
-                    )}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleToggleComplete(task)}
+                      className="neuro-button p-2"
+                      title={task.status === 'Completed' ? 'Mark as incomplete' : 'Mark as complete'}
+                    >
+                      {task.status === 'Completed' ? (
+                        <CheckSquare className="w-5 h-5" style={{ color: "#52c41a" }} />
+                      ) : (
+                        <Square className="w-5 h-5" style={{ color: "#888" }} />
+                      )}
+                    </button>
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowCollaborators(prev => ({ ...prev, [task.id]: !prev[task.id] }))}
+                        className="neuro-button p-2"
+                        title="Manage collaborators"
+                      >
+                        <UserPlus className="w-5 h-5" style={{ color: "#888" }} />
+                      </button>
+                      {showCollaborators[task.id] && (
+                        <div className="absolute left-0 top-full mt-2 ampvibe-card p-3 shadow-lg z-10 w-64">
+                          <p className="text-xs font-semibold mb-2" style={{ color: "#666" }}>
+                            Add Collaborator
+                          </p>
+                          <select
+                            className="neuro-input w-full text-sm mb-2"
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleAddCollaborator(task.id, e.target.value);
+                              }
+                            }}
+                            value=""
+                          >
+                            <option value="">Select user...</option>
+                            {users
+                              .filter(u => 
+                                u.email !== task.assigned_to && 
+                                !(task.collaborators || []).includes(u.email)
+                              )
+                              .map(u => (
+                                <option key={u.email} value={u.email}>
+                                  {u.full_name || u.email}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex-1">
                     <h3
                       className={`font-bold mb-1 ${
@@ -300,9 +433,37 @@ export default function Tasks() {
                           Assigned: {users.find(u => u.email === task.assigned_to)?.full_name || task.assigned_to}
                         </span>
                       )}
+                      {task.collaborators && task.collaborators.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3 h-3" style={{ color: "#888" }} />
+                          <span style={{ color: "#888" }}>
+                            {task.collaborators.length} collaborator{task.collaborators.length > 1 ? 's' : ''}:
+                          </span>
+                          {task.collaborators.map(email => (
+                            <span key={email} className="neuro-button px-2 py-1 flex items-center gap-1">
+                              {users.find(u => u.email === email)?.full_name || email}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveCollaborator(task.id, email);
+                                }}
+                                className="hover:text-red-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {task.related_to_type && (
                         <span className="neuro-button px-2 py-1">
                           {task.related_to_type}
+                        </span>
+                      )}
+                      {task.status === 'Completed' && task.completed_at && (
+                        <span style={{ color: "#52c41a" }} className="text-xs">
+                          ✓ Completed {new Date(task.completed_at).toLocaleDateString()}
+                          {task.completed_by && ` by ${users.find(u => u.email === task.completed_by)?.full_name || task.completed_by}`}
                         </span>
                       )}
                     </div>
