@@ -248,21 +248,9 @@ export default function SalesTracker() {
       {/* Bottom Navigation */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2">
         <div className="bg-white rounded-full shadow-lg px-4 py-2 flex items-center gap-2">
-          <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full flex items-center gap-2">
-            <List className="w-4 h-4" />
-            Inbox
-          </button>
-          <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            Planner
-          </button>
           <button className="px-4 py-2 text-sm bg-blue-100 text-blue-600 rounded-full flex items-center gap-2 font-medium">
             <LayoutGrid className="w-4 h-4" />
-            Board
-          </button>
-          <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Switch boards
+            Board View
           </button>
         </div>
       </div>

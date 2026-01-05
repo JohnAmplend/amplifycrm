@@ -96,6 +96,10 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
       className={`bg-white rounded-lg shadow-sm border border-gray-100 p-3 mb-2 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragging ? "shadow-lg scale-105 rotate-2" : "hover:shadow-md"
       }`}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onEdit(card);
+      }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <h4 className="font-medium text-gray-800 text-sm leading-tight flex-1">
@@ -136,7 +140,10 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
           <>
             {(card.start_date || card.end_date) && <span className="mx-1">•</span>}
             <button 
-              onClick={() => setShowSubtasks(!showSubtasks)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSubtasks(!showSubtasks);
+              }}
               className="flex items-center gap-1 hover:text-gray-700"
             >
               <CheckSquare className="w-3 h-3" />
@@ -171,17 +178,31 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
         <div className="mt-3 pt-3 border-t border-gray-200">
           <div className="space-y-1 mb-2">
             {subtasks.map((subtask) => (
-              <div key={subtask.id} className="flex items-center gap-2 group/subtask">
+              <div 
+                key={subtask.id} 
+                className="flex items-center gap-2 group/subtask"
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSubtask(subtask);
+                }}
+              >
                 <Checkbox
                   checked={subtask.completed}
-                  onCheckedChange={() => handleToggleSubtask(subtask)}
+                  onCheckedChange={(e) => {
+                    e?.stopPropagation?.();
+                    handleToggleSubtask(subtask);
+                  }}
                   className="h-3 w-3"
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <span className={`text-xs flex-1 ${subtask.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                   {subtask.title}
                 </span>
                 <button
-                  onClick={() => deleteSubtaskMutation.mutate(subtask.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteSubtaskMutation.mutate(subtask.id);
+                  }}
                   className="opacity-0 group-hover/subtask:opacity-100 p-0.5 hover:bg-gray-100 rounded"
                 >
                   <X className="w-3 h-3 text-gray-400" />
@@ -191,24 +212,31 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
           </div>
 
           {isAddingSubtask ? (
-            <form onSubmit={handleAddSubtask} className="flex items-center gap-1">
+            <form onSubmit={handleAddSubtask} className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
               <Input
                 value={newSubtask}
                 onChange={(e) => setNewSubtask(e.target.value)}
                 placeholder="Add subtask..."
                 className="h-6 text-xs"
                 autoFocus
+                onClick={(e) => e.stopPropagation()}
               />
-              <button type="submit" className="p-1 hover:bg-gray-100 rounded">
+              <button type="submit" className="p-1 hover:bg-gray-100 rounded" onClick={(e) => e.stopPropagation()}>
                 <CheckSquare className="w-3 h-3 text-green-600" />
               </button>
-              <button type="button" onClick={() => setIsAddingSubtask(false)} className="p-1 hover:bg-gray-100 rounded">
+              <button type="button" onClick={(e) => {
+                e.stopPropagation();
+                setIsAddingSubtask(false);
+              }} className="p-1 hover:bg-gray-100 rounded">
                 <X className="w-3 h-3 text-gray-400" />
               </button>
             </form>
           ) : (
             <button
-              onClick={() => setIsAddingSubtask(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAddingSubtask(true);
+              }}
               className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 w-full py-1"
             >
               <Plus className="w-3 h-3" />
@@ -221,7 +249,10 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
       {/* Add Subtask Button (when collapsed) */}
       {!showSubtasks && (
         <button
-          onClick={() => setShowSubtasks(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowSubtasks(true);
+          }}
           className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 mt-2 w-full"
         >
           <Plus className="w-3 h-3" />
