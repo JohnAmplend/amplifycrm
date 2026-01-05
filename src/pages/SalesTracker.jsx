@@ -14,11 +14,29 @@ export default function SalesTracker() {
   const [searchTerm, setSearchTerm] = useState("");
   const [cardModal, setCardModal] = useState({ isOpen: false, card: null, columnId: null });
   const [columnModal, setColumnModal] = useState({ isOpen: false, column: null });
+  const [currentBoardId, setCurrentBoardId] = useState(null);
+  const [showBoardSwitcher, setShowBoardSwitcher] = useState(false);
+  const [viewMode, setViewMode] = useState("board"); // "board" or "list"
 
-  // Fetch columns
+  // Fetch boards
+  const { data: boards = [], isLoading: boardsLoading } = useQuery({
+    queryKey: ['tracker-boards'],
+    queryFn: () => base44.entities.Tracker_Board.list('position')
+  });
+
+  // Set current board on load
+  useEffect(() => {
+    if (boards.length > 0 && !currentBoardId) {
+      const defaultBoard = boards.find(b => b.is_default) || boards[0];
+      setCurrentBoardId(defaultBoard.id);
+    }
+  }, [boards, currentBoardId]);
+
+  // Fetch columns for current board
   const { data: columns = [], isLoading: columnsLoading } = useQuery({
-    queryKey: ['tracker-columns'],
-    queryFn: () => base44.entities.Tracker_Column.list('position')
+    queryKey: ['tracker-columns', currentBoardId],
+    queryFn: () => currentBoardId ? base44.entities.Tracker_Column.filter({ board_id: currentBoardId }, 'position') : [],
+    enabled: !!currentBoardId
   });
 
   // Fetch cards
@@ -27,22 +45,31 @@ export default function SalesTracker() {
     queryFn: () => base44.entities.Tracker_Card.list('position')
   });
 
-  // Initialize default columns if none exist
+  // Initialize default board and columns if none exist
   useEffect(() => {
-    if (!columnsLoading && columns.length === 0) {
-      const defaultColumns = [
-        { title: "Backlog – Tasks not started", color: "#FEF3C7", position: 0 },
-        { title: "In Progress", color: "#DCFCE7", position: 1 },
-        { title: "For Approval", color: "#FEE2E2", position: 2 },
-        { title: "Completed/ Done", color: "#DBEAFE", position: 3 },
-        { title: "Reference / Resources", color: "#F3E8FF", position: 4 }
-      ];
-      defaultColumns.forEach(col => {
-        base44.entities.Tracker_Column.create(col);
+    if (!boardsLoading && boards.length === 0) {
+      base44.entities.Tracker_Board.create({
+        name: "Sales Team Tracker",
+        description: "Main sales tracking board",
+        is_default: true,
+        position: 0
+      }).then((board) => {
+        setCurrentBoardId(board.id);
+        const defaultColumns = [
+          { board_id: board.id, title: "Backlog – Tasks not started", color: "#FEF3C7", position: 0 },
+          { board_id: board.id, title: "In Progress", color: "#DCFCE7", position: 1 },
+          { board_id: board.id, title: "For Approval", color: "#FEE2E2", position: 2 },
+          { board_id: board.id, title: "Completed/ Done", color: "#DBEAFE", position: 3 },
+          { board_id: board.id, title: "Reference / Resources", color: "#F3E8FF", position: 4 }
+        ];
+        defaultColumns.forEach(col => {
+          base44.entities.Tracker_Column.create(col);
+        });
+        queryClient.invalidateQueries({ queryKey: ['tracker-boards'] });
+        queryClient.invalidateQueries({ queryKey: ['tracker-columns', board.id] });
       });
-      queryClient.invalidateQueries({ queryKey: ['tracker-columns'] });
     }
-  }, [columnsLoading, columns]);
+  }, [boardsLoading, boards]);
 
   // Mutations
   const createCardMutation = useMutation({
@@ -60,19 +87,24 @@ export default function SalesTracker() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-cards'] })
   });
 
+  const createBoardMutation = useMutation({
+    mutationFn: (data) => base44.entities.Tracker_Board.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-boards'] })
+  });
+
   const createColumnMutation = useMutation({
     mutationFn: (data) => base44.entities.Tracker_Column.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-columns'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-columns', currentBoardId] })
   });
 
   const updateColumnMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Tracker_Column.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-columns'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-columns', currentBoardId] })
   });
 
   const deleteColumnMutation = useMutation({
     mutationFn: (id) => base44.entities.Tracker_Column.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-columns'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker-columns', currentBoardId] })
   });
 
   // Handle drag and drop
@@ -142,11 +174,28 @@ export default function SalesTracker() {
     } else {
       createColumnMutation.mutate({
         ...formData,
+        board_id: currentBoardId,
         position: columns.length
       });
     }
     setColumnModal({ isOpen: false, column: null });
   };
+
+  const handleCreateBoard = () => {
+    const boardName = prompt("Enter board name:");
+    if (!boardName) return;
+    createBoardMutation.mutate({
+      name: boardName,
+      position: boards.length
+    });
+  };
+
+  const handleSwitchBoard = (boardId) => {
+    setCurrentBoardId(boardId);
+    setShowBoardSwitcher(false);
+  };
+
+  const currentBoard = boards.find(b => b.id === currentBoardId);
 
   const handleDeleteColumn = (columnId) => {
     // Delete all cards in the column first
@@ -167,7 +216,7 @@ export default function SalesTracker() {
       .sort((a, b) => (a.position || 0) - (b.position || 0));
   };
 
-  if (columnsLoading || cardsLoading) {
+  if (boardsLoading || columnsLoading || cardsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{
         background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #0891b2 100%)'
@@ -181,7 +230,7 @@ export default function SalesTracker() {
     <div 
       className="min-h-screen"
       style={{
-        background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #0891b2 100%)'
+        background: currentBoard?.background_color || 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #0891b2 100%)'
       }}
     >
       {/* Header */}
@@ -189,7 +238,7 @@ export default function SalesTracker() {
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <LayoutGrid className="w-5 h-5" />
-            Amplend Sales Team Tracker
+            {currentBoard?.name || "Sales Team Tracker"}
           </h1>
         </div>
 
@@ -216,9 +265,10 @@ export default function SalesTracker() {
         </div>
       </div>
 
-      {/* Board */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="px-4 pb-4 flex gap-4 overflow-x-auto">
+      {/* Board or List View */}
+      {viewMode === "board" ? (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="px-4 pb-4 flex gap-4 overflow-x-auto">
           {columns
             .sort((a, b) => (a.position || 0) - (b.position || 0))
             .map((column) => (
@@ -244,26 +294,79 @@ export default function SalesTracker() {
           </div>
         </div>
       </DragDropContext>
+      ) : (
+        <div className="px-4 pb-4">
+          <div className="bg-white rounded-lg p-4">
+            <h2 className="text-lg font-bold mb-4">List View</h2>
+            <div className="space-y-2">
+              {cards.map((card) => {
+                const column = columns.find(c => c.id === card.column_id);
+                return (
+                  <div key={card.id} className="flex items-center gap-4 p-3 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onClick={() => handleEditCard(card)}>
+                    <span className="font-medium flex-1">{card.title}</span>
+                    <span className="text-sm text-gray-600">{column?.title}</span>
+                    <span className={`text-xs px-2 py-1 rounded ${card.priority === 'High' || card.priority === 'Highest' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                      {card.priority}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded ${card.status === 'Done' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                      {card.status}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2">
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
         <div className="bg-white rounded-full shadow-lg px-4 py-2 flex items-center gap-2">
-          <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full flex items-center gap-2">
+          <button 
+            onClick={() => setViewMode("list")}
+            className={`px-4 py-2 text-sm rounded-full flex items-center gap-2 ${viewMode === "list" ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
             <List className="w-4 h-4" />
-            Inbox
+            List
           </button>
-          <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            Planner
-          </button>
-          <button className="px-4 py-2 text-sm bg-blue-100 text-blue-600 rounded-full flex items-center gap-2 font-medium">
+          <button 
+            onClick={() => setViewMode("board")}
+            className={`px-4 py-2 text-sm rounded-full flex items-center gap-2 ${viewMode === "board" ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
             <LayoutGrid className="w-4 h-4" />
             Board
           </button>
-          <button className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Switch boards
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowBoardSwitcher(!showBoardSwitcher)}
+              className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-full flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Boards
+            </button>
+            {showBoardSwitcher && (
+              <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl p-2 min-w-[200px]">
+                <div className="max-h-[300px] overflow-y-auto">
+                  {boards.map((board) => (
+                    <button
+                      key={board.id}
+                      onClick={() => handleSwitchBoard(board.id)}
+                      className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm ${board.id === currentBoardId ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}`}
+                    >
+                      {board.name}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={handleCreateBoard}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm text-blue-600 font-medium border-t border-gray-200 mt-2 pt-2"
+                >
+                  <Plus className="w-4 h-4 inline mr-1" />
+                  Create new board
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
