@@ -61,12 +61,25 @@ export default function Layout({ children, currentPageName }) {
   React.useEffect(() => {
     base44.auth.me().then(async (u) => {
       setUser(u);
-      try {
-        const allNotifications = await base44.entities.Notifications.filter({ user_id: u.email }, '-created_date', 5);
-        const unread = allNotifications.filter(n => !n.is_read);
-        setNotifications(allNotifications);
-        setUnreadNotifications(unread.length);
-      } catch (e) {}
+      
+      const fetchNotifications = async () => {
+        try {
+          const allNotifications = await base44.entities.Notifications.filter({ user_id: u.email }, '-created_date', 5);
+          const unread = allNotifications.filter(n => !n.is_read);
+          setNotifications(allNotifications);
+          setUnreadNotifications(unread.length);
+        } catch (e) {
+          console.error('Failed to fetch notifications:', e);
+        }
+      };
+      
+      // Initial fetch
+      fetchNotifications();
+      
+      // Poll every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      
+      return () => clearInterval(interval);
     }).catch(() => {});
   }, []);
 
