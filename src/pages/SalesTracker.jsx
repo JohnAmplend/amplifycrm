@@ -21,6 +21,7 @@ export default function SalesTracker() {
   const [showBoardSwitcher, setShowBoardSwitcher] = useState(false);
   const [viewMode, setViewMode] = useState("board"); // "board" or "list"
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [showHeaderBoardSwitcher, setShowHeaderBoardSwitcher] = useState(false);
   const [filters, setFilters] = useState({
     priority: "all",
     status: "all",
@@ -301,10 +302,44 @@ export default function SalesTracker() {
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <LayoutGrid className="w-5 h-5" />
-            {currentBoard?.name || "Tracker"}
-          </h1>
+          <div className="relative">
+            <button 
+              onClick={() => setShowHeaderBoardSwitcher(!showHeaderBoardSwitcher)}
+              className="flex items-center gap-2 text-xl font-bold text-white hover:opacity-80 transition-opacity"
+            >
+              <LayoutGrid className="w-5 h-5" />
+              {currentBoard?.name || "Tracker"}
+            </button>
+
+            {showHeaderBoardSwitcher && (
+              <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl p-2 min-w-[200px] z-[1000]">
+                <div className="max-h-[300px] overflow-y-auto">
+                  {boards.map((board) => (
+                    <button
+                      key={board.id}
+                      onClick={() => {
+                        setCurrentBoardId(board.id);
+                        setShowHeaderBoardSwitcher(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm ${board.id === currentBoardId ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}`}
+                    >
+                      {board.name}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => {
+                    handleCreateBoard();
+                    setShowHeaderBoardSwitcher(false);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm text-blue-600 font-medium border-t border-gray-200 mt-2 pt-2"
+                >
+                  <Plus className="w-4 h-4 inline mr-1" />
+                  Create new board
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
