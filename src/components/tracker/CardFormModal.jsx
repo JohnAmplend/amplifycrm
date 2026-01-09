@@ -80,7 +80,14 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ ...formData, id: card?.id });
+    
+    // If user is assigned and status is 'To do', auto-change to 'In progress'
+    const finalData = { ...formData, id: card?.id };
+    if (finalData.assigned_to && finalData.status === 'To do' && !card) {
+      finalData.status = 'In progress';
+    }
+    
+    onSave(finalData);
   };
 
   const handleFileUpload = async (e) => {

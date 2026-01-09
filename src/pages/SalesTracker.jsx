@@ -2,12 +2,15 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DragDropContext } from "@hello-pangea/dnd";
-import { Plus, LayoutGrid, List, Filter, Search, Settings } from "lucide-react";
+import { Plus, LayoutGrid, List, Filter, Search, Settings, BarChart } from "lucide-react";
 import TrackerColumn from "../components/tracker/TrackerColumn";
 import CardFormModal from "../components/tracker/CardFormModal";
 import ColumnFormModal from "../components/tracker/ColumnFormModal";
+import TrackerFilters from "../components/tracker/TrackerFilters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function SalesTracker() {
   const queryClient = useQueryClient();
@@ -18,6 +21,14 @@ export default function SalesTracker() {
   const [showBoardSwitcher, setShowBoardSwitcher] = useState(false);
   const [viewMode, setViewMode] = useState("board"); // "board" or "list"
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [filters, setFilters] = useState({
+    priority: "all",
+    status: "all",
+    assignee: "all",
+    collaborator: "all",
+    startDate: "",
+    endDate: ""
+  });
 
   // Fetch boards
   const { data: boards = [], isLoading: boardsLoading } = useQuery({
@@ -226,10 +237,42 @@ export default function SalesTracker() {
     deleteColumnMutation.mutate(columnId);
   };
 
-  // Filter cards by search term
-  const filteredCards = cards.filter(card =>
-    card.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter cards by search term and advanced filters
+  const filteredCards = cards.filter(card => {
+    // Search in title and description
+    const searchMatch = 
+      card.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (card.description && card.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    if (!searchMatch) return false;
+
+    // Priority filter
+    if (filters.priority !== "all" && card.priority !== filters.priority) return false;
+
+    // Status filter
+    if (filters.status !== "all" && card.status !== filters.status) return false;
+
+    // Assignee filter
+    if (filters.assignee !== "all") {
+      if (filters.assignee === "unassigned" && card.assigned_to) return false;
+      if (filters.assignee !== "unassigned" && card.assigned_to !== filters.assignee) return false;
+    }
+
+    // Collaborator filter
+    if (filters.collaborator !== "all") {
+      if (!card.collaborators || !card.collaborators.includes(filters.collaborator)) return false;
+    }
+
+    // Date range filters
+    if (filters.startDate && card.start_date) {
+      if (new Date(card.start_date) < new Date(filters.startDate)) return false;
+    }
+    if (filters.endDate && card.end_date) {
+      if (new Date(card.end_date) > new Date(filters.endDate)) return false;
+    }
+
+    return true;
+  });
 
   // Get cards for a specific column
   const getColumnCards = (columnId) => {
@@ -269,12 +312,23 @@ export default function SalesTracker() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
-              placeholder="Search cards..."
+              placeholder="Search in titles and descriptions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-white/90 border-0 w-64"
+              className="pl-9 bg-white/90 border-0 w-80"
             />
           </div>
+
+          {/* Advanced Filters */}
+          <TrackerFilters onFilterChange={setFilters} currentFilters={filters} />
+
+          {/* Reports Link */}
+          <Link to={createPageUrl("TrackerReports")}>
+            <Button className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm">
+              <BarChart className="w-4 h-4 mr-2" />
+              Reports
+            </Button>
+          </Link>
 
           {/* Add Column Button */}
           <Button
