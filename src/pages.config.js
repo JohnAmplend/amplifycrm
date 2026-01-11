@@ -70,11 +70,11 @@ import TemplateBuilder from './pages/TemplateBuilder';
 import Terms from './pages/Terms';
 import TicketDetail from './pages/TicketDetail';
 import TicketsDashboard from './pages/TicketsDashboard';
+import TrackerReports from './pages/TrackerReports';
 import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import TrackerReports from './pages/TrackerReports';
 import __Layout from './Layout.jsx';
 
 
@@ -151,11 +151,11 @@ export const PAGES = {
     "Terms": Terms,
     "TicketDetail": TicketDetail,
     "TicketsDashboard": TicketsDashboard,
+    "TrackerReports": TrackerReports,
     "UserProfile": UserProfile,
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "TrackerReports": TrackerReports,
 }
 
 export const pagesConfig = {

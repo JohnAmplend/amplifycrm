@@ -1,6 +1,6 @@
 import React from "react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, MoreHorizontal, Trash2, Edit2, Sparkles } from "lucide-react";
+import { Plus, MoreHorizontal, Trash2, Edit2, Sparkles, GripVertical } from "lucide-react";
 import TrackerCard from "./TrackerCard";
 import {
   DropdownMenu,
@@ -24,18 +24,26 @@ export default function TrackerColumn({
   onEditCard, 
   onDeleteCard,
   onEditColumn,
-  onDeleteColumn 
+  onDeleteColumn,
+  provided,
+  snapshot
 }) {
   const bgColor = column.color ? columnColors[column.color] || "bg-gray-100" : "bg-gray-100";
 
   return (
     <div 
-      className={`flex-shrink-0 w-72 rounded-xl ${bgColor} flex flex-col max-h-[calc(100vh-200px)]`}
-      style={{ backgroundColor: column.color || undefined }}
+      ref={provided?.innerRef}
+      {...provided?.draggableProps}
+      className={`flex-shrink-0 w-72 rounded-xl ${bgColor} flex flex-col max-h-[calc(100vh-200px)] ${snapshot?.isDragging ? 'opacity-70 rotate-2' : ''}`}
+      style={{ backgroundColor: column.color || undefined, ...provided?.draggableProps?.style }}
     >
       {/* Column Header */}
-      <div className="p-3 flex items-center justify-between">
+      <div 
+        {...provided?.dragHandleProps}
+        className="p-3 flex items-center justify-between group hover:bg-white/20 rounded-t-xl transition-colors cursor-grab active:cursor-grabbing"
+      >
         <div className="flex items-center gap-2">
+          <GripVertical className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           <h3 className="font-bold text-gray-700 text-sm">
             {column.title}
           </h3>

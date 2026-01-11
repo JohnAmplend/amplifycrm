@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DragDropContext } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, LayoutGrid, List, Filter, Search, Settings, BarChart } from "lucide-react";
 import TrackerColumn from "../components/tracker/TrackerColumn";
 import CardFormModal from "../components/tracker/CardFormModal";
@@ -125,8 +125,19 @@ export default function SalesTracker() {
   const handleDragEnd = (result) => {
     if (!result.destination) return;
 
-    const { source, destination, draggableId } = result;
+    const { source, destination, draggableId, type } = result;
     
+    // Handle column reordering
+    if (type === 'column') {
+      const sourceColumn = columns[source.index];
+      updateColumnMutation.mutate({
+        id: sourceColumn.id,
+        data: { position: destination.index }
+      });
+      return;
+    }
+    
+    // Handle card movement
     if (source.droppableId !== destination.droppableId) {
       // Card moved to different column
       updateCardMutation.mutate({
@@ -379,32 +390,46 @@ export default function SalesTracker() {
       {/* Board or List View */}
       {viewMode === "board" ? (
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="px-4 pb-4 flex gap-4 overflow-x-auto">
-          {columns
-            .sort((a, b) => (a.position || 0) - (b.position || 0))
-            .map((column) => (
-              <TrackerColumn
-                key={column.id}
-                column={column}
-                cards={getColumnCards(column.id)}
-                onAddCard={handleAddCard}
-                onEditCard={handleEditCard}
-                onDeleteCard={handleDeleteCard}
-                onEditColumn={handleEditColumn}
-                onDeleteColumn={handleDeleteColumn}
-              />
-            ))}
+          <Droppable droppableId="all-columns" direction="horizontal" type="column">
+            {(provided) => (
+              <div 
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className="px-4 pb-4 flex gap-4 overflow-x-auto"
+              >
+                {columns
+                  .sort((a, b) => (a.position || 0) - (b.position || 0))
+                  .map((column, index) => (
+                    <Draggable key={column.id} draggableId={`column-${column.id}`} index={index}>
+                      {(provided, snapshot) => (
+                        <TrackerColumn
+                          column={column}
+                          cards={getColumnCards(column.id)}
+                          onAddCard={handleAddCard}
+                          onEditCard={handleEditCard}
+                          onDeleteCard={handleDeleteCard}
+                          onEditColumn={handleEditColumn}
+                          onDeleteColumn={handleDeleteColumn}
+                          provided={provided}
+                          snapshot={snapshot}
+                        />
+                      )}
+                    </Draggable>
+                  ))}
+                {provided.placeholder}
 
-          {/* Add Column Placeholder */}
-          <div 
-            onClick={handleAddColumn}
-            className="flex-shrink-0 w-72 h-12 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer transition-colors backdrop-blur-sm"
-          >
-            <Plus className="w-5 h-5 text-white mr-2" />
-            <span className="text-white font-medium">Add another list</span>
-          </div>
-        </div>
-      </DragDropContext>
+                {/* Add Column Placeholder */}
+                <div 
+                  onClick={handleAddColumn}
+                  className="flex-shrink-0 w-72 h-12 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer transition-colors backdrop-blur-sm"
+                >
+                  <Plus className="w-5 h-5 text-white mr-2" />
+                  <span className="text-white font-medium">Add another list</span>
+                </div>
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       ) : (
         <div className="px-4 pb-4">
           <div className="bg-white rounded-lg p-4">
