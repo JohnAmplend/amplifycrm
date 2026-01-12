@@ -38,10 +38,13 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
   });
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  // Fetch users
+  // Fetch users via backend function (accessible to all users)
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: async () => {
+      const response = await base44.functions.invoke('getAllUsers');
+      return response.data.users || [];
+    }
   });
 
   useEffect(() => {

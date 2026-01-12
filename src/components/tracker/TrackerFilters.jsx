@@ -34,10 +34,13 @@ export default function TrackerFilters({ onFilterChange, currentFilters }) {
     endDate: currentFilters?.endDate || ""
   });
 
-  // Fetch users
+  // Fetch users via backend function (accessible to all users)
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: async () => {
+      const response = await base44.functions.invoke('getAllUsers');
+      return response.data.users || [];
+    }
   });
 
   // Fetch saved presets from user's custom_data
