@@ -127,7 +127,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{card ? "Edit Card" : "Add New Card"}</DialogTitle>
         </DialogHeader>
@@ -150,7 +150,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter description"
-              rows={3}
+              rows={6}
             />
           </div>
 
