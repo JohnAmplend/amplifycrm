@@ -35,11 +35,14 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
   const priority = priorityColors[card.priority] || priorityColors.Medium;
   const status = statusColors[card.status] || statusColors["To do"];
 
-  // Fetch user details if assigned
+  // Fetch user details via backend function (accessible to all users)
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-    enabled: !!card.assigned_to
+    queryFn: async () => {
+      const response = await base44.functions.invoke('getAllUsers');
+      return response.data.users || [];
+    },
+    enabled: !!(card.assigned_to || (card.collaborators && card.collaborators.length > 0))
   });
 
   const assignedUser = users.find(u => u.email === card.assigned_to);
