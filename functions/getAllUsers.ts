@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.11';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
@@ -10,12 +10,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Use service role to fetch all users
+    // Use service role to fetch all users (bypasses security rules)
     const users = await base44.asServiceRole.entities.User.list();
 
-    return Response.json({ users });
+    return Response.json({ 
+      success: true,
+      users: users || []
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ 
+      success: false,
+      error: error.message,
+      users: []
+    }, { status: 500 });
   }
 });
