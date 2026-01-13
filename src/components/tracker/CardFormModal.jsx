@@ -39,12 +39,20 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
   const [uploadingFile, setUploadingFile] = useState(false);
 
   // Fetch users via backend function (accessible to all users)
-  const { data: users = [] } = useQuery({
+  const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await base44.functions.invoke('getAllUsers');
-      return response.data.users || [];
-    }
+      try {
+        const response = await base44.functions.invoke('getAllUsers');
+        console.log('getAllUsers response:', response);
+        return response.data?.users || [];
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    staleTime: 60000
   });
 
   useEffect(() => {
@@ -243,11 +251,19 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
               </SelectTrigger>
               <SelectContent className="z-[1100]">
                 <SelectItem value={null}>Unassigned</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.email}>
-                    {user.full_name || user.email}
-                  </SelectItem>
-                ))}
+                {usersLoading ? (
+                  <SelectItem value={null} disabled>Loading users...</SelectItem>
+                ) : usersError ? (
+                  <SelectItem value={null} disabled>Error loading users</SelectItem>
+                ) : users.length === 0 ? (
+                  <SelectItem value={null} disabled>No users available</SelectItem>
+                ) : (
+                  users.map((user) => (
+                    <SelectItem key={user.id} value={user.email}>
+                      {user.full_name || user.email}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -255,23 +271,31 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
           <div>
             <Label>Collaborators</Label>
             <div className="max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-1">
-              {users.map((user) => (
-                <label key={user.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.collaborators.includes(user.email)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData({ ...formData, collaborators: [...formData.collaborators, user.email] });
-                      } else {
-                        setFormData({ ...formData, collaborators: formData.collaborators.filter(c => c !== user.email) });
-                      }
-                    }}
-                    className="rounded border-gray-300"
-                  />
-                  <span className="text-sm">{user.full_name || user.email}</span>
-                </label>
-              ))}
+              {usersLoading ? (
+                <div className="text-sm text-gray-500 p-2">Loading users...</div>
+              ) : usersError ? (
+                <div className="text-sm text-red-500 p-2">Error loading users</div>
+              ) : users.length === 0 ? (
+                <div className="text-sm text-gray-500 p-2">No users available</div>
+              ) : (
+                users.map((user) => (
+                  <label key={user.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.collaborators.includes(user.email)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData({ ...formData, collaborators: [...formData.collaborators, user.email] });
+                        } else {
+                          setFormData({ ...formData, collaborators: formData.collaborators.filter(c => c !== user.email) });
+                        }
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">{user.full_name || user.email}</span>
+                  </label>
+                ))
+              )}
             </div>
           </div>
 
