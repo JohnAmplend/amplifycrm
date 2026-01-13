@@ -158,7 +158,8 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter description"
-              rows={6}
+              rows={Math.max(6, Math.ceil((formData.description?.length || 0) / 50))}
+              className="min-h-[150px] max-h-[400px]"
             />
           </div>
 
