@@ -96,10 +96,10 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
 
   return (
     <div 
-      className={`bg-white rounded-lg shadow-sm border border-gray-100 p-3 mb-2 cursor-grab active:cursor-grabbing transition-all duration-200 ${
+      className={`bg-white rounded-lg shadow-sm border border-gray-100 p-3 mb-2 cursor-pointer transition-all duration-200 ${
         isDragging ? "shadow-lg scale-105 rotate-2" : "hover:shadow-md"
       }`}
-      onDoubleClick={(e) => {
+      onClick={(e) => {
         e.stopPropagation();
         onEdit(card);
       }}
@@ -208,10 +208,6 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
               <div 
                 key={subtask.id} 
                 className="flex items-center gap-2 group/subtask"
-                onDoubleClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleSubtask(subtask);
-                }}
               >
                 <Checkbox
                   checked={subtask.completed}
@@ -297,11 +293,6 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
                 href={file.file_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                onDoubleClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  window.open(file.file_url, '_blank');
-                }}
                 onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs transition-colors"
                 title={file.file_name}
