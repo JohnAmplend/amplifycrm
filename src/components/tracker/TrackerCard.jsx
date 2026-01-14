@@ -113,7 +113,7 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
               '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline" onclick="event.stopPropagation()">$1</a>'
             )
           }}
-        >
+        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-1 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity">
