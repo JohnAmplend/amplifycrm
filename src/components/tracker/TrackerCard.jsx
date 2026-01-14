@@ -105,9 +105,15 @@ export default function TrackerCard({ card, onEdit, onDelete, isDragging }) {
       }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h4 className="font-medium text-gray-800 text-sm leading-tight flex-1">
-          {card.title}
-        </h4>
+        <h4 
+          className="font-medium text-gray-800 text-sm leading-tight flex-1"
+          dangerouslySetInnerHTML={{
+            __html: card.title?.replace(
+              /(https?:\/\/[^\s]+)/g,
+              '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline" onclick="event.stopPropagation()">$1</a>'
+            )
+          }}
+        >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-1 hover:bg-gray-100 rounded opacity-0 group-hover:opacity-100 transition-opacity">
