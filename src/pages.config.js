@@ -75,6 +75,7 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
+import PropertyDemographicsDemo from './pages/PropertyDemographicsDemo';
 import __Layout from './Layout.jsx';
 
 
@@ -156,6 +157,7 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
+    "PropertyDemographicsDemo": PropertyDemographicsDemo,
 }
 
 export const pagesConfig = {
