@@ -55,6 +55,7 @@ import Leads from './pages/Leads';
 import MyTickets from './pages/MyTickets';
 import Notifications from './pages/Notifications';
 import Privacy from './pages/Privacy';
+import PropertyDemographicsDemo from './pages/PropertyDemographicsDemo';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportViewer from './pages/ReportViewer';
 import Reports from './pages/Reports';
@@ -75,7 +76,6 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import PropertyDemographicsDemo from './pages/PropertyDemographicsDemo';
 import __Layout from './Layout.jsx';
 
 
@@ -137,6 +137,7 @@ export const PAGES = {
     "MyTickets": MyTickets,
     "Notifications": Notifications,
     "Privacy": Privacy,
+    "PropertyDemographicsDemo": PropertyDemographicsDemo,
     "ReportBuilder": ReportBuilder,
     "ReportViewer": ReportViewer,
     "Reports": Reports,
@@ -157,7 +158,6 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "PropertyDemographicsDemo": PropertyDemographicsDemo,
 }
 
 export const pagesConfig = {

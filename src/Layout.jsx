@@ -80,8 +80,25 @@ export default function Layout({ children, currentPageName }) {
       const interval = setInterval(fetchNotifications, 30000);
       
       return () => clearInterval(interval);
-    }).catch(() => {});
+    }).catch(() => {
+      // User not authenticated - redirect to login
+      base44.auth.redirectToLogin();
+    });
   }, []);
+
+  // Show loading while checking authentication
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ 
+        background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)'
+      }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const markAsRead = async (notificationId) => {
     try {
