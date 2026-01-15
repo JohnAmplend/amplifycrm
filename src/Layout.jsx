@@ -59,6 +59,14 @@ export default function Layout({ children, currentPageName }) {
   const [activeMegaMenu, setActiveMegaMenu] = React.useState(null);
 
   React.useEffect(() => {
+    // One-time forced logout for all users
+    const forcedLogoutDone = localStorage.getItem('forced_logout_2026_01_15');
+    if (!forcedLogoutDone) {
+      localStorage.setItem('forced_logout_2026_01_15', 'true');
+      base44.auth.logout();
+      return;
+    }
+
     base44.auth.me().then(async (u) => {
       setUser(u);
       
