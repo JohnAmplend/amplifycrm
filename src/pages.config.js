@@ -59,6 +59,7 @@ import PropertyDemographicsDemo from './pages/PropertyDemographicsDemo';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportViewer from './pages/ReportViewer';
 import Reports from './pages/Reports';
+import ResendInvites from './pages/ResendInvites';
 import RingCentral from './pages/RingCentral';
 import RingCentralRecordingSync from './pages/RingCentralRecordingSync';
 import RolesPermissions from './pages/RolesPermissions';
@@ -76,7 +77,7 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import ResendInvites from './pages/ResendInvites';
+import UserManagement from './pages/UserManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -142,6 +143,7 @@ export const PAGES = {
     "ReportBuilder": ReportBuilder,
     "ReportViewer": ReportViewer,
     "Reports": Reports,
+    "ResendInvites": ResendInvites,
     "RingCentral": RingCentral,
     "RingCentralRecordingSync": RingCentralRecordingSync,
     "RolesPermissions": RolesPermissions,
@@ -159,7 +161,7 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "ResendInvites": ResendInvites,
+    "UserManagement": UserManagement,
 }
 
 export const pagesConfig = {
