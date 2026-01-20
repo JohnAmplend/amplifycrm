@@ -198,7 +198,7 @@ export default function ViewManager({
 
       {/* Create View Modal */}
       {showCreateView && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[300] flex items-center justify-center p-4">
           <div className="ampvibe-card max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -244,7 +244,7 @@ export default function ViewManager({
 
       {/* Column Editor Modal */}
       {showColumnEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[300] flex items-center justify-center p-4">
           <div className="ampvibe-card max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <div className="flex items-center justify-between">
