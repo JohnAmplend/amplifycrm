@@ -137,7 +137,7 @@ export default function AdvancedFilters({ isOpen, onClose, onApplyFilters, curre
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 50 }}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100 }}>
       <div className="ampvibe-card w-full max-w-6xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: "#e0e0e0" }}>

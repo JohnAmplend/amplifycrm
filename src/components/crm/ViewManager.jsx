@@ -245,8 +245,8 @@ export default function ViewManager({
 
       {/* Column Editor Modal */}
       {showColumnEditor && (
-        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 999999999, backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-          <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] flex flex-col bg-white" style={{ position: 'relative', zIndex: 1000000000 }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 200, backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] flex flex-col bg-white" style={{ position: 'relative', zIndex: 201 }}>
             <div className="p-6 border-b flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold" style={{ color: "#666" }}>
