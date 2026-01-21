@@ -136,7 +136,7 @@ export default function ViewManager({
               style={{ zIndex: 100000 }}
               onClick={() => setShowViewDropdown(false)}
             />
-            <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl min-w-[250px]" style={{ zIndex: 100001 }}>
+            <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl min-w-[250px] max-h-[400px] overflow-y-auto" style={{ zIndex: 100001 }}>
               <div className="p-2">
                 <p className="text-xs font-semibold px-3 py-2" style={{ color: "#888" }}>
                   MY VIEWS
