@@ -117,7 +117,7 @@ export default function ViewManager({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 relative" style={{ zIndex: showViewDropdown || showColumnEditor || showCreateView ? 100001 : 'auto' }}>
       {/* View Selector */}
       <div className="relative">
         <button
@@ -133,10 +133,10 @@ export default function ViewManager({
           <>
             <div 
               className="fixed inset-0" 
-              style={{ zIndex: 99998 }}
+              style={{ zIndex: 100000 }}
               onClick={() => setShowViewDropdown(false)}
             />
-            <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl min-w-[250px]" style={{ zIndex: 99999 }}>
+            <div className="fixed top-auto left-auto mt-2 ampvibe-card shadow-xl min-w-[250px]" style={{ zIndex: 100001 }}>
               <div className="p-2">
                 <p className="text-xs font-semibold px-3 py-2" style={{ color: "#888" }}>
                   MY VIEWS
@@ -199,7 +199,7 @@ export default function ViewManager({
 
       {/* Create View Modal */}
       {showCreateView && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100001 }}>
           <div className="ampvibe-card max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -245,7 +245,7 @@ export default function ViewManager({
 
       {/* Column Editor Modal */}
       {showColumnEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100001 }}>
           <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <div className="flex items-center justify-between">
