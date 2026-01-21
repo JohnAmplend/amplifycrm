@@ -18,8 +18,6 @@ export default function ViewManager({
   const [showCreateView, setShowCreateView] = useState(false);
   const [newViewName, setNewViewName] = useState("");
   const [editingColumns, setEditingColumns] = useState([]);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const buttonRef = React.useRef(null);
 
   // Load views from localStorage
   useEffect(() => {
@@ -123,17 +121,7 @@ export default function ViewManager({
       {/* View Selector */}
       <div className="relative">
         <button
-          ref={buttonRef}
-          onClick={(e) => {
-            if (!showViewDropdown) {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setDropdownPosition({
-                top: rect.bottom + window.scrollY + 8,
-                left: rect.left + window.scrollX
-              });
-            }
-            setShowViewDropdown(!showViewDropdown);
-          }}
+          onClick={() => setShowViewDropdown(!showViewDropdown)}
           className="ampvibe-button px-4 py-2 flex items-center gap-2"
         >
           <Eye className="w-4 h-4" />
@@ -145,20 +133,10 @@ export default function ViewManager({
           <>
             <div 
               className="fixed inset-0" 
-              style={{ zIndex: 999998 }}
+              style={{ zIndex: 99998 }}
               onClick={() => setShowViewDropdown(false)}
             />
-            <div 
-              className="fixed ampvibe-card shadow-xl min-w-[250px] max-h-[400px] overflow-y-auto" 
-              style={{ 
-                zIndex: 999999,
-                top: `${dropdownPosition.top}px`,
-                left: `${dropdownPosition.left}px`,
-                background: 'rgba(255, 255, 255, 0.98)',
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)'
-              }}
-            >
+            <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl min-w-[250px]" style={{ zIndex: 99999 }}>
               <div className="p-2">
                 <p className="text-xs font-semibold px-3 py-2" style={{ color: "#888" }}>
                   MY VIEWS
@@ -221,7 +199,7 @@ export default function ViewManager({
 
       {/* Create View Modal */}
       {showCreateView && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 999999 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
           <div className="ampvibe-card max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -267,7 +245,7 @@ export default function ViewManager({
 
       {/* Column Editor Modal */}
       {showColumnEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 999999 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
           <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <div className="flex items-center justify-between">
