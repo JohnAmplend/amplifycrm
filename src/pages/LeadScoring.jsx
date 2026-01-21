@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Save, TrendingUp, Target, Zap, Mail, Phone, Calendar, DollarSign, Award } from "lucide-react";
+import { Plus, Trash2, Save, TrendingUp, Target, Zap, Mail, Phone, Calendar, DollarSign, Award, RefreshCw, Search, Filter } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import LoadingState from "../components/crm/LoadingState";
+import { toast } from "../components/crm/useToast";
 
 export default function LeadScoring() {
   const queryClient = useQueryClient();
   const [scoringRules, setScoringRules] = useState([]);
   const [showAddRule, setShowAddRule] = useState(false);
+  const [isScoring, setIsScoring] = useState(false);
+  const [scoreFilter, setScoreFilter] = useState('all');
 
   // Fetch existing scoring rules from custom settings
   const { data: settings } = useQuery({
@@ -89,6 +95,53 @@ export default function LeadScoring() {
     return scoringRules.reduce((sum, rule) => sum + (rule.enabled ? Math.abs(rule.points) : 0), 0);
   };
 
+  // Fetch contacts with scores
+  const { data: contacts = [], isLoading: loadingContacts } = useQuery({
+    queryKey: ['contacts-with-scores'],
+    queryFn: () => base44.entities.Contact.list('-lead_score')
+  });
+
+  // Filter contacts by score
+  const filteredContacts = contacts.filter(contact => {
+    if (scoreFilter === 'all') return true;
+    if (scoreFilter === 'unscored') return !contact.lead_score;
+    return contact.lead_score_grade === scoreFilter;
+  });
+
+  // Score statistics
+  const scoreStats = {
+    total: contacts.length,
+    scored: contacts.filter(c => c.lead_score > 0).length,
+    cold: contacts.filter(c => c.lead_score_grade === 'Cold').length,
+    warm: contacts.filter(c => c.lead_score_grade === 'Warm').length,
+    hot: contacts.filter(c => c.lead_score_grade === 'Hot').length,
+    salesReady: contacts.filter(c => c.lead_score_grade === 'Sales Ready').length,
+    avgScore: contacts.length > 0 
+      ? Math.round(contacts.reduce((sum, c) => sum + (c.lead_score || 0), 0) / contacts.length) 
+      : 0
+  };
+
+  // Run AI scoring
+  const handleRunScoring = async (contactIds = null) => {
+    setIsScoring(true);
+    try {
+      const response = await base44.functions.invoke('calculateLeadScore', {
+        contactIds: contactIds
+      });
+
+      if (response.data.success) {
+        queryClient.invalidateQueries(['contacts-with-scores']);
+        toast.success(`Successfully scored ${response.data.total_scored} contacts`);
+      } else {
+        toast.error('Scoring failed: ' + response.data.error);
+      }
+    } catch (error) {
+      toast.error('Failed to run scoring: ' + error.message);
+    } finally {
+      setIsScoring(false);
+    }
+  };
+
   return (
     <div className="p-8" style={{ background: '#f5f7fa', minHeight: '100vh' }}>
       <div className="max-w-6xl mx-auto">
@@ -100,9 +153,13 @@ export default function LeadScoring() {
           </div>
           <div className="flex items-center gap-3">
             <div className="ampvibe-inset px-4 py-2 rounded-lg">
-              <p className="text-xs" style={{ color: "#9ca3af" }}>Total Possible Score</p>
-              <p className="text-2xl font-bold" style={{ color: "#0066cc" }}>{getTotalPossibleScore()}</p>
+              <p className="text-xs" style={{ color: "#9ca3af" }}>Average Score</p>
+              <p className="text-2xl font-bold" style={{ color: "#0066cc" }}>{scoreStats.avgScore}</p>
             </div>
+            <NeuroButton onClick={() => handleRunScoring()} disabled={isScoring}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isScoring ? 'animate-spin' : ''}`} />
+              {isScoring ? 'Scoring...' : 'Run AI Scoring'}
+            </NeuroButton>
             <NeuroButton variant="primary" onClick={handleSaveRules} disabled={saveRulesMutation.isLoading}>
               <Save className="w-4 h-4 mr-2" />
               {saveRulesMutation.isLoading ? 'Saving...' : 'Save Rules'}
@@ -110,30 +167,157 @@ export default function LeadScoring() {
           </div>
         </div>
 
-        {/* Score Ranges Guide */}
+        {/* Score Statistics */}
         <NeuroCard className="p-6 mb-6">
           <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: "#111827" }}>
             <Award className="w-5 h-5" style={{ color: "#0066cc" }} />
-            Score Ranges & Classifications
+            Lead Score Distribution
           </h3>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="text-center p-4 rounded-lg" style={{ background: '#fee' }}>
-              <p className="text-2xl font-bold mb-1" style={{ color: '#dc2626' }}>0-24</p>
-              <p className="text-sm font-medium" style={{ color: '#dc2626' }}>Cold Lead</p>
-            </div>
-            <div className="text-center p-4 rounded-lg" style={{ background: '#fef3c7' }}>
-              <p className="text-2xl font-bold mb-1" style={{ color: '#d97706' }}>25-49</p>
-              <p className="text-sm font-medium" style={{ color: '#d97706' }}>Warm Lead</p>
-            </div>
-            <div className="text-center p-4 rounded-lg" style={{ background: '#dbeafe' }}>
-              <p className="text-2xl font-bold mb-1" style={{ color: '#2563eb' }}>50-74</p>
-              <p className="text-sm font-medium" style={{ color: '#2563eb' }}>Hot Lead</p>
-            </div>
-            <div className="text-center p-4 rounded-lg" style={{ background: '#dcfce7' }}>
-              <p className="text-2xl font-bold mb-1" style={{ color: '#16a34a' }}>75+</p>
-              <p className="text-sm font-medium" style={{ color: '#16a34a' }}>Sales Ready</p>
-            </div>
+          <div className="grid grid-cols-5 gap-4">
+            <button
+              onClick={() => setScoreFilter('all')}
+              className={`text-center p-4 rounded-lg transition-all ${scoreFilter === 'all' ? 'ring-2 ring-blue-500' : ''}`}
+              style={{ background: '#f3f4f6' }}
+            >
+              <p className="text-2xl font-bold mb-1" style={{ color: '#6b7280' }}>{scoreStats.scored}</p>
+              <p className="text-sm font-medium" style={{ color: '#6b7280' }}>Scored</p>
+            </button>
+            <button
+              onClick={() => setScoreFilter('Cold')}
+              className={`text-center p-4 rounded-lg transition-all ${scoreFilter === 'Cold' ? 'ring-2 ring-red-500' : ''}`}
+              style={{ background: '#fee' }}
+            >
+              <p className="text-2xl font-bold mb-1" style={{ color: '#dc2626' }}>{scoreStats.cold}</p>
+              <p className="text-sm font-medium" style={{ color: '#dc2626' }}>Cold (0-24)</p>
+            </button>
+            <button
+              onClick={() => setScoreFilter('Warm')}
+              className={`text-center p-4 rounded-lg transition-all ${scoreFilter === 'Warm' ? 'ring-2 ring-orange-500' : ''}`}
+              style={{ background: '#fef3c7' }}
+            >
+              <p className="text-2xl font-bold mb-1" style={{ color: '#d97706' }}>{scoreStats.warm}</p>
+              <p className="text-sm font-medium" style={{ color: '#d97706' }}>Warm (25-49)</p>
+            </button>
+            <button
+              onClick={() => setScoreFilter('Hot')}
+              className={`text-center p-4 rounded-lg transition-all ${scoreFilter === 'Hot' ? 'ring-2 ring-blue-500' : ''}`}
+              style={{ background: '#dbeafe' }}
+            >
+              <p className="text-2xl font-bold mb-1" style={{ color: '#2563eb' }}>{scoreStats.hot}</p>
+              <p className="text-sm font-medium" style={{ color: '#2563eb' }}>Hot (50-74)</p>
+            </button>
+            <button
+              onClick={() => setScoreFilter('Sales Ready')}
+              className={`text-center p-4 rounded-lg transition-all ${scoreFilter === 'Sales Ready' ? 'ring-2 ring-green-500' : ''}`}
+              style={{ background: '#dcfce7' }}
+            >
+              <p className="text-2xl font-bold mb-1" style={{ color: '#16a34a' }}>{scoreStats.salesReady}</p>
+              <p className="text-sm font-medium" style={{ color: '#16a34a' }}>Sales Ready (75+)</p>
+            </button>
           </div>
+        </NeuroCard>
+
+        {/* Scored Contacts List */}
+        <NeuroCard className="p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold flex items-center gap-2" style={{ color: "#111827" }}>
+              <TrendingUp className="w-5 h-5" style={{ color: "#0066cc" }} />
+              Scored Contacts ({filteredContacts.length})
+            </h3>
+            <Link to={createPageUrl("Contacts")}>
+              <NeuroButton>
+                View All Contacts
+              </NeuroButton>
+            </Link>
+          </div>
+
+          {loadingContacts ? (
+            <LoadingState message="Loading contacts..." />
+          ) : filteredContacts.length === 0 ? (
+            <div className="text-center py-12" style={{ color: "#9ca3af" }}>
+              <p className="mb-2">No contacts match this filter</p>
+              <NeuroButton onClick={() => handleRunScoring()}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Score All Contacts
+              </NeuroButton>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b" style={{ borderColor: "#e5e7eb" }}>
+                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Contact</th>
+                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Score</th>
+                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Grade</th>
+                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Last Updated</th>
+                    <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredContacts.slice(0, 20).map((contact) => {
+                    let gradeColor = '#6b7280';
+                    if (contact.lead_score_grade === 'Sales Ready') gradeColor = '#16a34a';
+                    else if (contact.lead_score_grade === 'Hot') gradeColor = '#2563eb';
+                    else if (contact.lead_score_grade === 'Warm') gradeColor = '#d97706';
+                    else if (contact.lead_score_grade === 'Cold') gradeColor = '#dc2626';
+
+                    return (
+                      <tr key={contact.id} className="border-b hover:bg-gray-50" style={{ borderColor: "#f3f4f6" }}>
+                        <td className="py-3 px-4">
+                          <Link to={createPageUrl("ContactDetail") + `?id=${contact.id}`} className="hover:underline">
+                            <p className="font-medium" style={{ color: "#111827" }}>
+                              {contact.first_name} {contact.last_name}
+                            </p>
+                            <p className="text-sm" style={{ color: "#6b7280" }}>{contact.email}</p>
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full rounded-full" 
+                                style={{ 
+                                  width: `${contact.lead_score || 0}%`,
+                                  background: gradeColor
+                                }}
+                              />
+                            </div>
+                            <span className="font-bold" style={{ color: gradeColor }}>
+                              {contact.lead_score || 0}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span 
+                            className="px-3 py-1 rounded-full text-xs font-medium"
+                            style={{ 
+                              background: `${gradeColor}22`,
+                              color: gradeColor
+                            }}
+                          >
+                            {contact.lead_score_grade || 'Unscored'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm" style={{ color: "#6b7280" }}>
+                          {contact.lead_score_last_updated 
+                            ? new Date(contact.lead_score_last_updated).toLocaleDateString()
+                            : 'Never'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <NeuroButton 
+                            onClick={() => handleRunScoring([contact.id])}
+                            disabled={isScoring}
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </NeuroButton>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </NeuroCard>
 
         {/* Add Rule Button */}
