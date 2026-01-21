@@ -245,9 +245,9 @@ export default function ViewManager({
 
       {/* Column Editor Modal */}
       {showColumnEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 999999 }}>
-          <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" style={{ position: 'relative', zIndex: 1000000 }}>
-            <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+        <div className="fixed inset-0 z-[999999] bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] flex flex-col relative z-[1000000]">
+            <div className="p-6 border-b flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold" style={{ color: "#666" }}>
                   Edit Columns
@@ -261,7 +261,7 @@ export default function ViewManager({
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
               <div className="grid grid-cols-2 gap-4">
                 {/* Available Columns */}
                 <div>
@@ -330,7 +330,7 @@ export default function ViewManager({
               </div>
             </div>
 
-            <div className="p-6 border-t flex justify-end gap-2" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+            <div className="p-6 border-t flex justify-end gap-2 flex-shrink-0 bg-white" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <NeuroButton onClick={() => setShowColumnEditor(false)}>
                 Cancel
               </NeuroButton>
