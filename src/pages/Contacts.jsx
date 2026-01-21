@@ -789,7 +789,7 @@ export default function Contacts() {
         )}
 
         {/* View Manager */}
-        <NeuroCard className="mb-6">
+        <NeuroCard className="mb-6" style={{ overflow: 'visible' }}>
           <ViewManager
             objectType="Contact"
             currentView={currentView}

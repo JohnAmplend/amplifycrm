@@ -18,6 +18,8 @@ export default function ViewManager({
   const [showCreateView, setShowCreateView] = useState(false);
   const [newViewName, setNewViewName] = useState("");
   const [editingColumns, setEditingColumns] = useState([]);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = React.useRef(null);
 
   // Load views from localStorage
   useEffect(() => {
@@ -117,11 +119,21 @@ export default function ViewManager({
   };
 
   return (
-    <div className="flex items-center gap-2 relative" style={{ zIndex: showViewDropdown || showColumnEditor || showCreateView ? 100001 : 'auto' }}>
+    <div className="flex items-center gap-2">
       {/* View Selector */}
       <div className="relative">
         <button
-          onClick={() => setShowViewDropdown(!showViewDropdown)}
+          ref={buttonRef}
+          onClick={(e) => {
+            if (!showViewDropdown) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setDropdownPosition({
+                top: rect.bottom + window.scrollY + 8,
+                left: rect.left + window.scrollX
+              });
+            }
+            setShowViewDropdown(!showViewDropdown);
+          }}
           className="ampvibe-button px-4 py-2 flex items-center gap-2"
         >
           <Eye className="w-4 h-4" />
@@ -136,7 +148,14 @@ export default function ViewManager({
               style={{ zIndex: 100000 }}
               onClick={() => setShowViewDropdown(false)}
             />
-            <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl min-w-[250px] max-h-[400px] overflow-y-auto" style={{ zIndex: 100001 }}>
+            <div 
+              className="fixed ampvibe-card shadow-xl min-w-[250px] max-h-[400px] overflow-y-auto" 
+              style={{ 
+                zIndex: 100001,
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`
+              }}
+            >
               <div className="p-2">
                 <p className="text-xs font-semibold px-3 py-2" style={{ color: "#888" }}>
                   MY VIEWS
