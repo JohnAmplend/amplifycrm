@@ -119,7 +119,7 @@ export default function ViewManager({
   return (
     <div className="flex items-center gap-2">
       {/* View Selector */}
-      <div className="relative">
+      <div className="relative" style={{ zIndex: showViewDropdown ? 10000 : 'auto' }}>
         <button
           onClick={() => setShowViewDropdown(!showViewDropdown)}
           className="ampvibe-button px-4 py-2 flex items-center gap-2"
