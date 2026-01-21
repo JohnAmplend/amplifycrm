@@ -130,12 +130,6 @@ export default function ViewManager({
         </button>
 
         {showViewDropdown && (
-          <>
-            <div 
-              className="fixed inset-0" 
-              style={{ zIndex: 99998 }}
-              onClick={() => setShowViewDropdown(false)}
-            />
             <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl min-w-[250px]" style={{ zIndex: 99999 }}>
               <div className="p-2">
                 <p className="text-xs font-semibold px-3 py-2" style={{ color: "#888" }}>
@@ -179,7 +173,6 @@ export default function ViewManager({
                 </div>
               </div>
             </div>
-          </>
         )}
       </div>
 
