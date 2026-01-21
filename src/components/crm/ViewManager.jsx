@@ -145,15 +145,18 @@ export default function ViewManager({
           <>
             <div 
               className="fixed inset-0" 
-              style={{ zIndex: 100000 }}
+              style={{ zIndex: 999998 }}
               onClick={() => setShowViewDropdown(false)}
             />
             <div 
               className="fixed ampvibe-card shadow-xl min-w-[250px] max-h-[400px] overflow-y-auto" 
               style={{ 
-                zIndex: 100001,
+                zIndex: 999999,
                 top: `${dropdownPosition.top}px`,
-                left: `${dropdownPosition.left}px`
+                left: `${dropdownPosition.left}px`,
+                background: 'rgba(255, 255, 255, 0.98)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)'
               }}
             >
               <div className="p-2">
@@ -218,7 +221,7 @@ export default function ViewManager({
 
       {/* Create View Modal */}
       {showCreateView && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100001 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 999999 }}>
           <div className="ampvibe-card max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -264,7 +267,7 @@ export default function ViewManager({
 
       {/* Column Editor Modal */}
       {showColumnEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100001 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 999999 }}>
           <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <div className="flex items-center justify-between">
