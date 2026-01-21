@@ -243,103 +243,136 @@ export default function ViewManager({
         </div>
       )}
 
-      {/* Column Editor Modal */}
+      {/* Column Editor Modal - Simplified */}
       {showColumnEditor && (
-        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 300, backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-          <div className="ampvibe-card max-w-2xl w-full max-h-[90vh] flex flex-col bg-white" style={{ position: 'relative', zIndex: 301 }}>
-            <div className="p-6 border-b flex-shrink-0" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold" style={{ color: "#666" }}>
-                  Edit Columns
-                </h3>
-                <button onClick={() => setShowColumnEditor(false)} className="ampvibe-button p-2">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-sm mt-2" style={{ color: "#888" }}>
-                Select columns to display and reorder them
-              </p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 min-h-0">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Available Columns */}
-                <div>
-                  <h4 className="font-semibold mb-3" style={{ color: "#666" }}>
-                    Available Columns
-                  </h4>
-                  <div className="space-y-2">
-                    {availableColumns
-                      .filter(col => !editingColumns.includes(col.id))
-                      .map(column => (
-                        <button
-                          key={column.id}
-                          onClick={() => toggleColumn(column.id)}
-                          className="ampvibe-button w-full text-left px-3 py-2 flex items-center justify-between"
-                        >
-                          <span>{column.label}</span>
-                          <Plus className="w-4 h-4" style={{ color: "#00A86B" }} />
-                        </button>
-                      ))}
-                  </div>
+        <>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-60" 
+            style={{ zIndex: 9999 }}
+            onClick={() => setShowColumnEditor(false)}
+          />
+          <div 
+            className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none" 
+            style={{ zIndex: 10000 }}
+          >
+            <div 
+              className="ampvibe-card w-full max-w-3xl pointer-events-auto bg-white shadow-2xl"
+              style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
+            >
+              {/* Header */}
+              <div className="p-6 border-b" style={{ borderColor: "#e0e0e0", flexShrink: 0 }}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-2xl font-bold" style={{ color: "#555" }}>
+                    Edit Columns
+                  </h3>
+                  <button 
+                    onClick={() => setShowColumnEditor(false)} 
+                    className="ampvibe-button p-2 hover:bg-gray-100"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
+                <p className="text-sm" style={{ color: "#888" }}>
+                  Select and reorder columns for your view
+                </p>
+              </div>
 
-                {/* Selected Columns */}
-                <div>
-                  <h4 className="font-semibold mb-3" style={{ color: "#666" }}>
-                    Selected Columns ({editingColumns.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {editingColumns.map((columnId, index) => {
-                      const column = availableColumns.find(c => c.id === columnId);
-                      if (!column) return null;
-                      
-                      return (
-                        <div
-                          key={columnId}
-                          className="ampvibe-button px-3 py-2 flex items-center justify-between"
-                        >
-                          <span>{column.label}</span>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => moveColumn(columnId, 'up')}
-                              disabled={index === 0}
-                              className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
-                            >
-                              <ChevronDown className="w-4 h-4 rotate-180" />
-                            </button>
-                            <button
-                              onClick={() => moveColumn(columnId, 'down')}
-                              disabled={index === editingColumns.length - 1}
-                              className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => toggleColumn(columnId)}
-                              className="p-1 hover:bg-red-50 rounded ml-2"
-                            >
-                              <X className="w-4 h-4 text-red-500" />
-                            </button>
+              {/* Content */}
+              <div className="p-6 overflow-y-auto" style={{ flex: 1 }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Available Columns */}
+                  <div>
+                    <h4 className="font-bold mb-3 text-sm uppercase" style={{ color: "#888" }}>
+                      Available Columns
+                    </h4>
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                      {availableColumns
+                        .filter(col => !editingColumns.includes(col.id))
+                        .map(column => (
+                          <button
+                            key={column.id}
+                            onClick={() => toggleColumn(column.id)}
+                            className="ampvibe-button w-full text-left px-4 py-3 flex items-center justify-between hover:scale-102 transition-transform"
+                          >
+                            <span style={{ color: "#666" }}>{column.label}</span>
+                            <Plus className="w-4 h-4 flex-shrink-0" style={{ color: "#00A86B" }} />
+                          </button>
+                        ))}
+                      {availableColumns.filter(col => !editingColumns.includes(col.id)).length === 0 && (
+                        <p className="text-center py-8 text-sm" style={{ color: "#aaa" }}>
+                          All columns selected
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Selected Columns */}
+                  <div>
+                    <h4 className="font-bold mb-3 text-sm uppercase" style={{ color: "#888" }}>
+                      Selected ({editingColumns.length})
+                    </h4>
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                      {editingColumns.map((columnId, index) => {
+                        const column = availableColumns.find(c => c.id === columnId);
+                        if (!column) return null;
+                        
+                        return (
+                          <div
+                            key={columnId}
+                            className="ampvibe-button px-4 py-3 flex items-center justify-between"
+                          >
+                            <span style={{ color: "#666" }} className="font-medium">{column.label}</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => moveColumn(columnId, 'up')}
+                                disabled={index === 0}
+                                className="ampvibe-button p-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move up"
+                              >
+                                <ChevronDown className="w-4 h-4 rotate-180" />
+                              </button>
+                              <button
+                                onClick={() => moveColumn(columnId, 'down')}
+                                disabled={index === editingColumns.length - 1}
+                                className="ampvibe-button p-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move down"
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => toggleColumn(columnId)}
+                                className="ampvibe-button p-1.5 ml-1 hover:bg-red-50"
+                                title="Remove"
+                              >
+                                <X className="w-4 h-4" style={{ color: "#ef4444" }} />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                      {editingColumns.length === 0 && (
+                        <p className="text-center py-8 text-sm" style={{ color: "#aaa" }}>
+                          Select columns to display
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-6 border-t flex justify-end gap-2 flex-shrink-0 bg-white" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-              <NeuroButton onClick={() => setShowColumnEditor(false)}>
-                Cancel
-              </NeuroButton>
-              <NeuroButton variant="primary" onClick={handleSaveColumns}>
-                Apply Changes
-              </NeuroButton>
+              {/* Footer */}
+              <div className="p-6 border-t flex justify-end gap-3" style={{ borderColor: "#e0e0e0", flexShrink: 0 }}>
+                <NeuroButton onClick={() => setShowColumnEditor(false)}>
+                  Cancel
+                </NeuroButton>
+                <NeuroButton variant="primary" onClick={handleSaveColumns}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Apply Changes
+                </NeuroButton>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
