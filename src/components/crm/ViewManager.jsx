@@ -132,10 +132,11 @@ export default function ViewManager({
         {showViewDropdown && (
           <>
             <div 
-              className="fixed inset-0 z-[1000]" 
+              className="fixed inset-0" 
+              style={{ zIndex: 9998 }}
               onClick={() => setShowViewDropdown(false)}
             />
-            <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl z-[1100] min-w-[250px]">
+            <div className="absolute top-full left-0 mt-2 ampvibe-card shadow-xl min-w-[250px]" style={{ zIndex: 9999 }}>
               <div className="p-2">
                 <p className="text-xs font-semibold px-3 py-2" style={{ color: "#888" }}>
                   MY VIEWS
@@ -198,7 +199,7 @@ export default function ViewManager({
 
       {/* Create View Modal */}
       {showCreateView && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
           <div className="ampvibe-card max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -244,7 +245,7 @@ export default function ViewManager({
 
       {/* Column Editor Modal */}
       {showColumnEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
           <div className="ampvibe-card max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
               <div className="flex items-center justify-between">
