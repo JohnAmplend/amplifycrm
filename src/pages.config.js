@@ -11,6 +11,7 @@ import AuthGoogleCallback from './pages/AuthGoogleCallback';
 import AuthGoogleGmailCallback from './pages/AuthGoogleGmailCallback';
 import CRMCalendar from './pages/CRMCalendar';
 import CallDetail from './pages/CallDetail';
+import CampaignReport from './pages/CampaignReport';
 import Campaigns from './pages/Campaigns';
 import CannedResponses from './pages/CannedResponses';
 import ChatInbox from './pages/ChatInbox';
@@ -52,6 +53,7 @@ import KnowledgeBase from './pages/KnowledgeBase';
 import LeadDetail from './pages/LeadDetail';
 import LeadScoring from './pages/LeadScoring';
 import Leads from './pages/Leads';
+import ListDetail from './pages/ListDetail';
 import MyTickets from './pages/MyTickets';
 import Notifications from './pages/Notifications';
 import Privacy from './pages/Privacy';
@@ -65,6 +67,7 @@ import RingCentralRecordingSync from './pages/RingCentralRecordingSync';
 import RolesPermissions from './pages/RolesPermissions';
 import SLAPolicies from './pages/SLAPolicies';
 import SalesTracker from './pages/SalesTracker';
+import SequenceBuilder from './pages/SequenceBuilder';
 import SyncLogs from './pages/SyncLogs';
 import SyncStatus from './pages/SyncStatus';
 import Tasks from './pages/Tasks';
@@ -78,9 +81,6 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import SequenceBuilder from './pages/SequenceBuilder';
-import ListDetail from './pages/ListDetail';
-import CampaignReport from './pages/CampaignReport';
 import __Layout from './Layout.jsx';
 
 
@@ -98,6 +98,7 @@ export const PAGES = {
     "AuthGoogleGmailCallback": AuthGoogleGmailCallback,
     "CRMCalendar": CRMCalendar,
     "CallDetail": CallDetail,
+    "CampaignReport": CampaignReport,
     "Campaigns": Campaigns,
     "CannedResponses": CannedResponses,
     "ChatInbox": ChatInbox,
@@ -139,6 +140,7 @@ export const PAGES = {
     "LeadDetail": LeadDetail,
     "LeadScoring": LeadScoring,
     "Leads": Leads,
+    "ListDetail": ListDetail,
     "MyTickets": MyTickets,
     "Notifications": Notifications,
     "Privacy": Privacy,
@@ -152,6 +154,7 @@ export const PAGES = {
     "RolesPermissions": RolesPermissions,
     "SLAPolicies": SLAPolicies,
     "SalesTracker": SalesTracker,
+    "SequenceBuilder": SequenceBuilder,
     "SyncLogs": SyncLogs,
     "SyncStatus": SyncStatus,
     "Tasks": Tasks,
@@ -165,9 +168,6 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "SequenceBuilder": SequenceBuilder,
-    "ListDetail": ListDetail,
-    "CampaignReport": CampaignReport,
 }
 
 export const pagesConfig = {

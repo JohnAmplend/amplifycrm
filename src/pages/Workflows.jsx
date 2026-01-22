@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -215,7 +214,11 @@ export default function Workflows() {
                         {template.object}
                       </span>
                     </div>
-                    <NeuroButton size="sm" className="w-full">
+                    <NeuroButton 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => navigate(createPageUrl("WorkflowBuilder") + `?template=${idx}`)}
+                    >
                       Use Template
                     </NeuroButton>
                   </div>
