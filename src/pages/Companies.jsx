@@ -12,6 +12,7 @@ import CompanyForm from "../components/crm/CompanyForm";
 import AdvancedFilters from "../components/crm/AdvancedFilters";
 import LoadingState from "../components/crm/LoadingState";
 import EmptyState from "../components/crm/EmptyState";
+import ExportModal from "../components/crm/ExportModal";
 import { toast } from "../components/crm/useToast";
 
 export default function Companies() {
@@ -26,7 +27,8 @@ export default function Companies() {
   const [activeStatFilter, setActiveStatFilter] = useState(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState([]);
-  const [filterLogic, setFilterLogic] = useState('AND'); // Added filterLogic state
+  const [filterLogic, setFilterLogic] = useState('AND');
+  const [showExportModal, setShowExportModal] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -93,23 +95,53 @@ export default function Companies() {
     }
   });
 
-  const handleExport = () => {
-    const csvContent = [
-      ['Company Name', 'Domain', 'Industry', 'Phone', 'City', 'State', 'Country', 'Employees', 'Revenue', 'Owner', 'Stage', 'Created Date'],
-      ...filteredCompanies.map(c => [
-        c.company_name, c.domain, c.industry, c.phone, c.city, c.state, c.country,
-        c.number_of_employees, c.annual_revenue, c.company_owner, c.lifecycle_stage,
-        new Date(c.created_date).toLocaleDateString()
-      ])
-    ].map(row => row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const availableExportFields = [
+    { id: 'company_name', label: 'Company Name' },
+    { id: 'domain', label: 'Domain' },
+    { id: 'industry', label: 'Industry' },
+    { id: 'phone', label: 'Phone' },
+    { id: 'city', label: 'City' },
+    { id: 'state', label: 'State' },
+    { id: 'country', label: 'Country' },
+    { id: 'zip', label: 'Zip Code' },
+    { id: 'address', label: 'Address' },
+    { id: 'number_of_employees', label: 'Number of Employees' },
+    { id: 'annual_revenue', label: 'Annual Revenue' },
+    { id: 'company_owner', label: 'Owner' },
+    { id: 'lifecycle_stage', label: 'Lifecycle Stage' },
+    { id: 'created_date', label: 'Created Date' },
+    { id: 'updated_date', label: 'Updated Date' }
+  ];
+
+  const handleExport = (exportType, exportFields) => {
+    const dataToExport = exportType === 'all' ? filteredCompanies : filteredCompanies;
+
+    const headers = exportFields.map(fieldId => 
+      availableExportFields.find(f => f.id === fieldId)?.label || fieldId
+    );
+
+    const rows = dataToExport.map(c => 
+      exportFields.map(fieldId => {
+        const value = c[fieldId];
+        if (fieldId === 'created_date' || fieldId === 'updated_date') {
+          return value ? new Date(value).toLocaleDateString() : '';
+        }
+        return value || '';
+      })
+    );
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `companies-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `companies-${exportType}-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    setShowExportModal(false);
   };
 
   const handleStatCardClick = (filterType) => {
@@ -334,7 +366,7 @@ export default function Companies() {
             </p>
           </div>
           <div className="flex gap-3">
-            <NeuroButton onClick={handleExport}>
+            <NeuroButton onClick={() => setShowExportModal(true)}>
               <Download className="w-4 h-4 mr-2" />
               Export
             </NeuroButton>
@@ -678,7 +710,7 @@ export default function Companies() {
         onClose={() => setShowAdvancedFilters(false)}
         onApplyFilters={(filters, logic) => {
           setAdvancedFilters(filters);
-          setFilterLogic(logic); // Set the logic
+          setFilterLogic(logic);
           setActiveStatFilter(null);
           setSearchTerm("");
           setFilterOwner("");
@@ -688,7 +720,18 @@ export default function Companies() {
           setShowAdvancedFilters(false);
         }}
         currentFilters={advancedFilters}
-        currentLogic={filterLogic} // Pass current logic to AdvancedFilters
+        currentLogic={filterLogic}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        availableFields={availableExportFields}
+        defaultFields={['company_name', 'domain', 'industry', 'phone', 'city', 'state', 'country', 'number_of_employees', 'annual_revenue', 'company_owner', 'lifecycle_stage', 'created_date']}
+        totalCount={filteredCompanies.length}
+        objectType="Companies"
       />
     </div>
   );

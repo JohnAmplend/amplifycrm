@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +10,7 @@ import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import LeadForm from "../components/crm/LeadForm";
 import AdvancedFilters from "../components/crm/AdvancedFilters";
+import ExportModal from "../components/crm/ExportModal";
 
 export default function Leads() {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ export default function Leads() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState([]);
   const [filterLogic, setFilterLogic] = useState('AND');
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -83,25 +84,51 @@ export default function Leads() {
     }
   });
 
-  const handleExport = () => {
-    const csvContent = [
-      ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Job Title', 'Source', 'Status', 'Score', 'Owner', 'Created Date'],
-      ...filteredLeads.map(l => [
-        l.first_name, l.last_name, l.email, l.phone, l.company_name, l.job_title,
-        l.lead_source, l.lead_status, l.lead_score, l.lead_owner,
-        new Date(l.created_date).toLocaleDateString()
-      ])
-    ].map(row => row.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+  const availableExportFields = [
+    { id: 'first_name', label: 'First Name' },
+    { id: 'last_name', label: 'Last Name' },
+    { id: 'email', label: 'Email' },
+    { id: 'phone', label: 'Phone' },
+    { id: 'company_name', label: 'Company' },
+    { id: 'job_title', label: 'Job Title' },
+    { id: 'lead_source', label: 'Lead Source' },
+    { id: 'lead_status', label: 'Lead Status' },
+    { id: 'lead_score', label: 'Lead Score' },
+    { id: 'lead_owner', label: 'Lead Owner' },
+    { id: 'created_date', label: 'Created Date' },
+    { id: 'converted_date', label: 'Converted Date' },
+    { id: 'converted_contact_id', label: 'Converted Contact ID' }
+  ];
+
+  const handleExport = (exportType, exportFields) => {
+    const dataToExport = filteredLeads;
+
+    const headers = exportFields.map(fieldId => 
+      availableExportFields.find(f => f.id === fieldId)?.label || fieldId
+    );
+
+    const rows = dataToExport.map(l => 
+      exportFields.map(fieldId => {
+        const value = l[fieldId];
+        if (fieldId === 'created_date' || fieldId === 'converted_date') {
+          return value ? new Date(value).toLocaleDateString() : '';
+        }
+        return value || '';
+      })
+    );
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
+    a.download = `leads-${exportType}-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setShowExportModal(false);
   };
 
   const handleStatCardClick = (filterType) => {
@@ -327,7 +354,7 @@ export default function Leads() {
             </p>
           </div>
           <div className="flex gap-3">
-            <NeuroButton onClick={handleExport}>
+            <NeuroButton onClick={() => setShowExportModal(true)}>
               <Download className="w-4 h-4 mr-2" />
               Export
             </NeuroButton>
@@ -718,6 +745,17 @@ export default function Leads() {
         }}
         currentFilters={advancedFilters}
         currentLogic={filterLogic}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        availableFields={availableExportFields}
+        defaultFields={['first_name', 'last_name', 'email', 'phone', 'company_name', 'job_title', 'lead_source', 'lead_status', 'lead_score', 'lead_owner', 'created_date']}
+        totalCount={filteredLeads.length}
+        objectType="Leads"
       />
     </div>
   );
