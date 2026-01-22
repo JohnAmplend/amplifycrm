@@ -74,6 +74,7 @@ export default function Contacts() {
   const [showSmartSelection, setShowSmartSelection] = useState(false);
   const [showOperationHistory, setShowOperationHistory] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -206,10 +207,14 @@ export default function Contacts() {
     }
   });
 
-  const handleExport = () => {
+  const handleExport = (exportType = 'all') => {
+    let dataToExport = exportType === 'selected' && getSelectedCount() > 0 
+      ? getSelectedItems() 
+      : filteredContacts;
+
     const csvContent = [
       ['First Name', 'Last Name', 'Email', 'Phone', 'Job Title', 'Company', 'Owner', 'Status', 'Created Date'],
-      ...filteredContacts.map(c => [
+      ...dataToExport.map(c => [
         c.first_name, c.last_name, c.email, c.phone, c.job_title,
         c.company_id, c.contact_owner, c.lead_status,
         new Date(c.created_date).toLocaleDateString()
@@ -220,9 +225,10 @@ export default function Contacts() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `contacts-${exportType}-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    setShowExportModal(false);
   };
 
   const handleStatCardClick = (filterType) => {
@@ -651,7 +657,7 @@ export default function Contacts() {
             </p>
           </div>
           <div className="flex gap-2 md:gap-3">
-            <NeuroButton onClick={handleExport} className="hidden md:flex">
+            <NeuroButton onClick={() => setShowExportModal(true)} className="hidden md:flex">
               <Download className="w-4 h-4 mr-2" />
               <span className="hidden lg:inline">Export</span>
             </NeuroButton>
@@ -1098,8 +1104,8 @@ export default function Contacts() {
         onApplyFilters={(filters, logic) => {
           setAdvancedFilters(filters);
           setFilterLogic(logic);
-          setActiveStatFilter(null); // Clear stat filter when advanced filters are applied
-          setSearchTerm(""); // Clear basic filters
+          setActiveStatFilter(null);
+          setSearchTerm("");
           setFilterOwner("");
           setFilterStage("");
           setFilterStatus("");
@@ -1109,6 +1115,66 @@ export default function Contacts() {
         currentFilters={advancedFilters}
         currentLogic={filterLogic}
       />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black" 
+            style={{ zIndex: 9998, opacity: 0.6 }}
+            onClick={() => setShowExportModal(false)}
+          />
+          <div 
+            className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none" 
+            style={{ zIndex: 9999 }}
+          >
+            <div className="ampvibe-card max-w-md w-full pointer-events-auto bg-white shadow-2xl">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold" style={{ color: "#666" }}>
+                    Export Contacts
+                  </h3>
+                  <button onClick={() => setShowExportModal(false)} className="ampvibe-button p-2">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <p className="text-sm mb-6" style={{ color: "#888" }}>
+                  Choose what contacts to export:
+                </p>
+
+                <div className="space-y-3">
+                  <NeuroButton 
+                    onClick={() => handleExport('all')} 
+                    className="w-full justify-between"
+                  >
+                    <span>All Contacts ({filteredContacts.length})</span>
+                    <Download className="w-4 h-4" />
+                  </NeuroButton>
+
+                  {getSelectedCount() > 0 && (
+                    <NeuroButton 
+                      onClick={() => handleExport('selected')} 
+                      className="w-full justify-between"
+                      variant="primary"
+                    >
+                      <span>Selected Contacts ({getSelectedCount()})</span>
+                      <Download className="w-4 h-4" />
+                    </NeuroButton>
+                  )}
+
+                  <NeuroButton 
+                    onClick={() => setShowExportModal(false)} 
+                    className="w-full"
+                  >
+                    Cancel
+                  </NeuroButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
