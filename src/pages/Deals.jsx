@@ -10,8 +10,9 @@ import DealForm from "../components/crm/DealForm";
 import DealKanban from "../components/crm/DealKanban";
 import LoadingState from "../components/crm/LoadingState";
 import EmptyState from "../components/crm/EmptyState";
+import ExportModal from "../components/crm/ExportModal";
 import { toast } from "../components/crm/useToast";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Download } from "lucide-react";
 
 export default function Deals() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function Deals() {
   const [showForm, setShowForm] = useState(false);
   const [viewMode, setViewMode] = useState("kanban");
   const [currentUser, setCurrentUser] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,6 +94,54 @@ export default function Deals() {
       queryClient.invalidateQueries(['deals']);
     }
   });
+
+  const availableExportFields = [
+    { id: 'deal_name', label: 'Deal Name' },
+    { id: 'deal_amount', label: 'Deal Amount' },
+    { id: 'deal_stage', label: 'Deal Stage' },
+    { id: 'close_date', label: 'Close Date' },
+    { id: 'priority', label: 'Priority' },
+    { id: 'deal_owner', label: 'Deal Owner' },
+    { id: 'pipeline', label: 'Pipeline' },
+    { id: 'probability', label: 'Probability' },
+    { id: 'deal_type', label: 'Deal Type' },
+    { id: 'contact_id', label: 'Contact ID' },
+    { id: 'company_id', label: 'Company ID' },
+    { id: 'next_step', label: 'Next Step' },
+    { id: 'created_date', label: 'Created Date' },
+    { id: 'updated_date', label: 'Updated Date' }
+  ];
+
+  const handleExport = (exportType, exportFields) => {
+    const dataToExport = deals;
+
+    const headers = exportFields.map(fieldId => 
+      availableExportFields.find(f => f.id === fieldId)?.label || fieldId
+    );
+
+    const rows = dataToExport.map(d => 
+      exportFields.map(fieldId => {
+        const value = d[fieldId];
+        if (fieldId === 'created_date' || fieldId === 'updated_date' || fieldId === 'close_date') {
+          return value ? new Date(value).toLocaleDateString() : '';
+        }
+        return value || '';
+      })
+    );
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `deals-${exportType}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowExportModal(false);
+  };
 
   // Pagination calculations
   const totalItems = deals.length;
@@ -189,6 +239,10 @@ export default function Deals() {
             </p>
           </div>
           <div className="flex gap-3">
+            <NeuroButton onClick={() => setShowExportModal(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </NeuroButton>
             <div className="neuro-card flex p-1">
               <button
                 onClick={() => setViewMode("kanban")}
@@ -378,6 +432,17 @@ export default function Deals() {
           </>
         )}
       </div>
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        availableFields={availableExportFields}
+        defaultFields={['deal_name', 'deal_amount', 'deal_stage', 'close_date', 'priority', 'deal_owner', 'created_date']}
+        totalCount={deals.length}
+        objectType="Deals"
+      />
     </div>
   );
 }

@@ -21,6 +21,7 @@ import KeyboardShortcutsHelp from "../components/crm/KeyboardShortcutsHelp";
 import ViewManager from "../components/crm/ViewManager";
 import LoadingState from "../components/crm/LoadingState";
 import EmptyState from "../components/crm/EmptyState";
+import ExportModal from "../components/crm/ExportModal";
 import { toast } from "../components/crm/useToast";
 
 export default function Contacts() {
@@ -75,9 +76,6 @@ export default function Contacts() {
   const [showOperationHistory, setShowOperationHistory] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [exportFields, setExportFields] = useState([
-    'first_name', 'last_name', 'email', 'phone', 'job_title', 'company_id', 'contact_owner', 'lead_status', 'created_date'
-  ]);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -232,7 +230,7 @@ export default function Contacts() {
     { id: 'last_contacted', label: 'Last Contacted' }
   ];
 
-  const handleExport = (exportType = 'all') => {
+  const handleExport = (exportType, exportFields) => {
     let dataToExport = exportType === 'selected' && getSelectedCount() > 0 
       ? getSelectedItems() 
       : filteredContacts;
@@ -263,14 +261,6 @@ export default function Contacts() {
     a.click();
     URL.revokeObjectURL(url);
     setShowExportModal(false);
-  };
-
-  const toggleExportField = (fieldId) => {
-    if (exportFields.includes(fieldId)) {
-      setExportFields(exportFields.filter(f => f !== fieldId));
-    } else {
-      setExportFields([...exportFields, fieldId]);
-    }
   };
 
   const handleStatCardClick = (filterType) => {
@@ -1159,101 +1149,16 @@ export default function Contacts() {
       />
 
       {/* Export Modal */}
-      {showExportModal && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black" 
-            style={{ zIndex: 9998, opacity: 0.6 }}
-            onClick={() => setShowExportModal(false)}
-          />
-          <div 
-            className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none" 
-            style={{ zIndex: 9999 }}
-          >
-            <div className="ampvibe-card max-w-2xl w-full pointer-events-auto bg-white shadow-2xl max-h-[85vh] flex flex-col">
-              <div className="p-6 border-b flex-shrink-0" style={{ borderColor: "#e0e0e0" }}>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold" style={{ color: "#666" }}>
-                    Export Contacts
-                  </h3>
-                  <button onClick={() => setShowExportModal(false)} className="ampvibe-button p-2">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-6 overflow-y-auto flex-1">
-                <div className="mb-6">
-                  <h4 className="font-bold mb-3" style={{ color: "#666" }}>Select Fields to Export</h4>
-                  <div className="flex items-center gap-2 mb-3">
-                    <NeuroButton 
-                      onClick={() => setExportFields(availableExportFields.map(f => f.id))}
-                      size="sm"
-                    >
-                      Select All
-                    </NeuroButton>
-                    <NeuroButton 
-                      onClick={() => setExportFields([])}
-                      size="sm"
-                    >
-                      Clear All
-                    </NeuroButton>
-                    <span className="text-sm ml-2" style={{ color: "#888" }}>
-                      ({exportFields.length} selected)
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto ampvibe-inset p-4 rounded-lg">
-                    {availableExportFields.map(field => (
-                      <label key={field.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          checked={exportFields.includes(field.id)}
-                          onChange={() => toggleExportField(field.id)}
-                          className="w-4 h-4 cursor-pointer"
-                          style={{ accentColor: "#00A86B" }}
-                        />
-                        <span className="text-sm" style={{ color: "#666" }}>{field.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border-t pt-4" style={{ borderColor: "#e0e0e0" }}>
-                  <h4 className="font-bold mb-3" style={{ color: "#666" }}>Export Options</h4>
-                  <div className="space-y-2">
-                    <NeuroButton 
-                      onClick={() => handleExport('all')} 
-                      className="w-full justify-between"
-                      disabled={exportFields.length === 0}
-                    >
-                      <span>Export All Contacts ({filteredContacts.length})</span>
-                      <Download className="w-4 h-4" />
-                    </NeuroButton>
-
-                    {getSelectedCount() > 0 && (
-                      <NeuroButton 
-                        onClick={() => handleExport('selected')} 
-                        className="w-full justify-between"
-                        variant="primary"
-                        disabled={exportFields.length === 0}
-                      >
-                        <span>Export Selected Contacts ({getSelectedCount()})</span>
-                        <Download className="w-4 h-4" />
-                      </NeuroButton>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 border-t flex justify-end gap-2 flex-shrink-0" style={{ borderColor: "#e0e0e0" }}>
-                <NeuroButton onClick={() => setShowExportModal(false)}>
-                  Cancel
-                </NeuroButton>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        availableFields={availableExportFields}
+        defaultFields={['first_name', 'last_name', 'email', 'phone', 'job_title', 'company_id', 'contact_owner', 'lead_status', 'created_date']}
+        totalCount={filteredContacts.length}
+        selectedCount={getSelectedCount()}
+        objectType="Contacts"
+      />
     </div>
   );
 }

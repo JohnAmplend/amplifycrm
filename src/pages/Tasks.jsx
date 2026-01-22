@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, CheckSquare, Square, X, UserPlus, Users, Paperclip, Upload, FileText } from "lucide-react";
+import { Search, Plus, CheckSquare, Square, X, UserPlus, Users, Paperclip, Upload, FileText, Download } from "lucide-react";
 import { toast } from "../components/crm/useToast";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import ExportModal from "../components/crm/ExportModal";
 
 export default function Tasks() {
   const queryClient = useQueryClient();
@@ -31,6 +32,7 @@ export default function Tasks() {
   });
   const [showCollaborators, setShowCollaborators] = useState({});
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then((user) => {
@@ -185,6 +187,56 @@ export default function Tasks() {
       ...prev,
       attachments: prev.attachments.filter((_, i) => i !== index)
     }));
+  };
+
+  const availableExportFields = [
+    { id: 'task_name', label: 'Task Name' },
+    { id: 'description', label: 'Description' },
+    { id: 'due_date', label: 'Due Date' },
+    { id: 'priority', label: 'Priority' },
+    { id: 'status', label: 'Status' },
+    { id: 'assigned_to', label: 'Assigned To' },
+    { id: 'related_to_type', label: 'Related To Type' },
+    { id: 'related_to_id', label: 'Related To ID' },
+    { id: 'completed_at', label: 'Completed At' },
+    { id: 'completed_by', label: 'Completed By' },
+    { id: 'created_date', label: 'Created Date' },
+    { id: 'created_by', label: 'Created By' }
+  ];
+
+  const handleExport = (exportType, exportFields) => {
+    const dataToExport = filteredTasks;
+
+    const headers = exportFields.map(fieldId => 
+      availableExportFields.find(f => f.id === fieldId)?.label || fieldId
+    );
+
+    const rows = dataToExport.map(t => 
+      exportFields.map(fieldId => {
+        const value = t[fieldId];
+        if (fieldId === 'due_date' || fieldId === 'completed_at' || fieldId === 'created_date') {
+          return value ? new Date(value).toLocaleDateString() : '';
+        }
+        if (fieldId === 'assigned_to' || fieldId === 'completed_by' || fieldId === 'created_by') {
+          const user = users.find(u => u.email === value);
+          return user?.full_name || value || '';
+        }
+        return value || '';
+      })
+    );
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tasks-${exportType}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowExportModal(false);
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -372,25 +424,31 @@ export default function Tasks() {
               {filteredTasks.length} total tasks • {filteredTasks.filter(t => t.status !== 'Completed').length} active
             </p>
           </div>
-          <NeuroButton variant="primary" onClick={() => {
-            setEditingTask(null);
-            setFormData({
-              task_name: "",
-              description: "",
-              due_date: "",
-              priority: "Medium",
-              status: "Not Started",
-              assigned_to: currentUser?.email || "",
-              collaborators: [],
-              related_to_type: "",
-              related_to_id: "",
-              attachments: []
-            });
-            setShowForm(true);
-          }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Task
-          </NeuroButton>
+          <div className="flex gap-3">
+            <NeuroButton onClick={() => setShowExportModal(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </NeuroButton>
+            <NeuroButton variant="primary" onClick={() => {
+              setEditingTask(null);
+              setFormData({
+                task_name: "",
+                description: "",
+                due_date: "",
+                priority: "Medium",
+                status: "Not Started",
+                assigned_to: currentUser?.email || "",
+                collaborators: [],
+                related_to_type: "",
+                related_to_id: "",
+                attachments: []
+              });
+              setShowForm(true);
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Task
+            </NeuroButton>
+          </div>
         </div>
 
         <NeuroCard className="mb-6">
@@ -610,6 +668,17 @@ export default function Tasks() {
           )}
         </NeuroCard>
       </div>
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        availableFields={availableExportFields}
+        defaultFields={['task_name', 'description', 'due_date', 'priority', 'status', 'assigned_to', 'created_date']}
+        totalCount={filteredTasks.length}
+        objectType="Tasks"
+      />
     </div>
   );
 }
