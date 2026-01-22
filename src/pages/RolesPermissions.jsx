@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Plus, Edit, Trash2, Check, X, Lock, Unlock, Eye, PenTool, Save } from "lucide-react";
+import { Shield, Plus, Edit, Trash2, Check, X, Lock, Unlock, Eye, PenTool, Save, Sparkles } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
+import RoleTemplates from "../components/crm/RoleTemplates";
 
 export default function RolesPermissions() {
   const queryClient = useQueryClient();
@@ -15,80 +16,11 @@ export default function RolesPermissions() {
   const [roleData, setRoleData] = useState({
     role_name: "",
     description: "",
-    permissions: {
-      // CRM Module
-      crm_contacts_view: false,
-      crm_contacts_create: false,
-      crm_contacts_edit: false,
-      crm_contacts_delete: false,
-      crm_companies_view: false,
-      crm_companies_create: false,
-      crm_companies_edit: false,
-      crm_companies_delete: false,
-      crm_deals_view: false,
-      crm_deals_create: false,
-      crm_deals_edit: false,
-      crm_deals_delete: false,
-      crm_leads_view: false,
-      crm_leads_create: false,
-      crm_leads_edit: false,
-      crm_leads_delete: false,
-      
-      // Marketing Module
-      marketing_campaigns_view: false,
-      marketing_campaigns_create: false,
-      marketing_campaigns_edit: false,
-      marketing_campaigns_delete: false,
-      marketing_campaigns_send: false,
-      marketing_templates_view: false,
-      marketing_templates_create: false,
-      marketing_templates_edit: false,
-      marketing_lists_view: false,
-      marketing_lists_create: false,
-      marketing_lists_edit: false,
-      marketing_forms_view: false,
-      marketing_forms_create: false,
-      marketing_forms_edit: false,
-      
-      // Service Module
-      service_tickets_view: false,
-      service_tickets_create: false,
-      service_tickets_edit: false,
-      service_tickets_delete: false,
-      service_tickets_assign: false,
-      
-      // Reporting Module
-      reports_view: false,
-      reports_create: false,
-      reports_edit: false,
-      reports_delete: false,
-      reports_export: false,
-      dashboards_view: false,
-      dashboards_create: false,
-      dashboards_edit: false,
-      
-      // Settings Module
-      settings_general: false,
-      settings_users: false,
-      settings_roles: false,
-      settings_integrations: false,
-      settings_api_keys: false,
-      settings_payment_gateways: false,
-      settings_data_enrichment: false,
-      
-      // Advanced
-      workflows_view: false,
-      workflows_create: false,
-      workflows_edit: false,
-      import_data: false,
-      export_data: false,
-      bulk_operations: false,
-      
-      // Analytics & AI
-      analytics_view_token_usage: false,
-      ai_view_usage_analytics: false
-    }
+    permissions: {}
   });
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -104,48 +36,23 @@ export default function RolesPermissions() {
     queryFn: () => base44.entities.User.list()
   });
 
+  const assignRoleMutation = useMutation({
+    mutationFn: async ({ userId, roleId }) => {
+      return base44.entities.User.update(userId, { custom_role_id: roleId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users']);
+      setShowAssignModal(false);
+      setSelectedUser(null);
+    }
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      const roleData = {
-        role_name: data.role_name,
-        description: data.description,
-        permissions: {
-          crm: {
-            contacts: { view: data.permissions.crm_contacts_view, create: data.permissions.crm_contacts_create, edit: data.permissions.crm_contacts_edit, delete: data.permissions.crm_contacts_delete },
-            companies: { view: data.permissions.crm_companies_view, create: data.permissions.crm_companies_create, edit: data.permissions.crm_companies_edit, delete: data.permissions.crm_companies_delete },
-            deals: { view: data.permissions.crm_deals_view, create: data.permissions.crm_deals_create, edit: data.permissions.crm_deals_edit, delete: data.permissions.crm_deals_delete },
-            leads: { view: data.permissions.crm_leads_view, create: data.permissions.crm_leads_create, edit: data.permissions.crm_leads_edit, delete: data.permissions.crm_leads_delete }
-          },
-          analytics: {
-            view_token_usage: data.permissions.analytics_view_token_usage || false,
-            view_reports: data.permissions.reports_view || true,
-            create_reports: data.permissions.reports_create || false,
-            view_dashboards: data.permissions.dashboards_view || true
-          },
-          marketing: {
-            campaigns: { view: data.permissions.marketing_campaigns_view, create: data.permissions.marketing_campaigns_create, edit: data.permissions.marketing_campaigns_edit, delete: data.permissions.marketing_campaigns_delete },
-            templates: { view: data.permissions.marketing_templates_view, create: data.permissions.marketing_templates_create, edit: data.permissions.marketing_templates_edit, delete: false }
-          },
-          service: {
-            tickets: { view: data.permissions.service_tickets_view, create: data.permissions.service_tickets_create, edit: data.permissions.service_tickets_edit, delete: data.permissions.service_tickets_delete }
-          },
-          ai_assistant: {
-            use_ai: true,
-            view_usage_analytics: data.permissions.ai_view_usage_analytics || false
-          },
-          settings: {
-            manage_users: data.permissions.settings_users || false,
-            manage_roles: data.permissions.settings_roles || false,
-            manage_integrations: data.permissions.settings_integrations || false,
-            view_audit_log: false
-          }
-        }
-      };
-
       if (editingRole) {
-        return base44.entities.Role.update(editingRole.id, roleData);
+        return base44.entities.Role.update(editingRole.id, data);
       }
-      return base44.entities.Role.create(roleData);
+      return base44.entities.Role.create(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['roles']);
@@ -154,7 +61,7 @@ export default function RolesPermissions() {
       setRoleData({
         role_name: "",
         description: "",
-        permissions: Object.fromEntries(Object.keys(roleData.permissions).map(k => [k, false]))
+        permissions: {}
       });
     }
   });
@@ -168,136 +75,96 @@ export default function RolesPermissions() {
 
   const openEditModal = (role) => {
     setEditingRole(role);
-    const flatPerms = {
-      crm_contacts_view: role.permissions?.crm?.contacts?.view || false,
-      crm_contacts_create: role.permissions?.crm?.contacts?.create || false,
-      crm_contacts_edit: role.permissions?.crm?.contacts?.edit || false,
-      crm_contacts_delete: role.permissions?.crm?.contacts?.delete || false,
-      crm_companies_view: role.permissions?.crm?.companies?.view || false,
-      crm_companies_create: role.permissions?.crm?.companies?.create || false,
-      crm_companies_edit: role.permissions?.crm?.companies?.edit || false,
-      crm_companies_delete: role.permissions?.crm?.companies?.delete || false,
-      crm_deals_view: role.permissions?.crm?.deals?.view || false,
-      crm_deals_create: role.permissions?.crm?.deals?.create || false,
-      crm_deals_edit: role.permissions?.crm?.deals?.edit || false,
-      crm_deals_delete: role.permissions?.crm?.deals?.delete || false,
-      crm_leads_view: role.permissions?.crm?.leads?.view || false,
-      crm_leads_create: role.permissions?.crm?.leads?.create || false,
-      crm_leads_edit: role.permissions?.crm?.leads?.edit || false,
-      crm_leads_delete: role.permissions?.crm?.leads?.delete || false,
-      marketing_campaigns_view: role.permissions?.marketing?.campaigns?.view || false,
-      marketing_campaigns_create: role.permissions?.marketing?.campaigns?.create || false,
-      marketing_campaigns_edit: role.permissions?.marketing?.campaigns?.edit || false,
-      marketing_campaigns_delete: role.permissions?.marketing?.campaigns?.delete || false,
-      marketing_campaigns_send: false,
-      marketing_templates_view: role.permissions?.marketing?.templates?.view || false,
-      marketing_templates_create: role.permissions?.marketing?.templates?.create || false,
-      marketing_templates_edit: role.permissions?.marketing?.templates?.edit || false,
-      marketing_lists_view: false,
-      marketing_lists_create: false,
-      marketing_lists_edit: false,
-      marketing_forms_view: false,
-      marketing_forms_create: false,
-      marketing_forms_edit: false,
-      service_tickets_view: role.permissions?.service?.tickets?.view || false,
-      service_tickets_create: role.permissions?.service?.tickets?.create || false,
-      service_tickets_edit: role.permissions?.service?.tickets?.edit || false,
-      service_tickets_delete: role.permissions?.service?.tickets?.delete || false,
-      service_tickets_assign: false,
-      reports_view: role.permissions?.analytics?.view_reports || false,
-      reports_create: role.permissions?.analytics?.create_reports || false,
-      reports_edit: false,
-      reports_delete: false,
-      reports_export: false,
-      dashboards_view: role.permissions?.analytics?.view_dashboards || false,
-      dashboards_create: false,
-      dashboards_edit: false,
-      settings_general: false,
-      settings_users: role.permissions?.settings?.manage_users || false,
-      settings_roles: role.permissions?.settings?.manage_roles || false,
-      settings_integrations: role.permissions?.settings?.manage_integrations || false,
-      settings_api_keys: false,
-      settings_payment_gateways: false,
-      settings_data_enrichment: false,
-      workflows_view: false,
-      workflows_create: false,
-      workflows_edit: false,
-      import_data: false,
-      export_data: false,
-      bulk_operations: false,
-      analytics_view_token_usage: role.permissions?.analytics?.view_token_usage || false,
-      ai_view_usage_analytics: role.permissions?.ai_assistant?.view_usage_analytics || false
-    };
     setRoleData({
       role_name: role.role_name,
       description: role.description,
-      permissions: flatPerms
+      permissions: role.permissions || {}
     });
     setShowRoleModal(true);
   };
 
-  const togglePermission = (key) => {
-    setRoleData({
-      ...roleData,
-      permissions: {
-        ...roleData.permissions,
-        [key]: !roleData.permissions[key]
-      }
-    });
+  const togglePermission = (module, entity, action) => {
+    const newPerms = { ...roleData.permissions };
+    if (!newPerms[module]) newPerms[module] = {};
+    if (!newPerms[module][entity]) newPerms[module][entity] = {};
+    newPerms[module][entity][action] = !newPerms[module][entity][action];
+    setRoleData({ ...roleData, permissions: newPerms });
   };
 
-  const setModulePermissions = (module, value) => {
-    const moduleKeys = Object.keys(roleData.permissions).filter(k => k.startsWith(module));
-    const updates = {};
-    moduleKeys.forEach(k => updates[k] = value);
-    setRoleData({
-      ...roleData,
-      permissions: {
-        ...roleData.permissions,
-        ...updates
-      }
-    });
+  const setAllEntityPermissions = (module, entity, value) => {
+    const newPerms = { ...roleData.permissions };
+    if (!newPerms[module]) newPerms[module] = {};
+    newPerms[module][entity] = {
+      view: value,
+      create: value,
+      edit: value,
+      delete: value,
+      export: value,
+      ...(entity === 'contacts' || entity === 'companies' || entity === 'deals' || entity === 'leads' || entity === 'tickets' ? { view_all: value } : {}),
+      ...(entity === 'campaigns' ? { send: value } : {}),
+      ...(entity === 'tickets' ? { assign: value } : {})
+    };
+    setRoleData({ ...roleData, permissions: newPerms });
+  };
+
+  const getPermissionValue = (module, entity, action) => {
+    return roleData.permissions?.[module]?.[entity]?.[action] || false;
   };
 
   const permissionModules = {
-    'CRM': [
-      { group: 'Contacts', prefix: 'crm_contacts_' },
-      { group: 'Companies', prefix: 'crm_companies_' },
-      { group: 'Deals', prefix: 'crm_deals_' },
-      { group: 'Leads', prefix: 'crm_leads_' }
-    ],
-    'Marketing': [
-      { group: 'Campaigns', prefix: 'marketing_campaigns_', extra: ['send'] },
-      { group: 'Templates', prefix: 'marketing_templates_' },
-      { group: 'Lists', prefix: 'marketing_lists_' },
-      { group: 'Forms', prefix: 'marketing_forms_' }
-    ],
-    'Service': [
-      { group: 'Tickets', prefix: 'service_tickets_', extra: ['assign'] }
-    ],
-    'Reporting': [
-      { group: 'Reports', prefix: 'reports_', extra: ['export'] },
-      { group: 'Dashboards', prefix: 'dashboards_' }
-    ],
-    'Settings': [
-      { group: 'General Settings', key: 'settings_general' },
-      { group: 'User Management', key: 'settings_users' },
-      { group: 'Roles & Permissions', key: 'settings_roles' },
-      { group: 'Integrations', key: 'settings_integrations' },
-      { group: 'API Keys', key: 'settings_api_keys' },
-      { group: 'Payment Gateways', key: 'settings_payment_gateways' },
-      { group: 'Data Enrichment', key: 'settings_data_enrichment' }
-    ],
-    'Advanced': [
-      { group: 'Workflows', prefix: 'workflows_' },
-      { group: 'Import Data', key: 'import_data' },
-      { group: 'Export Data', key: 'export_data' },
-      { group: 'Bulk Operations', key: 'bulk_operations' }
-    ],
-    'Analytics & AI': [
-      { group: 'View Token Usage Analytics', key: 'analytics_view_token_usage' },
-      { group: 'View AI Usage Analytics', key: 'ai_view_usage_analytics' }
-    ]
+    'CRM': {
+      module: 'crm',
+      entities: [
+        { name: 'Contacts', key: 'contacts', actions: ['view', 'create', 'edit', 'delete', 'export', 'view_all'] },
+        { name: 'Companies', key: 'companies', actions: ['view', 'create', 'edit', 'delete', 'export', 'view_all'] },
+        { name: 'Deals', key: 'deals', actions: ['view', 'create', 'edit', 'delete', 'export', 'view_all'] },
+        { name: 'Leads', key: 'leads', actions: ['view', 'create', 'edit', 'delete', 'export', 'view_all'] },
+        { name: 'Activities', key: 'activities', actions: ['view', 'create', 'edit', 'delete'] },
+        { name: 'Tasks', key: 'tasks', actions: ['view', 'create', 'edit', 'delete', 'export'] }
+      ]
+    },
+    'Marketing': {
+      module: 'marketing',
+      entities: [
+        { name: 'Campaigns', key: 'campaigns', actions: ['view', 'create', 'edit', 'delete', 'send'] },
+        { name: 'Templates', key: 'templates', actions: ['view', 'create', 'edit', 'delete'] },
+        { name: 'Lists', key: 'lists', actions: ['view', 'create', 'edit', 'delete'] },
+        { name: 'Forms', key: 'forms', actions: ['view', 'create', 'edit', 'delete'] }
+      ]
+    },
+    'Service': {
+      module: 'service',
+      entities: [
+        { name: 'Tickets', key: 'tickets', actions: ['view', 'create', 'edit', 'delete', 'assign', 'view_all'] }
+      ]
+    },
+    'Analytics': {
+      module: 'analytics',
+      entities: [
+        { name: 'Reports', key: 'reports', actions: ['view', 'create', 'edit', 'delete', 'export'] },
+        { name: 'Dashboards', key: 'dashboards', actions: ['view', 'create', 'edit', 'delete'] }
+      ]
+    },
+    'Data Operations': {
+      module: 'data_operations',
+      entities: [
+        { name: 'Import', key: 'import', actions: ['allowed'] },
+        { name: 'Export', key: 'export', actions: ['allowed'] },
+        { name: 'Bulk Edit', key: 'bulk_edit', actions: ['allowed'] },
+        { name: 'Bulk Delete', key: 'bulk_delete', actions: ['allowed'] }
+      ]
+    },
+    'Settings': {
+      module: 'settings',
+      entities: [
+        { name: 'Manage Users', key: 'manage_users', actions: ['allowed'] },
+        { name: 'Manage Roles', key: 'manage_roles', actions: ['allowed'] },
+        { name: 'Manage Integrations', key: 'manage_integrations', actions: ['allowed'] },
+        { name: 'View Audit Log', key: 'view_audit_log', actions: ['allowed'] },
+        { name: 'Manage Workflows', key: 'manage_workflows', actions: ['allowed'] },
+        { name: 'Data Quality', key: 'manage_data_quality', actions: ['allowed'] }
+      ]
+    }
   };
 
   const getPermissionCount = (role) => {
@@ -352,9 +219,9 @@ export default function RolesPermissions() {
         </div>
 
         {/* Roles List */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           {roles.map((role) => (
-            <NeuroCard key={role.id} className="p-6">
+            <NeuroCard key={role.id} className="p-6 hover:scale-105 transition-transform">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="ampvibe-inset p-2 rounded-lg">
@@ -371,7 +238,15 @@ export default function RolesPermissions() {
                   <button onClick={() => openEditModal(role)} className="ampvibe-button p-2">
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteMutation.mutate(role.id)} className="ampvibe-button p-2 hover:bg-red-50" style={{ color: "#dc2626" }}>
+                  <button 
+                    onClick={() => {
+                      if (confirm(`Delete role "${role.role_name}"?`)) {
+                        deleteMutation.mutate(role.id);
+                      }
+                    }} 
+                    className="ampvibe-button p-2 hover:bg-red-50" 
+                    style={{ color: "#dc2626" }}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -381,15 +256,75 @@ export default function RolesPermissions() {
               </p>
               <div className="flex items-center justify-between text-xs">
                 <span style={{ color: "#9ca3af" }}>
-                  {users.filter(u => u.custom_role_id === role.id).length} users
+                  {users.filter(u => u.custom_role_id === role.id).length} users assigned
                 </span>
                 <span className="px-2 py-1 rounded-full" style={{ background: '#e6f7ff', color: "#0066cc" }}>
-                  Custom Role
+                  Custom
                 </span>
               </div>
             </NeuroCard>
           ))}
         </div>
+
+        {/* User Role Assignments */}
+        <NeuroCard className="mb-6">
+          <h3 className="font-bold mb-4 text-lg" style={{ color: "#111827" }}>User Role Assignments</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b" style={{ borderColor: "#e5e7eb" }}>
+                  <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>User</th>
+                  <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Email</th>
+                  <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>System Role</th>
+                  <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Custom Role</th>
+                  <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(u => {
+                  const customRole = roles.find(r => r.id === u.custom_role_id);
+                  return (
+                    <tr key={u.id} className="border-b hover:bg-gray-50" style={{ borderColor: "#f3f4f6" }}>
+                      <td className="py-3 px-4 font-medium" style={{ color: "#374151" }}>
+                        {u.full_name}
+                      </td>
+                      <td className="py-3 px-4" style={{ color: "#6b7280" }}>
+                        {u.email}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          u.role === 'admin' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        {customRole ? (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                            {customRole.role_name}
+                          </span>
+                        ) : (
+                          <span className="text-xs" style={{ color: "#9ca3af" }}>—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <NeuroButton 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUser(u);
+                            setShowAssignModal(true);
+                          }}
+                        >
+                          Assign Role
+                        </NeuroButton>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </NeuroCard>
 
         {/* Default Roles Info */}
         <NeuroCard className="p-6">
@@ -458,79 +393,85 @@ export default function RolesPermissions() {
                 />
               </div>
 
+              {/* Role Templates */}
+              {!editingRole && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setShowTemplates(!showTemplates)}
+                    className="ampvibe-button px-4 py-2 flex items-center gap-2 mb-3"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {showTemplates ? 'Hide Templates' : 'Use Template'}
+                  </button>
+                  
+                  {showTemplates && (
+                    <RoleTemplates 
+                      onSelectTemplate={(template) => {
+                        setRoleData({
+                          ...roleData,
+                          role_name: template.name,
+                          description: template.description,
+                          permissions: template.permissions
+                        });
+                        setShowTemplates(false);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
               {/* Permissions */}
               <div className="space-y-6">
-                {Object.entries(permissionModules).map(([moduleName, groups]) => (
+                {Object.entries(permissionModules).map(([moduleName, config]) => (
                   <div key={moduleName} className="p-4 border rounded-lg" style={{ borderColor: "#e5e7eb" }}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold" style={{ color: "#111827" }}>{moduleName}</h3>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setModulePermissions(moduleName.toLowerCase(), true)}
-                          className="text-xs px-3 py-1 rounded hover:bg-green-50"
-                          style={{ color: "#52c41a" }}
-                        >
-                          All
-                        </button>
-                        <button
-                          onClick={() => setModulePermissions(moduleName.toLowerCase(), false)}
-                          className="text-xs px-3 py-1 rounded hover:bg-red-50"
-                          style={{ color: "#dc2626" }}
-                        >
-                          None
-                        </button>
-                      </div>
-                    </div>
+                    <h3 className="font-bold mb-4 text-lg" style={{ color: "#111827" }}>{moduleName}</h3>
 
-                    <div className="space-y-3">
-                      {groups.map((group) => {
-                        if (group.key) {
-                          // Single permission
-                          return (
-                            <label key={group.key} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
-                              <input
-                                type="checkbox"
-                                checked={roleData.permissions[group.key]}
-                                onChange={() => togglePermission(group.key)}
-                                className="w-4 h-4 rounded"
-                                style={{ accentColor: "#0066cc" }}
-                              />
-                              <span className="text-sm font-medium" style={{ color: "#374151" }}>
-                                {group.group}
-                              </span>
-                            </label>
-                          );
-                        } else {
-                          // Permission group with CRUD
-                          const actions = ['view', 'create', 'edit', 'delete', ...(group.extra || [])];
-                          return (
-                            <div key={group.prefix} className="pl-4">
-                              <p className="text-sm font-medium mb-2" style={{ color: "#6b7280" }}>
-                                {group.group}
-                              </p>
-                              <div className="grid grid-cols-5 gap-2">
-                                {actions.map((action) => {
-                                  const key = `${group.prefix}${action}`;
-                                  return (
-                                    <label key={key} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
-                                      <input
-                                        type="checkbox"
-                                        checked={roleData.permissions[key]}
-                                        onChange={() => togglePermission(key)}
-                                        className="w-4 h-4 rounded"
-                                        style={{ accentColor: "#0066cc" }}
-                                      />
-                                      <span className="text-xs capitalize" style={{ color: "#374151" }}>
-                                        {action}
-                                      </span>
-                                    </label>
-                                  );
-                                })}
-                              </div>
+                    <div className="space-y-4">
+                      {config.entities.map((entity) => (
+                        <div key={entity.key} className="border-l-4 pl-4" style={{ borderColor: "#d1d5db" }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-semibold text-sm" style={{ color: "#374151" }}>
+                              {entity.name}
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setAllEntityPermissions(config.module, entity.key, true)}
+                                className="text-xs px-2 py-1 rounded hover:bg-green-50"
+                                style={{ color: "#52c41a" }}
+                              >
+                                All
+                              </button>
+                              <button
+                                onClick={() => setAllEntityPermissions(config.module, entity.key, false)}
+                                className="text-xs px-2 py-1 rounded hover:bg-red-50"
+                                style={{ color: "#dc2626" }}
+                              >
+                                None
+                              </button>
                             </div>
-                          );
-                        }
-                      })}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {entity.actions.map((action) => (
+                              <label 
+                                key={action} 
+                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer border"
+                                style={{ borderColor: getPermissionValue(config.module, entity.key, action) ? "#00A86B" : "#e5e7eb" }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={getPermissionValue(config.module, entity.key, action)}
+                                  onChange={() => togglePermission(config.module, entity.key, action)}
+                                  className="w-4 h-4 rounded"
+                                  style={{ accentColor: "#00A86B" }}
+                                />
+                                <span className="text-xs font-medium capitalize" style={{ color: "#374151" }}>
+                                  {action.replace('_', ' ')}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -549,6 +490,65 @@ export default function RolesPermissions() {
               >
                 <Save className="w-4 h-4 mr-2" />
                 {editingRole ? 'Update Role' : 'Create Role'}
+              </NeuroButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Role Modal */}
+      {showAssignModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full">
+            <div className="p-6 border-b" style={{ borderColor: "#e5e7eb" }}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold" style={{ color: "#111827" }}>
+                  Assign Role to {selectedUser.full_name}
+                </h2>
+                <button onClick={() => setShowAssignModal(false)} className="ampvibe-button p-2">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <p className="text-sm mb-4" style={{ color: "#6b7280" }}>
+                Select a custom role to assign. This will override their default permissions.
+              </p>
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    assignRoleMutation.mutate({ userId: selectedUser.id, roleId: null });
+                  }}
+                  className={`w-full text-left p-3 rounded-lg border transition-all ${
+                    !selectedUser.custom_role_id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <p className="font-medium" style={{ color: "#374151" }}>Default ({selectedUser.role})</p>
+                  <p className="text-xs" style={{ color: "#6b7280" }}>Use system role permissions</p>
+                </button>
+
+                {roles.map(role => (
+                  <button
+                    key={role.id}
+                    onClick={() => {
+                      assignRoleMutation.mutate({ userId: selectedUser.id, roleId: role.id });
+                    }}
+                    className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      selectedUser.custom_role_id === role.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <p className="font-medium" style={{ color: "#374151" }}>{role.role_name}</p>
+                    <p className="text-xs" style={{ color: "#6b7280" }}>{role.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 border-t flex justify-end" style={{ borderColor: "#e5e7eb" }}>
+              <NeuroButton onClick={() => setShowAssignModal(false)}>
+                Close
               </NeuroButton>
             </div>
           </div>
