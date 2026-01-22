@@ -78,6 +78,9 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
+import SequenceBuilder from './pages/SequenceBuilder';
+import ListDetail from './pages/ListDetail';
+import CampaignReport from './pages/CampaignReport';
 import __Layout from './Layout.jsx';
 
 
@@ -162,6 +165,9 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
+    "SequenceBuilder": SequenceBuilder,
+    "ListDetail": ListDetail,
+    "CampaignReport": CampaignReport,
 }
 
 export const pagesConfig = {

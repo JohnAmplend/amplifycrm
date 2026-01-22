@@ -479,6 +479,88 @@ export default function Contacts() {
     throw new Error(response.data.error);
   };
 
+  const handleBulkRemoveTags = async ({ tags }) => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkRemoveTags', {
+      objectType: 'Contact',
+      recordIds,
+      tags
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['contacts']);
+      clearSelection();
+      setLastOperation(response.data);
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
+  const handleBulkSendEmail = async ({ subject, body }) => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkSendEmail', {
+      contactIds: recordIds,
+      subject,
+      body
+    });
+
+    if (response.data.success) {
+      clearSelection();
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
+  const handleBulkAddToList = async ({ listId }) => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkAddToList', {
+      contactIds: recordIds,
+      listId
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['list-members']);
+      clearSelection();
+      setLastOperation(response.data);
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
+  const handleBulkUpdateStage = async ({ stage }) => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkUpdateStage', {
+      objectType: 'Contact',
+      recordIds,
+      stage
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['contacts']);
+      clearSelection();
+      setLastOperation(response.data);
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
+  const handleBulkUpdateStatus = async ({ status }) => {
+    const recordIds = getSelectedRecordIds();
+    const response = await base44.functions.invoke('bulkOperations/bulkUpdateStatus', {
+      objectType: 'Contact',
+      recordIds,
+      status
+    });
+
+    if (response.data.success) {
+      queryClient.invalidateQueries(['contacts']);
+      clearSelection();
+      setLastOperation(response.data);
+      return response.data;
+    }
+    throw new Error(response.data.error);
+  };
+
   const handleUndo = async () => {
     if (!lastOperation?.operationId) return;
 
@@ -898,12 +980,11 @@ export default function Contacts() {
           onDelete={() => setBulkActionModal({ isOpen: true, action: 'delete' })}
           onChangeOwner={() => setBulkActionModal({ isOpen: true, action: 'changeOwner' })}
           onAddTags={() => setBulkActionModal({ isOpen: true, action: 'addTags' })}
-          onRemoveTags={() => alert('Remove Tags functionality coming soon')}
-          onExport={() => alert('Export functionality coming soon')}
-          onSendEmail={() => alert('Send Email functionality coming soon')}
-          onAddToList={() => alert('Add to List functionality coming soon')}
-          onUpdateStage={() => alert('Update Stage functionality coming soon')}
-          onUpdateStatus={() => alert('Update Status functionality coming soon')}
+          onRemoveTags={() => setBulkActionModal({ isOpen: true, action: 'removeTags' })}
+          onSendEmail={() => setBulkActionModal({ isOpen: true, action: 'sendEmail' })}
+          onAddToList={() => setBulkActionModal({ isOpen: true, action: 'addToList' })}
+          onUpdateStage={() => setBulkActionModal({ isOpen: true, action: 'updateStage' })}
+          onUpdateStatus={() => setBulkActionModal({ isOpen: true, action: 'updateStatus' })}
           onUndo={lastOperation?.canUndo ? handleUndo : null}
           undoTimeRemaining={undoTimeRemaining}
           onSmartSelection={() => setShowSmartSelection(true)}
@@ -1121,6 +1202,16 @@ export default function Contacts() {
               return await handleBulkChangeOwner(payload);
             case 'addTags':
               return await handleBulkAddTags(payload);
+            case 'removeTags':
+              return await handleBulkRemoveTags(payload);
+            case 'sendEmail':
+              return await handleBulkSendEmail(payload);
+            case 'addToList':
+              return await handleBulkAddToList(payload);
+            case 'updateStage':
+              return await handleBulkUpdateStage(payload);
+            case 'updateStatus':
+              return await handleBulkUpdateStatus(payload);
             default:
               throw new Error('Unknown action');
           }

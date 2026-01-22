@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { X, AlertTriangle, Loader2, CheckCircle, XCircle } from "lucide-react";
 import NeuroButton from "./NeuroButton";
 import NeuroInput from "./NeuroInput";
@@ -19,6 +21,14 @@ export default function BulkActionModal({
   const [tagInput, setTagInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState(null);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+
+  const { data: lists = [] } = useQuery({
+    queryKey: ['contact_lists'],
+    queryFn: () => base44.entities.Contact_List.list(),
+    enabled: action === 'addToList'
+  });
 
   if (!isOpen) return null;
 
@@ -46,8 +56,14 @@ export default function BulkActionModal({
         return { tags };
       case 'removeTags':
         return { tags };
-      case 'updateStatus':
+      case 'sendEmail':
+        return { subject: emailSubject, body: emailBody };
+      case 'addToList':
+        return { listId: inputValue };
       case 'updateStage':
+        return { stage: inputValue };
+      case 'updateStatus':
+        return { status: inputValue };
       case 'updatePriority':
         return { value: inputValue };
       default:
@@ -121,7 +137,66 @@ export default function BulkActionModal({
           icon: CheckCircle,
           iconColor: '#00A86B'
         };
-      default:
+      case 'sendEmail':
+        return {
+          title: 'Send Email',
+          description: `Send email to ${selectedCount} ${objectType.toLowerCase()}(s):`,
+          confirmText: 'Send Email',
+          confirmVariant: 'primary',
+          showInput: true,
+          inputType: 'email',
+          icon: CheckCircle,
+          iconColor: '#00A86B'
+        };
+      case 'addToList':
+        return {
+          title: 'Add to List',
+          description: `Add ${selectedCount} ${objectType.toLowerCase()}(s) to a contact list:`,
+          confirmText: 'Add to List',
+          confirmVariant: 'primary',
+          showInput: true,
+          inputType: 'list',
+          icon: CheckCircle,
+          iconColor: '#00A86B'
+        };
+      case 'updateStage':
+        return {
+          title: 'Update Stage',
+          description: `Update lifecycle stage for ${selectedCount} ${objectType.toLowerCase()}(s):`,
+          confirmText: 'Update Stage',
+          confirmVariant: 'primary',
+          showInput: true,
+          inputType: 'stage',
+          icon: CheckCircle,
+          iconColor: '#00A86B'
+        };
+      case 'updateStatus':
+        return {
+          title: 'Remove Tags',
+          description: `Remove tags from ${selectedCount} ${objectType.toLowerCase()}(s):`,
+          confirmText: 'Remove Tags',
+          confirmVariant: 'primary',
+          showInput: true,
+          inputType: 'tags',
+          icon: CheckCircle,
+          iconColor: '#00A86B'
+        };
+        case 'updateStatus':
+        const statusOptions = objectType === 'Contact' || objectType === 'Lead' 
+          ? ['New', 'Attempting', 'Connected', 'Qualified', 'Unqualified']
+          : ['New', 'Open', 'In Progress', 'Waiting on Customer', 'Resolved', 'Closed'];
+        return {
+          title: 'Update Status',
+          description: `Select new status for ${selectedCount} ${objectType.toLowerCase()}(s):`,
+          confirmText: 'Update Status',
+          confirmVariant: 'primary',
+          showInput: true,
+          inputType: 'select',
+          inputOptions: statusOptions.map(s => ({ value: s, label: s })),
+          icon: CheckCircle,
+          iconColor: '#00A86B'
+        };
+        default:
         return {
           title: 'Bulk Action',
           description: `Perform action on ${selectedCount} ${objectType.toLowerCase()}(s)?`,
@@ -221,6 +296,65 @@ export default function BulkActionModal({
                   )}
                 </div>
               )}
+
+              {config.showInput && config.inputType === 'email' && (
+                <div className="space-y-4">
+                  <NeuroInput
+                    label="Subject Line"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    placeholder="Enter email subject..."
+                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#666" }}>
+                      Email Body
+                    </label>
+                    <textarea
+                      value={emailBody}
+                      onChange={(e) => setEmailBody(e.target.value)}
+                      className="ampvibe-input w-full min-h-[200px]"
+                      placeholder="Write your email... (Use {{first_name}}, {{last_name}}, {{company}} for personalization)"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {config.showInput && config.inputType === 'list' && (
+                <NeuroSelect
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  options={lists.map(l => ({ value: l.id, label: l.list_name }))}
+                  placeholder="Select a list..."
+                />
+              )}
+
+              {config.showInput && config.inputType === 'stage' && (
+                <NeuroSelect
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  options={
+                    objectType === 'Deal' 
+                      ? [
+                          { value: 'Appointment Scheduled', label: 'Appointment Scheduled' },
+                          { value: 'Qualified', label: 'Qualified' },
+                          { value: 'Presentation Scheduled', label: 'Presentation Scheduled' },
+                          { value: 'Decision Maker Bought-In', label: 'Decision Maker Bought-In' },
+                          { value: 'Contract Sent', label: 'Contract Sent' },
+                          { value: 'Closed Won', label: 'Closed Won' },
+                          { value: 'Closed Lost', label: 'Closed Lost' }
+                        ]
+                      : [
+                          { value: 'Subscriber', label: 'Subscriber' },
+                          { value: 'Lead', label: 'Lead' },
+                          { value: 'MQL', label: 'MQL' },
+                          { value: 'SQL', label: 'SQL' },
+                          { value: 'Opportunity', label: 'Opportunity' },
+                          { value: 'Customer', label: 'Customer' }
+                        ]
+                  }
+                  placeholder="Select stage..."
+                />
+              )}
             </>
           ) : (
             <div className="text-center py-6">
@@ -265,7 +399,11 @@ export default function BulkActionModal({
               <NeuroButton
                 variant={config.confirmVariant === 'danger' ? undefined : 'primary'}
                 onClick={handleConfirm}
-                disabled={isProcessing || (config.showInput && !inputValue && tags.length === 0)}
+                disabled={isProcessing || (config.showInput && config.inputType === 'select' && !inputValue) || 
+                         (config.showInput && config.inputType === 'tags' && tags.length === 0) ||
+                         (config.showInput && config.inputType === 'email' && (!emailSubject || !emailBody)) ||
+                         (config.showInput && config.inputType === 'list' && !inputValue) ||
+                         (config.showInput && config.inputType === 'stage' && !inputValue)}
                 className={config.confirmVariant === 'danger' ? 'bg-red-500 hover:bg-red-600 text-white' : ''}
               >
                 {isProcessing ? (
