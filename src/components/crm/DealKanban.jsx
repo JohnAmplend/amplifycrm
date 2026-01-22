@@ -63,10 +63,11 @@ export default function DealKanban({ deals, onUpdateDeal, onClickDeal }) {
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             onClick={() => onClickDeal(deal)}
-                            className="neuro-inset p-4 rounded-lg cursor-pointer"
+                            className="neuro-inset p-4 rounded-lg cursor-pointer border-b"
                             style={{
                               ...provided.draggableProps.style,
-                              backgroundColor: snapshot.isDragging ? "#d0d0d0" : "#e8e8e8"
+                              backgroundColor: snapshot.isDragging ? "#d0d0d0" : "#e8e8e8",
+                              borderBottomColor: "rgba(0, 0, 0, 0.1)"
                             }}
                           >
                             <p className="font-bold mb-2" style={{ color: "#666" }}>
