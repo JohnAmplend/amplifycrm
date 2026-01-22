@@ -192,48 +192,58 @@ export default function ViewManager({
 
       {/* Create View Modal */}
       {showCreateView && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
-          <div className="ampvibe-card max-w-md w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold" style={{ color: "#666" }}>
-                  Create New View
-                </h3>
-                <button onClick={() => setShowCreateView(false)} className="ampvibe-button p-2">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" style={{ color: "#666" }}>
-                  View Name
-                </label>
-                <input
-                  type="text"
-                  value={newViewName}
-                  onChange={(e) => setNewViewName(e.target.value)}
-                  placeholder="e.g., My Active Contacts"
-                  className="ampvibe-input w-full"
-                  autoFocus
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateView()}
-                />
-              </div>
+        <>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-60" 
+            style={{ zIndex: 9999 }}
+            onClick={() => setShowCreateView(false)}
+          />
+          <div 
+            className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none" 
+            style={{ zIndex: 10000 }}
+          >
+            <div className="ampvibe-card max-w-md w-full pointer-events-auto bg-white shadow-2xl">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold" style={{ color: "#666" }}>
+                    Create New View
+                  </h3>
+                  <button onClick={() => setShowCreateView(false)} className="ampvibe-button p-2">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2" style={{ color: "#666" }}>
+                    View Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newViewName}
+                    onChange={(e) => setNewViewName(e.target.value)}
+                    placeholder="e.g., My Active Contacts"
+                    className="ampvibe-input w-full"
+                    autoFocus
+                    onKeyPress={(e) => e.key === 'Enter' && handleCreateView()}
+                  />
+                </div>
 
-              <div className="flex gap-2 justify-end">
-                <NeuroButton onClick={() => setShowCreateView(false)}>
-                  Cancel
-                </NeuroButton>
-                <NeuroButton 
-                  variant="primary" 
-                  onClick={handleCreateView}
-                  disabled={!newViewName.trim()}
-                >
-                  Create View
-                </NeuroButton>
+                <div className="flex gap-2 justify-end">
+                  <NeuroButton onClick={() => setShowCreateView(false)}>
+                    Cancel
+                  </NeuroButton>
+                  <NeuroButton 
+                    variant="primary" 
+                    onClick={handleCreateView}
+                    disabled={!newViewName.trim()}
+                  >
+                    Create View
+                  </NeuroButton>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Column Editor Modal - Simplified */}
