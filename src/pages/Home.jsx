@@ -26,12 +26,11 @@ export default function Home() {
           <p className="text-lg mb-8" style={{ color: "#888", maxWidth: "800px", margin: "0 auto 2rem" }}>
             AmplifyCRM helps businesses streamline sales, marketing, and customer service operations. Track leads, manage deals through your pipeline, automate email campaigns, and get actionable insights with powerful analytics.
           </p>
-          <button 
-            className="ampvibe-button-primary px-8 py-4 text-lg"
-            onClick={() => base44.auth.redirectToLogin(createPageUrl("Dashboard"))}
-          >
-            Get Started <ArrowRight className="w-5 h-5 ml-2 inline" />
-          </button>
+          <a href={createPageUrl("Dashboard")}>
+            <button className="ampvibe-button-primary px-8 py-4 text-lg">
+              Get Started <ArrowRight className="w-5 h-5 ml-2 inline" />
+            </button>
+          </a>
         </div>
 
         {/* Features Grid */}
