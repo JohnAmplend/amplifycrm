@@ -8,6 +8,9 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import StatCard from "../components/crm/StatCard";
+import { toast } from "../components/crm/useToast";
+import PermissionGuard from "../components/crm/PermissionGuard";
+import usePermissions from "../components/crm/usePermissions";
 
 export default function Campaigns() {
   const navigate = useNavigate();
@@ -25,6 +28,10 @@ export default function Campaigns() {
     mutationFn: (id) => base44.entities.Email_Campaign.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['email_campaigns']);
+      toast.success('Campaign deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete campaign: ' + error.message);
     }
   });
 
@@ -59,10 +66,12 @@ export default function Campaigns() {
             </h1>
             <p style={{ color: "#888" }}>Manage your email marketing campaigns</p>
           </div>
-          <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("CreateCampaign"))}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Campaign
-          </NeuroButton>
+          <PermissionGuard module="marketing" entity="campaigns" action="create">
+            <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("CreateCampaign"))}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Campaign
+            </NeuroButton>
+          </PermissionGuard>
         </div>
 
         {/* Stats */}
@@ -199,18 +208,27 @@ export default function Campaigns() {
                             >
                               <BarChart3 className="w-3 h-3" />
                             </NeuroButton>
-                            <NeuroButton
-                              size="sm"
-                              onClick={() => navigate(createPageUrl("CreateCampaign") + `?id=${campaign.id}`)}
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </NeuroButton>
-                            <NeuroButton
-                              size="sm"
-                              onClick={() => handleDelete(campaign)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </NeuroButton>
+                            <PermissionGuard module="marketing" entity="campaigns" action="edit">
+                              <NeuroButton
+                                size="sm"
+                                onClick={() => navigate(createPageUrl("CreateCampaign") + `?id=${campaign.id}`)}
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </NeuroButton>
+                            </PermissionGuard>
+                            <PermissionGuard module="marketing" entity="campaigns" action="delete">
+                              <NeuroButton
+                                size="sm"
+                                onClick={() => handleDelete(campaign)}
+                                disabled={deleteMutation.isLoading}
+                              >
+                                {deleteMutation.isLoading ? (
+                                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <Trash2 className="w-3 h-3" />
+                                )}
+                              </NeuroButton>
+                            </PermissionGuard>
                           </div>
                         </td>
                       </tr>

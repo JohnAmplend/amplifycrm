@@ -11,6 +11,7 @@ import NeuroSelect from "../components/crm/NeuroSelect";
 export default function EmailTemplates() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
 
@@ -23,6 +24,10 @@ export default function EmailTemplates() {
     mutationFn: (id) => base44.entities.Email_Template.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['email_templates']);
+      toast.success('Template deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete template: ' + error.message);
     }
   });
 
