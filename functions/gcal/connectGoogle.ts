@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { google } from 'npm:googleapis@129.0.0';
 
 Deno.serve(async (req) => {
@@ -10,53 +10,40 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { code } = await req.json();
+    // Get Google OAuth credentials
+    const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+    const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+    const redirectUri = Deno.env.get('GOOGLE_REDIRECT_URI');
 
-    if (!code) {
-      // Generate auth URL
-      const oauth2Client = new google.auth.OAuth2(
-        Deno.env.get('GOOGLE_CLIENT_ID'),
-        Deno.env.get('GOOGLE_CLIENT_SECRET'),
-        Deno.env.get('GOOGLE_REDIRECT_URI')
-      );
-
-      const authUrl = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: ['https://www.googleapis.com/auth/calendar'],
-        prompt: 'consent'
-      });
-
-      return Response.json({ auth_url: authUrl });
+    if (!clientId || !clientSecret || !redirectUri) {
+      return Response.json({ 
+        error: 'Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in your environment secrets.' 
+      }, { status: 500 });
     }
 
-    // Exchange code for tokens
+    // Generate auth URL - this is what gets called from the frontend
     const oauth2Client = new google.auth.OAuth2(
-      Deno.env.get('GOOGLE_CLIENT_ID'),
-      Deno.env.get('GOOGLE_CLIENT_SECRET'),
-      Deno.env.get('GOOGLE_REDIRECT_URI')
+      clientId,
+      clientSecret,
+      redirectUri
     );
 
-    const { tokens } = await oauth2Client.getToken(code);
-
-    // Update user with tokens
-    await base44.asServiceRole.auth.updateMe({
-      google_connected: true,
-      google_refresh_token: tokens.refresh_token,
-      google_access_token: tokens.access_token,
-      google_token_expiry: new Date(tokens.expiry_date).toISOString(),
-      google_calendar_id: 'primary'
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.events'
+      ],
+      prompt: 'consent'
     });
 
-    return Response.json({ 
-      success: true,
-      message: 'Google Calendar connected successfully'
-    });
+    return Response.json({ auth_url: authUrl });
 
   } catch (error) {
     console.error('connectGoogle error:', error);
     return Response.json({ 
       error: error.message,
-      stack: error.stack 
+      details: error.stack 
     }, { status: 500 });
   }
 });

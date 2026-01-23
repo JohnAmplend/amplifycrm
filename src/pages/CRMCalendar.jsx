@@ -109,7 +109,12 @@ export default function CRMCalendar() {
     onSuccess: (response) => {
       if (response.data.auth_url) {
         window.location.href = response.data.auth_url;
+      } else if (response.data.error) {
+        alert('Error: ' + response.data.error);
       }
+    },
+    onError: (error) => {
+      alert('Failed to initiate Google connection: ' + error.message);
     }
   });
 
