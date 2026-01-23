@@ -23,10 +23,13 @@ import LoadingState from "../components/crm/LoadingState";
 import EmptyState from "../components/crm/EmptyState";
 import ExportModal from "../components/crm/ExportModal";
 import { toast } from "../components/crm/useToast";
+import PermissionGuard from "../components/crm/PermissionGuard";
+import usePermissions from "../components/crm/usePermissions";
 
 export default function Contacts() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOwner, setFilterOwner] = useState("");
   const [filterStage, setFilterStage] = useState("");
@@ -771,26 +774,32 @@ export default function Contacts() {
             </p>
           </div>
           <div className="flex gap-2 md:gap-3">
-            <NeuroButton onClick={() => setShowExportModal(true)} className="hidden md:flex">
-              <Download className="w-4 h-4 mr-2" />
-              <span className="hidden lg:inline">Export</span>
-            </NeuroButton>
-            <Link to={createPageUrl("Import") + "?type=Contacts"}>
-              <NeuroButton className="hidden md:flex">
-                <Upload className="w-4 h-4 mr-2" />
-                <span className="hidden lg:inline">Import</span>
+            <PermissionGuard module="crm" entity="contacts" action="export">
+              <NeuroButton onClick={() => setShowExportModal(true)} className="hidden md:flex">
+                <Download className="w-4 h-4 mr-2" />
+                <span className="hidden lg:inline">Export</span>
               </NeuroButton>
-            </Link>
+            </PermissionGuard>
+            <PermissionGuard module="data_operations" entity="import" action="allowed">
+              <Link to={createPageUrl("Import") + "?type=Contacts"}>
+                <NeuroButton className="hidden md:flex">
+                  <Upload className="w-4 h-4 mr-2" />
+                  <span className="hidden lg:inline">Import</span>
+                </NeuroButton>
+              </Link>
+            </PermissionGuard>
             <NeuroButton 
               onClick={() => setShowKeyboardHelp(true)}
               className="hidden md:flex"
             >
               <span className="text-sm">?</span>
             </NeuroButton>
-            <NeuroButton variant="primary" onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Add Contact</span>
-            </NeuroButton>
+            <PermissionGuard module="crm" entity="contacts" action="create">
+              <NeuroButton variant="primary" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Add Contact</span>
+              </NeuroButton>
+            </PermissionGuard>
           </div>
         </div>
 
