@@ -45,8 +45,8 @@ import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
 import { Toaster } from "sonner";
 
 export default function Layout({ children, currentPageName }) {
-  // Skip layout for ChatWidget - render standalone
-  if (currentPageName === "ChatWidget") {
+  // Skip layout for public pages - render standalone
+  if (currentPageName === "ChatWidget" || currentPageName === "Home" || currentPageName === "Privacy" || currentPageName === "Terms") {
     return children;
   }
 
