@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Upload, FileText } from "lucide-react";
+import { X, Upload, FileText, Send, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "../crm/useToast";
 import { Input } from "@/components/ui/input";
@@ -34,9 +34,17 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
     completed_tasks: 0,
     assigned_to: "",
     collaborators: [],
-    attachments: []
+    attachments: [],
+    comments: []
   });
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Get current user
+  useEffect(() => {
+    base44.auth.me().then(user => setCurrentUser(user));
+  }, []);
 
   // Fetch users via backend function (accessible to all users)
   const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
@@ -69,7 +77,8 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         completed_tasks: card.completed_tasks || 0,
         assigned_to: card.assigned_to || "",
         collaborators: card.collaborators || [],
-        attachments: card.attachments || []
+        attachments: card.attachments || [],
+        comments: card.comments || []
       });
     } else {
       setFormData({
@@ -84,7 +93,8 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         completed_tasks: 0,
         assigned_to: "",
         collaborators: [],
-        attachments: []
+        attachments: [],
+        comments: []
       });
     }
   }, [card, columns]);
@@ -131,6 +141,40 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
       ...prev,
       attachments: prev.attachments.filter((_, i) => i !== index)
     }));
+  };
+
+  const handleAddComment = () => {
+    if (!newComment.trim() || !currentUser) return;
+    
+    const comment = {
+      comment_text: newComment.trim(),
+      author_email: currentUser.email,
+      author_name: currentUser.full_name || currentUser.email,
+      timestamp: new Date().toISOString()
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      comments: [...(prev.comments || []), comment]
+    }));
+    setNewComment("");
+    toast.success('Comment added');
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   return (
@@ -329,6 +373,53 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
               </label>
             </div>
           </div>
+
+          {card && (
+            <div>
+              <Label className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Comments ({formData.comments?.length || 0})
+              </Label>
+              <div className="border border-gray-200 rounded-lg p-3 space-y-3 max-h-64 overflow-y-auto bg-gray-50">
+                {formData.comments && formData.comments.length > 0 ? (
+                  formData.comments.map((comment, index) => (
+                    <div key={index} className="bg-white p-3 rounded shadow-sm">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="font-medium text-sm text-gray-900">{comment.author_name}</span>
+                        <span className="text-xs text-gray-500">{formatTimestamp(comment.timestamp)}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.comment_text}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">No comments yet</p>
+                )}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Textarea
+                  placeholder="Add a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddComment();
+                    }
+                  }}
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim()}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
