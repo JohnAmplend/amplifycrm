@@ -20,7 +20,10 @@ export default function Home() {
             AmplifyCRM
           </h1>
           <p className="text-xl mb-8" style={{ color: "#666" }}>
-            All-in-one CRM platform to grow your business
+            All-in-one CRM platform to manage contacts, deals, and customer relationships
+          </p>
+          <p className="text-lg mb-8" style={{ color: "#888", maxWidth: "800px", margin: "0 auto 2rem" }}>
+            AmplifyCRM helps businesses streamline sales, marketing, and customer service operations. Track leads, manage deals through your pipeline, automate email campaigns, and get actionable insights with powerful analytics.
           </p>
           <Link to={createPageUrl("Dashboard")}>
             <button className="ampvibe-button-primary px-8 py-4 text-lg">
