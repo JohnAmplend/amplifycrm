@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +25,9 @@ export default function FormBuilder() {
     redirect_url: "",
     notification_emails: "",
     is_active: true,
+    // Security settings
+    recaptcha_enabled: false,
+    recaptcha_site_key: "",
     // Automation settings
     automation_enabled: false,
     workflow_actions: [], // These will be handled by a separate state for easier manipulation
@@ -164,6 +166,8 @@ export default function FormBuilder() {
         redirect_url: form.redirect_url || "",
         notification_emails: form.notification_emails || "",
         is_active: form.is_active ?? true,
+        recaptcha_enabled: customData.recaptcha_enabled || false,
+        recaptcha_site_key: customData.recaptcha_site_key || "",
         automation_enabled: customData.automation_enabled || false,
         workflow_actions: [], // workflowActions are managed by its own state
         custom_styles: customData.custom_styles || {
@@ -220,8 +224,10 @@ export default function FormBuilder() {
         ...formData,
         // custom_data will contain all additional dynamic settings
         custom_data: {
+          recaptcha_enabled: formData.recaptcha_enabled,
+          recaptcha_site_key: formData.recaptcha_site_key,
           automation_enabled: formData.automation_enabled,
-          workflow_actions: workflowActions, // Save the separate workflowActions state
+          workflow_actions: workflowActions,
           custom_styles: formData.custom_styles
         }
       };
@@ -405,7 +411,8 @@ export default function FormBuilder() {
       field_type: property.type,
       is_required: false,
       placeholder_text: "",
-      field_order: formFields.length
+      field_order: formFields.length,
+      conditional_visibility: null
     };
     setFormFields([...formFields, newField]);
   };
@@ -776,6 +783,19 @@ export default function FormBuilder() {
                               <button onClick={() => updateField(field.id, { is_required: !field.is_required })} className={`p-1.5 rounded hover:bg-gray-100 transition-colors font-bold`} style={{ color: field.is_required ? '#dc2626' : '#6b7280' }} title="Toggle required">
                                 *
                               </button>
+                              <button 
+                                onClick={() => {
+                                  const condition = prompt('Show this field only if (e.g., "previous_field=value")');
+                                  if (condition !== null) {
+                                    updateField(field.id, { conditional_visibility: condition || null });
+                                  }
+                                }}
+                                className="p-1.5 rounded hover:bg-blue-50 transition-colors text-xs font-bold" 
+                                style={{ color: field.conditional_visibility ? '#0066cc' : '#6b7280' }} 
+                                title="Conditional visibility"
+                              >
+                                IF
+                              </button>
                               <button onClick={() => removeField(field.id)} className="p-1.5 rounded hover:bg-red-50 transition-colors" style={{ color: "#dc2626" }} title="Delete field">
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -856,6 +876,37 @@ export default function FormBuilder() {
                     onChange={(e) => setFormData({ ...formData, notification_emails: e.target.value })}
                     placeholder="email1@example.com, email2@example.com"
                   />
+
+                  <div className="pt-4 border-t" style={{ borderColor: "#e5e7eb" }}>
+                    <h3 className="font-bold mb-4" style={{ color: "#666" }}>Security & Spam Protection</h3>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer mb-4">
+                      <input
+                        type="checkbox"
+                        checked={formData.recaptcha_enabled}
+                        onChange={(e) => setFormData({ ...formData, recaptcha_enabled: e.target.checked })}
+                        className="w-4 h-4 rounded"
+                        style={{ accentColor: "#0066cc" }}
+                      />
+                      <div>
+                        <span className="text-sm font-medium" style={{ color: "#374151" }}>
+                          Enable reCAPTCHA v2
+                        </span>
+                        <p className="text-xs" style={{ color: "#9ca3af" }}>
+                          Protect your form from spam and bot submissions
+                        </p>
+                      </div>
+                    </label>
+
+                    {formData.recaptcha_enabled && (
+                      <NeuroInput
+                        label="reCAPTCHA Site Key"
+                        value={formData.recaptcha_site_key}
+                        onChange={(e) => setFormData({ ...formData, recaptcha_site_key: e.target.value })}
+                        placeholder="6Lc..."
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

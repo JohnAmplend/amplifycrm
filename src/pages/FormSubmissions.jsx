@@ -15,7 +15,10 @@ export default function FormSubmissions() {
   const [dateRange, setDateRange] = useState("last30days");
   const [aiInsights, setAiInsights] = useState(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
-  const [selectedAnalysis, setSelectedAnalysis] = useState('comprehensive'); // comprehensive, sentiment, intent
+  const [selectedAnalysis, setSelectedAnalysis] = useState('comprehensive');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [fieldFilters, setFieldFilters] = useState({});
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -34,10 +37,38 @@ export default function FormSubmissions() {
     enabled: !!formId
   });
 
-  const { data: submissions = [] } = useQuery({
+  const { data: allSubmissions = [] } = useQuery({
     queryKey: ['form-submissions', formId],
     queryFn: () => base44.entities.Form_Submission.filter({ form_id: formId }, '-created_date'),
     enabled: !!formId
+  });
+
+  // Apply filters
+  const submissions = allSubmissions.filter(sub => {
+    // Date range filter
+    if (filterStartDate) {
+      const subDate = new Date(sub.created_date);
+      const startDate = new Date(filterStartDate);
+      if (subDate < startDate) return false;
+    }
+    if (filterEndDate) {
+      const subDate = new Date(sub.created_date);
+      const endDate = new Date(filterEndDate);
+      endDate.setHours(23, 59, 59);
+      if (subDate > endDate) return false;
+    }
+
+    // Field filters
+    for (const [fieldName, filterValue] of Object.entries(fieldFilters)) {
+      if (filterValue && filterValue.trim()) {
+        const fieldValue = sub.submission_data?.[fieldName];
+        if (!fieldValue || !fieldValue.toString().toLowerCase().includes(filterValue.toLowerCase())) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   });
 
   const { data: fields = [] } = useQuery({
@@ -978,12 +1009,80 @@ Format as JSON with: primaryIntents, intentCategories, intentByField, buyingSign
 
           {/* Submissions Tab */}
           {activeTab === 'submissions' && (
-            <NeuroCard>
-              {submissions.length === 0 ? (
+            <>
+              {/* Filters */}
+              <NeuroCard className="p-6 mb-6">
+                <h3 className="text-lg font-bold mb-4" style={{ color: "#666" }}>Filters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#666" }}>
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={filterStartDate}
+                      onChange={(e) => setFilterStartDate(e.target.value)}
+                      className="ampvibe-input w-full px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: "#666" }}>
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={filterEndDate}
+                      onChange={(e) => setFilterEndDate(e.target.value)}
+                      className="ampvibe-input w-full px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => {
+                        setFilterStartDate('');
+                        setFilterEndDate('');
+                        setFieldFilters({});
+                      }}
+                      className="ampvibe-button px-4 py-2 text-sm w-full"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Field Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {fields.slice(0, 6).map((field) => (
+                    <div key={field.id}>
+                      <label className="block text-sm font-medium mb-2" style={{ color: "#666" }}>
+                        {field.field_label}
+                      </label>
+                      <input
+                        type="text"
+                        value={fieldFilters[field.field_name] || ''}
+                        onChange={(e) => setFieldFilters({ ...fieldFilters, [field.field_name]: e.target.value })}
+                        placeholder={`Filter by ${field.field_label.toLowerCase()}`}
+                        className="ampvibe-input w-full px-3 py-2 text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-4 text-sm" style={{ color: "#888" }}>
+                  Showing {submissions.length} of {allSubmissions.length} submissions
+                </div>
+              </NeuroCard>
+
+              <NeuroCard>
+                {submissions.length === 0 ? (
                 <div className="text-center py-12" style={{ color: "#aaa" }}>
                   <FileText className="w-12 h-12 mx-auto mb-4" style={{ color: "#ddd" }} />
-                  <p className="text-lg mb-2">No submissions yet</p>
-                  <p className="text-sm">Share your form to start collecting responses</p>
+                  <p className="text-lg mb-2">
+                    {allSubmissions.length === 0 ? 'No submissions yet' : 'No submissions match your filters'}
+                  </p>
+                  <p className="text-sm">
+                    {allSubmissions.length === 0 ? 'Share your form to start collecting responses' : 'Try adjusting your filters'}
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
