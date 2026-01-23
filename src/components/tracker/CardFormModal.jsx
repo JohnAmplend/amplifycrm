@@ -143,7 +143,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
     }));
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!newComment.trim() || !currentUser || !card) return;
     
     const comment = {
@@ -167,6 +167,18 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
       id: card.id,
       comments: updatedComments
     });
+    
+    // Notify assigned user and collaborators
+    try {
+      await base44.functions.invoke('notifyTaskAssignees', {
+        card_id: card.id,
+        card_title: card.title,
+        action: 'commented',
+        additional_info: `New comment: ${newComment.trim().substring(0, 50)}${newComment.trim().length > 50 ? '...' : ''}`
+      });
+    } catch (error) {
+      console.error('Failed to send notifications:', error);
+    }
     
     setNewComment("");
     toast.success('Comment added');
