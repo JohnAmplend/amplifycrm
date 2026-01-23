@@ -7,6 +7,7 @@ import { Plus, Zap, Play, Pause, Edit2, Trash2, Clock, Copy, TrendingUp, Chevron
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function Workflows() {
   const navigate = useNavigate();
@@ -34,6 +35,10 @@ export default function Workflows() {
     mutationFn: ({ id, isActive }) => base44.entities.Workflows.update(id, { is_active: !isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries(['workflows']);
+      toast.success('Workflow status updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update workflow: ' + error.message);
     }
   });
 
@@ -41,6 +46,10 @@ export default function Workflows() {
     mutationFn: (id) => base44.entities.Workflows.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['workflows']);
+      toast.success('Workflow deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete workflow: ' + error.message);
     }
   });
 
@@ -59,6 +68,10 @@ export default function Workflows() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['workflows']);
+      toast.success('Workflow cloned successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to clone workflow: ' + error.message);
     }
   });
 
@@ -66,38 +79,72 @@ export default function Workflows() {
     {
       name: "New Lead Follow-Up",
       description: "Automatically follow up with new leads from website",
-      trigger: "Record Created",
-      object: "Lead"
+      trigger_type: "Record Created",
+      trigger_object: "Lead",
+      trigger_conditions: { event: "create" },
+      actions: [
+        { type: "wait", duration: 1, unit: "hours" },
+        { type: "send_email", subject: "Welcome {{first_name}}!", body: "Thanks for your interest..." },
+        { type: "create_task", task_name: "Follow up with {{first_name}}", assigned_to: "{{lead_owner}}" }
+      ]
     },
     {
       name: "Deal Won Celebration",
       description: "Celebrate closed deals and start onboarding",
-      trigger: "Deal Stage Changed",
-      object: "Deal"
+      trigger_type: "Field Changed",
+      trigger_object: "Deal",
+      trigger_conditions: { field: "deal_stage", new_value: "Closed Won" },
+      actions: [
+        { type: "send_email", subject: "Congratulations on closing {{deal_name}}!", body: "Great work!" },
+        { type: "create_task", task_name: "Start onboarding for {{company_name}}", assigned_to: "{{deal_owner}}" }
+      ]
     },
     {
       name: "Ticket SLA Alert",
       description: "Alert team when ticket SLA is at risk",
-      trigger: "Time-Based",
-      object: "Ticket"
+      trigger_type: "Time-Based",
+      trigger_object: "Ticket",
+      trigger_conditions: { schedule: "every_hour" },
+      actions: [
+        { type: "send_notification", message: "Ticket {{ticket_number}} approaching SLA deadline" }
+      ]
     },
     {
       name: "Lead Nurture Sequence",
       description: "Multi-touch email nurture campaign",
-      trigger: "Record Created",
-      object: "Contact"
+      trigger_type: "Record Created",
+      trigger_object: "Contact",
+      trigger_conditions: { event: "create", stage: "Lead" },
+      actions: [
+        { type: "wait", duration: 1, unit: "days" },
+        { type: "send_email", subject: "Day 1: Getting Started", body: "Welcome to our platform..." },
+        { type: "wait", duration: 3, unit: "days" },
+        { type: "send_email", subject: "Day 4: Best Practices", body: "Here are some tips..." },
+        { type: "wait", duration: 7, unit: "days" },
+        { type: "send_email", subject: "Day 11: Success Stories", body: "See how others..." }
+      ]
     },
     {
       name: "Inactive Customer Re-engagement",
       description: "Re-engage customers who haven't been contacted recently",
-      trigger: "Time-Based",
-      object: "Contact"
+      trigger_type: "Time-Based",
+      trigger_object: "Contact",
+      trigger_conditions: { schedule: "weekly", last_contacted: "30_days_ago" },
+      actions: [
+        { type: "send_email", subject: "We miss you {{first_name}}!", body: "It's been a while..." },
+        { type: "create_task", task_name: "Follow up with {{first_name}}", assigned_to: "{{contact_owner}}" }
+      ]
     },
     {
       name: "Form to Deal Creation",
       description: "Auto-create deals from demo request forms",
-      trigger: "Form Submitted",
-      object: "Contact"
+      trigger_type: "Form Submitted",
+      trigger_object: "Contact",
+      trigger_conditions: { form_name: "Demo Request" },
+      actions: [
+        { type: "create_deal", deal_name: "{{company_name}} - Demo", deal_stage: "Qualified" },
+        { type: "send_notification", message: "New demo request from {{first_name}} {{last_name}}" }
+      ]
     }
   ];
 
@@ -208,10 +255,10 @@ export default function Workflows() {
                     </p>
                     <div className="flex gap-2">
                       <span className="ampvibe-button px-2 py-1 text-xs">
-                        {template.trigger}
+                        {template.trigger_type}
                       </span>
                       <span className="ampvibe-button px-2 py-1 text-xs">
-                        {template.object}
+                        {template.trigger_object}
                       </span>
                     </div>
                     <NeuroButton 
@@ -257,8 +304,11 @@ export default function Workflows() {
                         <button
                           onClick={() => toggleActiveMutation.mutate({ id: workflow.id, isActive: workflow.is_active })}
                           className="ampvibe-button p-2"
+                          disabled={toggleActiveMutation.isLoading}
                         >
-                          {workflow.is_active ? (
+                          {toggleActiveMutation.isLoading ? (
+                            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                          ) : workflow.is_active ? (
                             <Pause className="w-4 h-4" style={{ color: "#52c41a" }} />
                           ) : (
                             <Play className="w-4 h-4" style={{ color: "#888" }} />
@@ -295,9 +345,10 @@ export default function Workflows() {
                         <NeuroButton
                           size="sm"
                           onClick={() => cloneMutation.mutate(workflow)}
+                          disabled={cloneMutation.isLoading}
                         >
                           <Copy className="w-3 h-3 mr-1" />
-                          Clone
+                          {cloneMutation.isLoading ? 'Cloning...' : 'Clone'}
                         </NeuroButton>
                         <NeuroButton
                           size="sm"
@@ -306,9 +357,10 @@ export default function Workflows() {
                               deleteMutation.mutate(workflow.id);
                             }
                           }}
+                          disabled={deleteMutation.isLoading}
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
-                          Delete
+                          {deleteMutation.isLoading ? 'Deleting...' : 'Delete'}
                         </NeuroButton>
                       </div>
                     </div>
