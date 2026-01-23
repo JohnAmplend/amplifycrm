@@ -59,8 +59,9 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         return [];
       }
     },
-    retry: 3,
-    staleTime: 60000
+    retry: 1,
+    staleTime: 300000, // 5 minutes
+    cacheTime: 600000 // 10 minutes
   });
 
   useEffect(() => {
@@ -143,7 +144,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
     }));
   };
 
-  const handleAddComment = async () => {
+  const handleAddComment = () => {
     if (!newComment.trim() || !currentUser || !card) return;
     
     const comment = {
@@ -154,34 +155,30 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
     };
     
     const updatedComments = [...(formData.comments || []), comment];
+    const commentText = newComment.trim();
     
-    // Update local state
+    // Optimistically update UI immediately
     setFormData(prev => ({
       ...prev,
       comments: updatedComments
     }));
+    setNewComment("");
+    toast.success('Comment added');
     
-    // Immediately save to database
+    // Save to database asynchronously (non-blocking)
     onSave({
       ...formData,
       id: card.id,
       comments: updatedComments
     });
     
-    // Notify assigned user and collaborators
-    try {
-      await base44.functions.invoke('notifyTaskAssignees', {
-        card_id: card.id,
-        card_title: card.title,
-        action: 'commented',
-        additional_info: `New comment: ${newComment.trim().substring(0, 50)}${newComment.trim().length > 50 ? '...' : ''}`
-      });
-    } catch (error) {
-      console.error('Failed to send notifications:', error);
-    }
-    
-    setNewComment("");
-    toast.success('Comment added');
+    // Fire-and-forget notification (non-blocking)
+    base44.functions.invoke('notifyTaskAssignees', {
+      card_id: card.id,
+      card_title: card.title,
+      action: 'commented',
+      additional_info: `New comment: ${commentText.substring(0, 50)}${commentText.length > 50 ? '...' : ''}`
+    }).catch(error => console.error('Failed to send notifications:', error));
   };
 
   const formatTimestamp = (timestamp) => {
