@@ -41,6 +41,10 @@ export default function EmailTemplates() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['email_templates']);
+      toast.success('Template cloned successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to clone template: ' + error.message);
     }
   });
 
@@ -150,14 +154,20 @@ export default function EmailTemplates() {
                     <NeuroButton
                       size="sm"
                       onClick={() => cloneMutation.mutate(template)}
+                      disabled={cloneMutation.isLoading}
                     >
-                      <Copy className="w-3 h-3" />
+                      {cloneMutation.isLoading ? (
+                        <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                      ) : <Copy className="w-3 h-3" />}
                     </NeuroButton>
                     <NeuroButton
                       size="sm"
                       onClick={() => handleDelete(template)}
+                      disabled={deleteMutation.isLoading}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      {deleteMutation.isLoading ? (
+                        <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                      ) : <Trash2 className="w-3 h-3" />}
                     </NeuroButton>
                   </div>
                 </div>

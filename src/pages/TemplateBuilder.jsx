@@ -8,6 +8,7 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function TemplateBuilder() {
   const navigate = useNavigate();
@@ -60,7 +61,11 @@ export default function TemplateBuilder() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['email_templates']);
+      toast.success(templateId ? 'Template updated successfully' : 'Template created successfully');
       navigate(createPageUrl("EmailTemplates"));
+    },
+    onError: (error) => {
+      toast.error('Failed to save template: ' + error.message);
     }
   });
 

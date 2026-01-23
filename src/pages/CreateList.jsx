@@ -8,6 +8,7 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function CreateList() {
   const navigate = useNavigate();
@@ -54,7 +55,11 @@ export default function CreateList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['contact_lists']);
+      toast.success(listId ? 'List updated successfully' : 'List created successfully');
       navigate(createPageUrl("ContactLists"));
+    },
+    onError: (error) => {
+      toast.error('Failed to save list: ' + error.message);
     }
   });
 
