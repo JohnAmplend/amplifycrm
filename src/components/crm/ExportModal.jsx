@@ -10,9 +10,13 @@ export default function ExportModal({
   defaultFields,
   totalCount,
   selectedCount = 0,
-  objectType = "records"
+  objectType = "records",
+  allItems = [],
+  selectedItems = []
 }) {
   const [exportFields, setExportFields] = useState(defaultFields);
+  const [selectedItemsToExport, setSelectedItemsToExport] = useState([]);
+  const [exportMode, setExportMode] = useState('all'); // 'all' or 'custom'
 
   if (!isOpen) return null;
 
@@ -25,7 +29,27 @@ export default function ExportModal({
   };
 
   const handleExport = (exportType) => {
-    onExport(exportType, exportFields);
+    if (exportMode === 'custom') {
+      onExport('custom', exportFields, selectedItemsToExport);
+    } else {
+      onExport(exportType, exportFields);
+    }
+  };
+
+  const toggleItemSelection = (itemId) => {
+    if (selectedItemsToExport.includes(itemId)) {
+      setSelectedItemsToExport(selectedItemsToExport.filter(id => id !== itemId));
+    } else {
+      setSelectedItemsToExport([...selectedItemsToExport, itemId]);
+    }
+  };
+
+  const selectAllItems = () => {
+    setSelectedItemsToExport(allItems.map(item => item.id));
+  };
+
+  const deselectAllItems = () => {
+    setSelectedItemsToExport([]);
   };
 
   return (
@@ -89,28 +113,90 @@ export default function ExportModal({
 
             <div className="border-t pt-4" style={{ borderColor: "#e0e0e0" }}>
               <h4 className="font-bold mb-3" style={{ color: "#666" }}>Export Options</h4>
-              <div className="space-y-2">
-                <NeuroButton 
-                  onClick={() => handleExport('all')} 
-                  className="w-full justify-between"
-                  disabled={exportFields.length === 0}
-                >
-                  <span>Export All {objectType} ({totalCount})</span>
-                  <Download className="w-4 h-4" />
-                </NeuroButton>
-
+              <div className="space-y-2 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                  <input
+                    type="radio"
+                    name="exportMode"
+                    checked={exportMode === 'all'}
+                    onChange={() => setExportMode('all')}
+                    className="w-4 h-4 cursor-pointer"
+                    style={{ accentColor: "#00A86B" }}
+                  />
+                  <span className="text-sm font-medium" style={{ color: "#666" }}>Export All ({totalCount})</span>
+                </label>
+                
                 {selectedCount > 0 && (
-                  <NeuroButton 
-                    onClick={() => handleExport('selected')} 
-                    className="w-full justify-between"
-                    variant="primary"
-                    disabled={exportFields.length === 0}
-                  >
-                    <span>Export Selected {objectType} ({selectedCount})</span>
-                    <Download className="w-4 h-4" />
-                  </NeuroButton>
+                  <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                    <input
+                      type="radio"
+                      name="exportMode"
+                      checked={exportMode === 'selected'}
+                      onChange={() => setExportMode('selected')}
+                      className="w-4 h-4 cursor-pointer"
+                      style={{ accentColor: "#00A86B" }}
+                    />
+                    <span className="text-sm font-medium" style={{ color: "#666" }}>Export Pre-Selected ({selectedCount})</span>
+                  </label>
                 )}
+
+                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                  <input
+                    type="radio"
+                    name="exportMode"
+                    checked={exportMode === 'custom'}
+                    onChange={() => setExportMode('custom')}
+                    className="w-4 h-4 cursor-pointer"
+                    style={{ accentColor: "#00A86B" }}
+                  />
+                  <span className="text-sm font-medium" style={{ color: "#666" }}>Choose Specific Items</span>
+                </label>
               </div>
+
+              {exportMode === 'custom' && (
+                <div className="mb-4 ampvibe-inset p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <NeuroButton onClick={selectAllItems} size="sm">
+                      Select All
+                    </NeuroButton>
+                    <NeuroButton onClick={deselectAllItems} size="sm">
+                      Deselect All
+                    </NeuroButton>
+                    <span className="text-sm ml-2" style={{ color: "#888" }}>
+                      ({selectedItemsToExport.length} selected)
+                    </span>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {allItems.map(item => (
+                      <label key={item.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          checked={selectedItemsToExport.includes(item.id)}
+                          onChange={() => toggleItemSelection(item.id)}
+                          className="w-4 h-4 cursor-pointer"
+                          style={{ accentColor: "#00A86B" }}
+                        />
+                        <span className="text-sm truncate" style={{ color: "#666" }}>
+                          {item.first_name || item.company_name || item.deal_name || item.task_name || item.title || item.email || 'Unnamed'}
+                          {item.last_name && ` ${item.last_name}`}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <NeuroButton 
+                onClick={() => exportMode === 'all' ? handleExport('all') : exportMode === 'selected' ? handleExport('selected') : handleExport('custom')}
+                className="w-full justify-between"
+                variant="primary"
+                disabled={exportFields.length === 0 || (exportMode === 'custom' && selectedItemsToExport.length === 0)}
+              >
+                <span>
+                  Export {exportMode === 'all' ? `All (${totalCount})` : exportMode === 'selected' ? `Selected (${selectedCount})` : `Custom (${selectedItemsToExport.length})`} {objectType}
+                </span>
+                <Download className="w-4 h-4" />
+              </NeuroButton>
             </div>
           </div>
 
