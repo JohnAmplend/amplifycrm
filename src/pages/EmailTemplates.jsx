@@ -7,11 +7,11 @@ import { Plus, Search, Eye, Edit2, Copy, Trash2, Mail } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function EmailTemplates() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
 

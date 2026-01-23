@@ -6,12 +6,13 @@ import { createPageUrl } from "@/utils";
 import { Plus, Search, Edit2, Trash2, List, Users } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
+import { toast } from "../components/crm/useToast";
+import PermissionGuard from "../components/crm/PermissionGuard";
 
 export default function ContactLists() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const { hasPermission } = usePermissions();
 
   const { data: lists = [], isLoading } = useQuery({
     queryKey: ['contact_lists'],
@@ -129,8 +130,11 @@ export default function ContactLists() {
                     <NeuroButton
                       size="sm"
                       onClick={() => handleDelete(list)}
+                      disabled={deleteMutation.isLoading}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      {deleteMutation.isLoading ? (
+                        <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                      ) : <Trash2 className="w-3 h-3" />}
                     </NeuroButton>
                   </div>
                 </div>

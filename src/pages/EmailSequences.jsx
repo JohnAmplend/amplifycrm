@@ -8,11 +8,11 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function EmailSequences() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -30,6 +30,10 @@ export default function EmailSequences() {
     mutationFn: (id) => base44.entities.Email_Sequence.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['sequences']);
+      toast.success('Sequence deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete sequence: ' + error.message);
     }
   });
 
@@ -37,6 +41,10 @@ export default function EmailSequences() {
     mutationFn: ({ id, isActive }) => base44.entities.Email_Sequence.update(id, { is_active: !isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries(['sequences']);
+      toast.success('Sequence status updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update sequence: ' + error.message);
     }
   });
 
@@ -53,16 +61,10 @@ export default function EmailSequences() {
             <h1 className="text-3xl font-bold mb-2" style={{ color: "#111827" }}>Email Sequences</h1>
             <p style={{ color: "#6b7280" }}>Automate multi-touch email campaigns</p>
           </div>
-          <div className="flex gap-3">
-            <NeuroButton onClick={() => setShowAIModal(true)}>
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Sequence Builder
-            </NeuroButton>
-            <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("SequenceBuilder"))}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Sequence
-            </NeuroButton>
-          </div>
+          <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("SequenceBuilder"))}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Sequence
+          </NeuroButton>
         </div>
 
         {/* Sequences List */}
@@ -76,16 +78,10 @@ export default function EmailSequences() {
               <p className="text-sm mb-6" style={{ color: "#9ca3af" }}>
                 Create automated email sequences to nurture leads
               </p>
-              <div className="flex gap-3 justify-center">
-                <NeuroButton onClick={() => setShowAIModal(true)}>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Use AI Builder
-                </NeuroButton>
-                <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("SequenceBuilder"))}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Manually
-                </NeuroButton>
-              </div>
+              <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("SequenceBuilder"))}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Sequence
+              </NeuroButton>
             </NeuroCard>
           ) : (
             sequences.map((sequence) => {
@@ -121,8 +117,11 @@ export default function EmailSequences() {
                           <button
                             onClick={() => toggleActiveMutation.mutate({ id: sequence.id, isActive: sequence.is_active })}
                             className="ampvibe-button p-2"
+                            disabled={toggleActiveMutation.isLoading}
                           >
-                            {sequence.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                            {toggleActiveMutation.isLoading ? (
+                              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                            ) : sequence.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                           </button>
                           <button
                             onClick={() => navigate(createPageUrl("SequenceBuilder") + `?id=${sequence.id}`)}
@@ -131,10 +130,17 @@ export default function EmailSequences() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => deleteMutation.mutate(sequence.id)}
+                            onClick={() => {
+                              if (window.confirm('Delete this sequence?')) {
+                                deleteMutation.mutate(sequence.id);
+                              }
+                            }}
                             className="ampvibe-button p-2 text-red-600"
+                            disabled={deleteMutation.isLoading}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {deleteMutation.isLoading ? (
+                              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                            ) : <Trash2 className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
@@ -172,16 +178,6 @@ export default function EmailSequences() {
         </div>
       </div>
 
-      {/* AI Sequence Builder Modal */}
-      {showAIModal && (
-        <AISequenceBuilder
-          onClose={() => setShowAIModal(false)}
-          onSuccess={() => {
-            setShowAIModal(false);
-            queryClient.invalidateQueries(['sequences']);
-          }}
-        />
-      )}
     </div>
   );
 }
