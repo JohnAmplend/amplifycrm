@@ -9,6 +9,7 @@ import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { toast } from "../components/crm/useToast";
 
 export default function ABTesting() {
   const navigate = useNavigate();
@@ -299,7 +300,13 @@ function CreateABTestModal({ onClose, onSuccess }) {
       
       return test;
     },
-    onSuccess: onSuccess
+    onSuccess: () => {
+      onSuccess();
+      toast.success('A/B test created successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to create test: ' + error.message);
+    }
   });
 
   const handleCreate = () => {

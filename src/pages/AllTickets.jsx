@@ -11,7 +11,6 @@ import NeuroSelect from "../components/crm/NeuroSelect";
 export default function AllTickets() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { hasPermission, canViewAll } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
