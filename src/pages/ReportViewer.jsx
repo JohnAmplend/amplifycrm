@@ -6,6 +6,7 @@ import { createPageUrl } from "@/utils";
 import { ArrowLeft, Download, RefreshCw } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function ReportViewer() {
   const navigate = useNavigate();
@@ -96,6 +97,33 @@ export default function ReportViewer() {
 
   const columns = report.columns_to_show || [];
 
+  // Process data for chart visualization
+  const processChartData = () => {
+    if (!reportData.length || !columns.length) return [];
+    
+    const groupByColumn = columns[0]; // First column for grouping
+    const valueColumn = columns[1]; // Second column for values
+    
+    const grouped = {};
+    reportData.forEach(row => {
+      const key = row[groupByColumn] || 'Unknown';
+      if (!grouped[key]) {
+        grouped[key] = { name: key, value: 0, count: 0 };
+      }
+      
+      const value = parseFloat(row[valueColumn]);
+      if (!isNaN(value)) {
+        grouped[key].value += value;
+      }
+      grouped[key].count += 1;
+    });
+    
+    return Object.values(grouped).slice(0, 20); // Limit to 20 items for readability
+  };
+
+  const chartData = processChartData();
+  const COLORS = ['#4a90e2', '#00A86B', '#f5a623', '#d0021b', '#7b68ee', '#ff6b6b', '#4ecdc4', '#45b7d1'];
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -153,6 +181,56 @@ export default function ReportViewer() {
             </p>
           </NeuroCard>
         </div>
+
+        {/* Chart Visualization */}
+        {!dataLoading && reportData.length > 0 && columns.length > 0 && report.chart_type !== 'Table' && (
+          <NeuroCard className="mb-6">
+            <h2 className="text-xl font-bold mb-4" style={{ color: "#555" }}>Chart Visualization</h2>
+            <div style={{ width: '100%', height: 400 }}>
+              <ResponsiveContainer>
+                {report.chart_type === 'Bar Chart' ? (
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="value" fill="#4a90e2" />
+                    <Bar dataKey="count" fill="#00A86B" />
+                  </BarChart>
+                ) : report.chart_type === 'Line Chart' ? (
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="value" stroke="#4a90e2" strokeWidth={2} />
+                    <Line type="monotone" dataKey="count" stroke="#00A86B" strokeWidth={2} />
+                  </LineChart>
+                ) : report.chart_type === 'Pie Chart' ? (
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      dataKey="count"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={120}
+                      label
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                ) : null}
+              </ResponsiveContainer>
+            </div>
+          </NeuroCard>
+        )}
 
         {/* Report Data Table */}
         <NeuroCard>
