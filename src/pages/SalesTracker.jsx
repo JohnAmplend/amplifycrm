@@ -31,20 +31,6 @@ export default function SalesTracker() {
     endDate: ""
   });
 
-  // Check URL for cardId and open that card
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const cardId = urlParams.get('cardId');
-    if (cardId && cards.length > 0) {
-      const card = cards.find(c => c.id === cardId);
-      if (card) {
-        handleEditCard(card);
-        // Clear URL parameter
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    }
-  }, [cards]);
-
   // Fetch boards
   const { data: boards = [], isLoading: boardsLoading } = useQuery({
     queryKey: ['tracker-boards'],
@@ -178,6 +164,20 @@ export default function SalesTracker() {
   const handleEditCard = (card) => {
     setCardModal({ isOpen: true, card, columnId: card.column_id });
   };
+
+  // Check URL for cardId and open that card
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cardId = urlParams.get('cardId');
+    if (cardId && cards.length > 0) {
+      const card = cards.find(c => c.id === cardId);
+      if (card) {
+        handleEditCard(card);
+        // Clear URL parameter
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [cards]);
 
   const handleSaveCard = async (formData) => {
     if (formData.id) {
