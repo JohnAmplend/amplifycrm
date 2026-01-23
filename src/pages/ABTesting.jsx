@@ -16,15 +16,22 @@ export default function ABTesting() {
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTest, setSelectedTest] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const { data: tests = [] } = useQuery({
+  useEffect(() => {
+    base44.auth.me().then(() => setIsAuthenticated(true)).catch(() => {});
+  }, []);
+
+  const { data: tests = [], isLoading: testsLoading } = useQuery({
     queryKey: ['ab-tests'],
-    queryFn: () => base44.entities.AB_Test_Campaign.list('-created_date')
+    queryFn: () => base44.entities.AB_Test_Campaign.list('-created_date'),
+    enabled: isAuthenticated
   });
 
-  const { data: allVariants = [] } = useQuery({
+  const { data: allVariants = [], isLoading: variantsLoading } = useQuery({
     queryKey: ['ab-variants'],
-    queryFn: () => base44.entities.AB_Test_Variant.list()
+    queryFn: () => base44.entities.AB_Test_Variant.list(),
+    enabled: isAuthenticated
   });
 
   const getTestVariants = (testId) => {
@@ -81,6 +88,14 @@ export default function ABTesting() {
     };
     return icons[variable] || Mail;
   };
+
+  if (!isAuthenticated || testsLoading || variantsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8" style={{ background: '#f5f7fa', minHeight: '100vh' }}>
