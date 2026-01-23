@@ -8,12 +8,83 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function WorkflowBuilder() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const workflowId = urlParams.get('id');
+  const templateIndex = urlParams.get('template');
+
+  const workflowTemplates = [
+    {
+      name: "New Lead Follow-Up",
+      description: "Automatically follow up with new leads from website",
+      trigger_type: "Record Created",
+      trigger_object: "Lead",
+      trigger_conditions: { event: "create" },
+      actions: [
+        { action_type: "Send Email", action_order: 1, delay_minutes: 60, action_configuration: { recipient_type: "Record Owner" } },
+        { action_type: "Create Task", action_order: 2, delay_minutes: 0, action_configuration: { title: "Follow up with lead", priority: "High", due_days: 1 } }
+      ]
+    },
+    {
+      name: "Deal Won Celebration",
+      description: "Celebrate closed deals and start onboarding",
+      trigger_type: "Field Changed",
+      trigger_object: "Deal",
+      trigger_conditions: { field: "deal_stage", new_value: "Closed Won" },
+      actions: [
+        { action_type: "Send Email", action_order: 1, delay_minutes: 0, action_configuration: { recipient_type: "Record Owner" } },
+        { action_type: "Create Task", action_order: 2, delay_minutes: 0, action_configuration: { title: "Start onboarding", priority: "High", due_days: 3 } }
+      ]
+    },
+    {
+      name: "Ticket SLA Alert",
+      description: "Alert team when ticket SLA is at risk",
+      trigger_type: "Time-Based",
+      trigger_object: "Ticket",
+      trigger_conditions: { schedule: "every_hour" },
+      actions: [
+        { action_type: "Send Notification", action_order: 1, delay_minutes: 0, action_configuration: { title: "SLA Alert", user_id: "Record Owner" } }
+      ]
+    },
+    {
+      name: "Lead Nurture Sequence",
+      description: "Multi-touch email nurture campaign",
+      trigger_type: "Record Created",
+      trigger_object: "Contact",
+      trigger_conditions: { event: "create", stage: "Lead" },
+      actions: [
+        { action_type: "Send Email", action_order: 1, delay_minutes: 1440, action_configuration: { recipient_type: "Contact Email" } },
+        { action_type: "Send Email", action_order: 2, delay_minutes: 4320, action_configuration: { recipient_type: "Contact Email" } },
+        { action_type: "Send Email", action_order: 3, delay_minutes: 10080, action_configuration: { recipient_type: "Contact Email" } }
+      ]
+    },
+    {
+      name: "Inactive Customer Re-engagement",
+      description: "Re-engage customers who haven't been contacted recently",
+      trigger_type: "Time-Based",
+      trigger_object: "Contact",
+      trigger_conditions: { schedule: "weekly", last_contacted: "30_days_ago" },
+      actions: [
+        { action_type: "Send Email", action_order: 1, delay_minutes: 0, action_configuration: { recipient_type: "Contact Email" } },
+        { action_type: "Create Task", action_order: 2, delay_minutes: 0, action_configuration: { title: "Follow up with inactive customer", priority: "Medium", due_days: 7 } }
+      ]
+    },
+    {
+      name: "Form to Deal Creation",
+      description: "Auto-create deals from demo request forms",
+      trigger_type: "Form Submitted",
+      trigger_object: "Contact",
+      trigger_conditions: { form_name: "Demo Request" },
+      actions: [
+        { action_type: "Create Record", action_order: 1, delay_minutes: 0, action_configuration: { entity_type: "Deal", field_map: { deal_name: "Demo Request", deal_stage: "Qualified" } } },
+        { action_type: "Send Notification", action_order: 2, delay_minutes: 0, action_configuration: { title: "New Demo Request", user_id: "Record Owner" } }
+      ]
+    }
+  ];
 
   const [workflowData, setWorkflowData] = useState({
     workflow_name: "",
@@ -53,23 +124,48 @@ export default function WorkflowBuilder() {
   });
 
   useEffect(() => {
-    if (workflow) {
+    if (templateIndex !== null && !workflowId) {
+      const template = workflowTemplates[parseInt(templateIndex)];
+      if (template) {
+        setWorkflowData({
+          workflow_name: template.name,
+          workflow_description: template.description,
+          trigger_type: template.trigger_type,
+          trigger_object: template.trigger_object,
+          trigger_conditions: template.trigger_conditions,
+          is_active: false
+        });
+        if (template.actions) {
+          setActions(template.actions);
+        }
+      }
+    } else if (workflow) {
       setWorkflowData(workflow);
     }
-  }, [workflow]);
+  }, [workflow, templateIndex]);
 
   useEffect(() => {
-    if (workflowActions.length > 0) {
+    if (workflowActions.length > 0 && !templateIndex) {
       setActions(workflowActions);
     }
-  }, [workflowActions]);
+  }, [workflowActions, templateIndex]);
 
   const saveWorkflowMutation = useMutation({
     mutationFn: async (data) => {
       if (workflowId) {
         return base44.entities.Workflows.update(workflowId, data);
       } else {
-        return base44.entities.Workflows.create(data);
+        const workflow = await base44.entities.Workflows.create(data);
+        // If we have template actions, create them too
+        if (actions.length > 0 && templateIndex !== null) {
+          for (const action of actions) {
+            await base44.entities.Workflow_Actions.create({
+              ...action,
+              workflow_id: workflow.id
+            });
+          }
+        }
+        return workflow;
       }
     },
     onSuccess: (result) => {
@@ -77,6 +173,10 @@ export default function WorkflowBuilder() {
       if (!workflowId) {
         navigate(createPageUrl("WorkflowBuilder") + `?id=${result.id}`);
       }
+      toast.success('Workflow saved successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to save workflow: ' + error.message);
     }
   });
 
@@ -95,6 +195,10 @@ export default function WorkflowBuilder() {
       queryClient.invalidateQueries(['workflow_actions']);
       setShowConfigModal(false);
       setCurrentAction(null);
+      toast.success('Action saved successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to save action: ' + error.message);
     }
   });
 
@@ -102,6 +206,10 @@ export default function WorkflowBuilder() {
     mutationFn: (id) => base44.entities.Workflow_Actions.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['workflow_actions']);
+      toast.success('Action deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete action: ' + error.message);
     }
   });
 
@@ -491,9 +599,13 @@ export default function WorkflowBuilder() {
                 <NeuroButton onClick={() => navigate(createPageUrl("Workflows"))}>
                   Cancel
                 </NeuroButton>
-                <NeuroButton variant="primary" onClick={handleSaveWorkflow}>
+                <NeuroButton 
+                  variant="primary" 
+                  onClick={handleSaveWorkflow}
+                  disabled={saveWorkflowMutation.isLoading}
+                >
                   <Save className="w-4 h-4 mr-2" />
-                  Create & Continue
+                  {saveWorkflowMutation.isLoading ? 'Creating...' : 'Create & Continue'}
                 </NeuroButton>
               </div>
             </div>
@@ -522,9 +634,12 @@ export default function WorkflowBuilder() {
             </p>
           </div>
           <div className="flex gap-2">
-            <NeuroButton onClick={handleSaveWorkflow}>
+            <NeuroButton 
+              onClick={handleSaveWorkflow}
+              disabled={saveWorkflowMutation.isLoading}
+            >
               <Save className="w-4 h-4 mr-2" />
-              Save
+              {saveWorkflowMutation.isLoading ? 'Saving...' : 'Save'}
             </NeuroButton>
             <button
               onClick={() => setWorkflowData({ ...workflowData, is_active: !workflowData.is_active })}
@@ -621,8 +736,13 @@ export default function WorkflowBuilder() {
                       <button
                         onClick={() => handleDeleteAction(action.id)}
                         className="ampvibe-button p-2 text-red-600"
+                        disabled={deleteActionMutation.isLoading}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {deleteActionMutation.isLoading ? (
+                          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -714,9 +834,13 @@ export default function WorkflowBuilder() {
                   }}>
                     Cancel
                   </NeuroButton>
-                  <NeuroButton variant="primary" onClick={handleSaveAction}>
+                  <NeuroButton 
+                    variant="primary" 
+                    onClick={handleSaveAction}
+                    disabled={saveActionMutation.isLoading}
+                  >
                     <Save className="w-4 h-4 mr-2" />
-                    Save Action
+                    {saveActionMutation.isLoading ? 'Saving...' : 'Save Action'}
                   </NeuroButton>
                 </div>
               </div>
