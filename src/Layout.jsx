@@ -420,7 +420,11 @@ export default function Layout({ children, currentPageName }) {
                           className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50' : ''}`}
                           onClick={() => {
                             if (!notif.is_read) markAsRead(notif.id);
-                            if (notif.link) window.location.href = notif.link;
+                            if (notif.link) {
+                              window.location.href = notif.link;
+                            } else if (notif.custom_data?.card_id) {
+                              window.location.href = createPageUrl("SalesTracker") + `?cardId=${notif.custom_data.card_id}`;
+                            }
                             setShowNotifications(false);
                           }}
                         >
