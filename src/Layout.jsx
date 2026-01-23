@@ -47,7 +47,7 @@ import { Toaster } from "sonner";
 export default function Layout({ children, currentPageName }) {
   // Skip layout for public pages - render standalone
   if (currentPageName === "ChatWidget" || currentPageName === "Home" || currentPageName === "Privacy" || currentPageName === "Terms") {
-    return children;
+    return <>{children}</>;
   }
 
   const location = useLocation();
