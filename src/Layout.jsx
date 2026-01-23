@@ -80,9 +80,10 @@ export default function Layout({ children, currentPageName }) {
       const interval = setInterval(fetchNotifications, 30000);
       
       return () => clearInterval(interval);
-    }).catch(() => {
-      // User not authenticated - redirect to login
-      base44.auth.redirectToLogin();
+    }).catch((error) => {
+      console.error('Authentication error:', error);
+      // Let Base44 platform handle authentication
+      setUser(null);
     });
   }, []);
 
