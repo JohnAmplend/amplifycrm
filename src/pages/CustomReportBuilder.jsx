@@ -64,36 +64,38 @@ export default function CustomReportBuilder() {
       let data = [];
       switch (reportConfig.entity_type) {
         case 'Contact':
-          data = await base44.entities.Contact.list();
+          data = await base44.entities.Contact.list('-created_date', 200);
           break;
         case 'Company':
-          data = await base44.entities.Company.list();
+          data = await base44.entities.Company.list('-created_date', 200);
           break;
         case 'Deal':
-          data = await base44.entities.Deal.list();
+          data = await base44.entities.Deal.list('-created_date', 200);
           break;
         case 'Lead':
-          data = await base44.entities.Lead.list();
+          data = await base44.entities.Lead.list('-created_date', 200);
           break;
         case 'Email_Campaign':
-          data = await base44.entities.Email_Campaign.list();
+          data = await base44.entities.Email_Campaign.list('-created_date', 200);
           break;
         case 'Form':
-          data = await base44.entities.Form.list();
+          data = await base44.entities.Form.list('-created_date', 200);
           break;
         case 'Form_Submission':
-          data = await base44.entities.Form_Submission.list();
+          data = await base44.entities.Form_Submission.list('-created_date', 200);
           break;
         case 'Ticket':
-          data = await base44.entities.Ticket.list();
+          data = await base44.entities.Ticket.list('-created_date', 200);
           break;
         case 'Task':
-          data = await base44.entities.Task.list();
+          data = await base44.entities.Task.list('-created_date', 200);
           break;
         case 'Activity':
-          data = await base44.entities.Activity.list();
+          data = await base44.entities.Activity.list('-created_date', 200);
           break;
       }
+
+      data = data || [];
 
       // Apply filters
       reportConfig.filters.forEach(filter => {
