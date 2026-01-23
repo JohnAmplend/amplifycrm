@@ -8,6 +8,7 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function CreateCampaign() {
   const navigate = useNavigate();
@@ -88,7 +89,11 @@ export default function CreateCampaign() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['email_campaigns']);
+      toast.success(campaignId ? 'Campaign updated successfully' : 'Campaign created successfully');
       navigate(createPageUrl("Campaigns"));
+    },
+    onError: (error) => {
+      toast.error('Failed to save campaign: ' + error.message);
     }
   });
 
@@ -253,7 +258,7 @@ export default function CreateCampaign() {
               <div className="flex flex-col gap-3">
                 <NeuroButton type="submit" variant="primary" disabled={saveMutation.isLoading}>
                   <Save className="w-4 h-4 mr-2" />
-                  Save Draft
+                  {saveMutation.isLoading ? 'Saving...' : 'Save Draft'}
                 </NeuroButton>
                 <NeuroButton
                   type="button"
@@ -262,7 +267,7 @@ export default function CreateCampaign() {
                   disabled={saveMutation.isLoading || !formData.contact_list_id}
                 >
                   <Send className="w-4 h-4 mr-2" />
-                  {formData.send_date ? 'Schedule' : 'Send Now'}
+                  {saveMutation.isLoading ? 'Sending...' : formData.send_date ? 'Schedule' : 'Send Now'}
                 </NeuroButton>
                 <NeuroButton type="button" onClick={() => navigate(createPageUrl("Campaigns"))}>
                   Cancel

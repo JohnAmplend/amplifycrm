@@ -249,10 +249,10 @@ export default function SequenceBuilder() {
           <NeuroButton 
             variant="primary" 
             onClick={() => saveMutation.mutate()}
-            disabled={!sequenceData.sequence_name || emails.some(e => !e.subject_line)}
+            disabled={!sequenceData.sequence_name || emails.some(e => !e.subject_line) || saveMutation.isLoading}
           >
             <Save className="w-4 h-4 mr-2" />
-            {sequenceId ? 'Update Sequence' : 'Create Sequence'}
+            {saveMutation.isLoading ? 'Saving...' : sequenceId ? 'Update Sequence' : 'Create Sequence'}
           </NeuroButton>
         </div>
       </div>
