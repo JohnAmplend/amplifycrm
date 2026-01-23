@@ -27,9 +27,11 @@ Deno.serve(async (req) => {
         type: 'task_assigned',
         title: action === 'created' ? 'New Task Assigned' : 'Task Updated',
         message: `${user.full_name || user.email} ${action === 'created' ? 'assigned' : 'updated'} you to: ${card_title}`,
-        link: `/SalesTracker`,
         is_read: false,
-        priority: 'medium'
+        priority: 'medium',
+        custom_data: {
+          card_id: card_id
+        }
       });
     }
 
@@ -42,9 +44,11 @@ Deno.serve(async (req) => {
             type: 'task_collaboration',
             title: action === 'created' ? 'Added as Collaborator' : 'Task Updated',
             message: `${user.full_name || user.email} ${action === 'created' ? 'added you as collaborator on' : 'updated'}: ${card_title}`,
-            link: `/SalesTracker`,
             is_read: false,
-            priority: 'low'
+            priority: 'low',
+            custom_data: {
+              card_id: card_id
+            }
           });
         }
       }
