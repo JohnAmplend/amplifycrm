@@ -1127,6 +1127,7 @@ Format as JSON with: primaryIntents, intentCategories, intentByField, buyingSign
                 </div>
               )}
             </NeuroCard>
+            </>
           )}
         </div>
       </div>
