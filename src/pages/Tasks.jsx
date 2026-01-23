@@ -507,11 +507,11 @@ export default function Tasks() {
               </NeuroButton>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y" style={{ borderColor: "rgba(0, 0, 0, 0.06)" }}>
               {filteredTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="neuro-inset p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:scale-[1.01] transition-transform"
+                  className="p-4 flex items-start gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onDoubleClick={() => handleEditTask(task)}
                 >
                   <div className="flex flex-col gap-2">
