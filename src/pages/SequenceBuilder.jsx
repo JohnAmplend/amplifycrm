@@ -27,8 +27,14 @@ export default function SequenceBuilder() {
     delay_days: 0,
     delay_hours: 0,
     subject_line: "",
-    email_body: ""
+    email_body: "",
+    template_id: ""
   }]);
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ['email-templates'],
+    queryFn: () => base44.entities.Email_Template.list()
+  });
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -80,7 +86,8 @@ export default function SequenceBuilder() {
           delay_days: email.delay_days,
           delay_hours: email.delay_hours,
           subject_line: email.subject_line,
-          email_body: email.email_body
+          email_body: email.email_body,
+          template_id: email.template_id || null
         })
       ));
 
@@ -102,7 +109,8 @@ export default function SequenceBuilder() {
       delay_days: 1,
       delay_hours: 0,
       subject_line: "",
-      email_body: ""
+      email_body: "",
+      template_id: ""
     }]);
   };
 
@@ -114,6 +122,16 @@ export default function SequenceBuilder() {
   const updateEmail = (index, field, value) => {
     const newEmails = [...emails];
     newEmails[index] = { ...newEmails[index], [field]: value };
+    
+    // If template is selected, auto-fill subject and body
+    if (field === 'template_id' && value) {
+      const template = templates.find(t => t.id === value);
+      if (template) {
+        newEmails[index].subject_line = template.subject_line || '';
+        newEmails[index].email_body = template.email_body || '';
+      }
+    }
+    
     setEmails(newEmails);
   };
 
@@ -207,6 +225,22 @@ export default function SequenceBuilder() {
                         value={email.delay_hours}
                         onChange={(e) => updateEmail(index, 'delay_hours', parseInt(e.target.value) || 0)}
                       />
+                    </div>
+                  )}
+
+                  <NeuroSelect
+                    label="Use Email Template (Optional)"
+                    value={email.template_id}
+                    onChange={(e) => updateEmail(index, 'template_id', e.target.value)}
+                    options={[
+                      { value: '', label: 'Create from scratch' },
+                      ...templates.map(t => ({ value: t.id, label: t.template_name }))
+                    ]}
+                  />
+
+                  {email.template_id && (
+                    <div className="ampvibe-inset p-3 rounded-lg text-sm" style={{ color: "#666" }}>
+                      Template selected - content will auto-fill. You can customize it below.
                     </div>
                   )}
 
