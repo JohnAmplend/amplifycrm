@@ -122,7 +122,7 @@ export default function SalesTracker() {
   });
 
   // Handle drag and drop
-  const handleDragEnd = (result) => {
+  const handleDragEnd = async (result) => {
     if (!result.destination) return;
 
     const { source, destination, draggableId, type } = result;
@@ -140,6 +140,9 @@ export default function SalesTracker() {
     // Handle card movement
     if (source.droppableId !== destination.droppableId) {
       // Card moved to different column
+      const card = cards.find(c => c.id === draggableId);
+      const newColumn = columns.find(c => c.id === destination.droppableId);
+      
       updateCardMutation.mutate({
         id: draggableId,
         data: {
@@ -147,6 +150,20 @@ export default function SalesTracker() {
           position: destination.index
         }
       });
+      
+      // Notify about column move
+      if (card && newColumn) {
+        try {
+          await base44.functions.invoke('notifyTaskAssignees', {
+            card_id: card.id,
+            card_title: card.title,
+            action: 'moved',
+            additional_info: `Moved to ${newColumn.title}`
+          });
+        } catch (error) {
+          console.error('Failed to send notifications:', error);
+        }
+      }
     } else if (source.index !== destination.index) {
       // Card reordered within same column
       updateCardMutation.mutate({
