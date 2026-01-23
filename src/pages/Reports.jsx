@@ -1,21 +1,24 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, BarChart, Star, Edit2, Trash2, Play, Search, Eye } from "lucide-react"; // Added Search and Eye
+import { Plus, BarChart, Star, Edit2, Trash2, Play, Search, Eye, Layout, X } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
+import { toast } from "../components/crm/useToast";
 
 export default function Reports() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState(""); // New state
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false); // New state
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showAddToDashboardModal, setShowAddToDashboardModal] = useState(false);
+  const [selectedReportForDashboard, setSelectedReportForDashboard] = useState(null);
+  const [selectedDashboard, setSelectedDashboard] = useState("");
 
   React.useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -24,6 +27,11 @@ export default function Reports() {
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ['reports'],
     queryFn: () => base44.entities.Reports.list('-created_date')
+  });
+
+  const { data: dashboards = [] } = useQuery({
+    queryKey: ['dashboards'],
+    queryFn: () => base44.entities.Dashboards.list('-created_date')
   });
 
   const toggleFavoriteMutation = useMutation({
@@ -51,6 +59,35 @@ export default function Reports() {
       queryClient.invalidateQueries(['reports']);
     }
   });
+
+  const addToDashboardMutation = useMutation({
+    mutationFn: (data) => base44.entities.Dashboard_Widgets.create(data),
+    onSuccess: () => {
+      toast.success('Report added to dashboard');
+      setShowAddToDashboardModal(false);
+      setSelectedReportForDashboard(null);
+      setSelectedDashboard("");
+    },
+    onError: () => toast.error('Failed to add report to dashboard')
+  });
+
+  const handleAddToDashboard = () => {
+    if (!selectedDashboard || !selectedReportForDashboard) return;
+
+    addToDashboardMutation.mutate({
+      dashboard_id: selectedDashboard,
+      widget_type: 'Report',
+      widget_title: selectedReportForDashboard.report_name,
+      configuration: {
+        report_type: 'report',
+        report_id: selectedReportForDashboard.id
+      },
+      position_x: 0,
+      position_y: 0,
+      width: 2,
+      height: 2
+    });
+  };
 
   // Updated filteredReports logic
   const filteredReports = reports.filter(report => {
@@ -171,7 +208,17 @@ export default function Reports() {
                       <Eye className="w-4 h-4 mr-1" />
                       View
                     </NeuroButton>
-                    {report.created_by === currentUser?.email && ( // Only allow delete for owner
+                    <button
+                      onClick={() => {
+                        setSelectedReportForDashboard(report);
+                        setShowAddToDashboardModal(true);
+                      }}
+                      className="ampvibe-button p-2"
+                      title="Add to Dashboard"
+                    >
+                      <Layout className="w-4 h-4" />
+                    </button>
+                    {report.created_by === currentUser?.email && (
                       <button
                         onClick={() => {
                           if (window.confirm(`Delete report "${report.report_name}"?`)) {
@@ -190,6 +237,84 @@ export default function Reports() {
           )}
         </div>
       </div>
+
+      {/* Add to Dashboard Modal */}
+      {showAddToDashboardModal && selectedReportForDashboard && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <NeuroCard className="max-w-lg w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold" style={{ color: "#1E3A8A" }}>
+                Add Report to Dashboard
+              </h2>
+              <button onClick={() => {
+                setShowAddToDashboardModal(false);
+                setSelectedReportForDashboard(null);
+                setSelectedDashboard("");
+              }} className="ampvibe-button p-2">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="ampvibe-inset p-4 rounded-lg">
+                <p className="text-sm font-medium mb-1" style={{ color: "#666" }}>
+                  Report: {selectedReportForDashboard.report_name}
+                </p>
+                <p className="text-xs" style={{ color: "#888" }}>
+                  {selectedReportForDashboard.report_description}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: "#666" }}>
+                  Select Dashboard
+                </label>
+                <select
+                  value={selectedDashboard}
+                  onChange={(e) => setSelectedDashboard(e.target.value)}
+                  className="ampvibe-input w-full"
+                >
+                  <option value="">Choose a dashboard...</option>
+                  {dashboards.map(dashboard => (
+                    <option key={dashboard.id} value={dashboard.id}>
+                      {dashboard.dashboard_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {dashboards.length === 0 && (
+                <div className="ampvibe-inset p-4 rounded-lg text-center">
+                  <p className="text-sm mb-3" style={{ color: "#888" }}>
+                    No dashboards found. Create one first!
+                  </p>
+                  <NeuroButton onClick={() => navigate(createPageUrl("Dashboards"))}>
+                    Go to Dashboards
+                  </NeuroButton>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4">
+                <NeuroButton onClick={() => {
+                  setShowAddToDashboardModal(false);
+                  setSelectedReportForDashboard(null);
+                  setSelectedDashboard("");
+                }}>
+                  Cancel
+                </NeuroButton>
+                <NeuroButton 
+                  variant="primary" 
+                  onClick={handleAddToDashboard}
+                  disabled={!selectedDashboard || addToDashboardMutation.isLoading}
+                >
+                  <Layout className="w-4 h-4 mr-2" />
+                  Add to Dashboard
+                </NeuroButton>
+              </div>
+            </div>
+          </NeuroCard>
+        </div>
+      )}
     </div>
   );
 }
