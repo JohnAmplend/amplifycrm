@@ -69,9 +69,6 @@ export default function Dashboards() {
                   </div>
                 </div>
                 <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                  <button className="ampvibe-button p-2">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
                   <button onClick={() => deleteMutation.mutate(dashboard.id)} className="ampvibe-button p-2 text-red-600">
                     <Trash2 className="w-4 h-4" />
                   </button>
