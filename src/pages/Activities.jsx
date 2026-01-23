@@ -210,7 +210,7 @@ export default function Activities() {
                                   {activity.direction}
                                 </span>
                               )}
-                              <span className="neuro-button px-2 py-1 text-xs">
+                              <span className="ampvibe-button px-2 py-1 text-xs">
                                 {activity.status}
                               </span>
                             </div>
