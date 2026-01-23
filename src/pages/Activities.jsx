@@ -184,7 +184,7 @@ export default function Activities() {
                     onClick={() => handleActivityClick(activity)}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="neuro-button p-3 rounded-lg">
+                      <div className="ampvibe-inset p-3 rounded-lg">
                         <Icon className="w-5 h-5" style={{ color: "#666" }} />
                       </div>
                       <div className="flex-1">
