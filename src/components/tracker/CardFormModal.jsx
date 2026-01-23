@@ -144,7 +144,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
   };
 
   const handleAddComment = () => {
-    if (!newComment.trim() || !currentUser) return;
+    if (!newComment.trim() || !currentUser || !card) return;
     
     const comment = {
       comment_text: newComment.trim(),
@@ -153,10 +153,21 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
       timestamp: new Date().toISOString()
     };
     
+    const updatedComments = [...(formData.comments || []), comment];
+    
+    // Update local state
     setFormData(prev => ({
       ...prev,
-      comments: [...(prev.comments || []), comment]
+      comments: updatedComments
     }));
+    
+    // Immediately save to database
+    onSave({
+      ...formData,
+      id: card.id,
+      comments: updatedComments
+    });
+    
     setNewComment("");
     toast.success('Comment added');
   };
