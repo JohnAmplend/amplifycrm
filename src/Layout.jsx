@@ -276,20 +276,20 @@ export default function Layout({ children, currentPageName }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         * { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-        .ampvibe-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1); transition: all 0.3s ease-in-out; }
-        .ampvibe-card:hover { box-shadow: 0 12px 40px rgba(30, 58, 138, 0.15); transform: translateY(-2px); }
-        .ampvibe-inset { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: inset 0 2px 8px rgba(30, 58, 138, 0.05); }
-        .ampvibe-button { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 4px 16px rgba(30, 58, 138, 0.08); transition: all 0.3s ease-in-out; cursor: pointer; color: #333333; }
-        .ampvibe-button:hover { background: rgba(255, 255, 255, 0.8); box-shadow: 0 6px 20px rgba(30, 58, 138, 0.12); transform: scale(1.02) translateY(-1px); }
+        .ampvibe-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08); transition: all 0.3s ease-in-out; }
+        .ampvibe-card:hover { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); transform: translateY(-2px); }
+        .ampvibe-inset { background: rgba(248, 250, 252, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.06); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); }
+        .ampvibe-button { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); transition: all 0.3s ease-in-out; cursor: pointer; color: #333333; }
+        .ampvibe-button:hover { background: rgba(255, 255, 255, 1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transform: scale(1.02) translateY(-1px); }
         .ampvibe-button:active, .ampvibe-button.active { background: rgba(0, 168, 107, 0.15); border-color: rgba(0, 168, 107, 0.3); color: #00A86B; box-shadow: 0 2px 8px rgba(0, 168, 107, 0.2); }
-        .ampvibe-button-primary { background: linear-gradient(135deg, #00A86B 0%, #00C87A 100%); color: white; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 16px rgba(0, 168, 107, 0.25); }
+        .ampvibe-button-primary { background: linear-gradient(135deg, #00A86B 0%, #00C87A 100%); color: white; border: 1px solid rgba(0, 168, 107, 0.2); box-shadow: 0 4px 16px rgba(0, 168, 107, 0.25); }
         .ampvibe-button-primary:hover { background: linear-gradient(135deg, #00C87A 0%, #00E089 100%); box-shadow: 0 6px 24px rgba(0, 168, 107, 0.35); transform: scale(1.05) translateY(-2px); }
-        .ampvibe-input { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3); padding: 12px 16px; outline: none; color: #333333; box-shadow: inset 0 2px 8px rgba(30, 58, 138, 0.05); transition: all 0.3s ease-in-out; }
-        .ampvibe-input:focus { background: rgba(255, 255, 255, 0.7); border-color: rgba(0, 168, 107, 0.5); box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1), inset 0 2px 8px rgba(30, 58, 138, 0.05); }
+        .ampvibe-input { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.1); padding: 12px 16px; outline: none; color: #333333; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); transition: all 0.3s ease-in-out; }
+        .ampvibe-input:focus { background: rgba(255, 255, 255, 1); border-color: rgba(0, 168, 107, 0.5); box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1), inset 0 1px 3px rgba(0, 0, 0, 0.05); }
         .ampvibe-input::placeholder { color: rgba(51, 51, 51, 0.5); }
         * { scrollbar-width: thin; scrollbar-color: rgba(0, 168, 107, 0.3) rgba(255, 255, 255, 0.1); }
         *::-webkit-scrollbar { width: 8px; height: 8px; }
-        *::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        *::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
         *::-webkit-scrollbar-thumb { background: rgba(0, 168, 107, 0.3); border-radius: 10px; transition: all 0.3s ease; }
         *::-webkit-scrollbar-thumb:hover { background: rgba(0, 168, 107, 0.5); }
         h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
