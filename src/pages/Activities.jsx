@@ -174,13 +174,13 @@ export default function Activities() {
               onAction={() => setShowForm(true)}
             />
           ) : (
-            <div className="space-y-4">
+            <div className="divide-y" style={{ borderColor: "rgba(0, 0, 0, 0.06)" }}>
               {filteredActivities.map((activity) => {
                 const Icon = getActivityIcon(activity.activity_type);
                 return (
                   <div 
                     key={activity.id} 
-                    className="neuro-inset p-5 rounded-lg cursor-pointer hover:scale-[1.01] transition-transform"
+                    className="p-5 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => handleActivityClick(activity)}
                   >
                     <div className="flex items-start gap-4">
