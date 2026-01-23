@@ -29,12 +29,14 @@ export default function RolesPermissions() {
 
   const { data: roles = [] } = useQuery({
     queryKey: ['roles'],
-    queryFn: () => base44.entities.Role.list()
+    queryFn: () => base44.entities.Role.list(),
+    enabled: !!currentUser && currentUser.role === 'admin'
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!currentUser && currentUser.role === 'admin'
   });
 
   const assignRoleMutation = useMutation({
