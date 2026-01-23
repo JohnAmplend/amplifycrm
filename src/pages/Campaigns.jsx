@@ -12,6 +12,7 @@ import StatCard from "../components/crm/StatCard";
 export default function Campaigns() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 

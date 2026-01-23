@@ -12,6 +12,7 @@ import NeuroSelect from "../components/crm/NeuroSelect";
 export default function EmailSequences() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
 

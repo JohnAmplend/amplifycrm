@@ -11,6 +11,7 @@ export default function ContactLists() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const { hasPermission } = usePermissions();
 
   const { data: lists = [], isLoading } = useQuery({
     queryKey: ['contact_lists'],
@@ -21,6 +22,10 @@ export default function ContactLists() {
     mutationFn: (id) => base44.entities.Contact_List.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['contact_lists']);
+      toast.success('List deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete list: ' + error.message);
     }
   });
 
@@ -44,10 +49,12 @@ export default function ContactLists() {
             </h1>
             <p style={{ color: "#888" }}>Organize contacts for targeted campaigns</p>
           </div>
-          <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("CreateList"))}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create List
-          </NeuroButton>
+          <PermissionGuard module="marketing" entity="lists" action="create">
+            <NeuroButton variant="primary" onClick={() => navigate(createPageUrl("CreateList"))}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create List
+            </NeuroButton>
+          </PermissionGuard>
         </div>
 
         {/* Search */}

@@ -6,6 +6,7 @@ import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroInput from "../components/crm/NeuroInput";
 import RoleTemplates from "../components/crm/RoleTemplates";
+import { toast } from "../components/crm/useToast";
 
 export default function RolesPermissions() {
   const queryClient = useQueryClient();
@@ -44,6 +45,10 @@ export default function RolesPermissions() {
       queryClient.invalidateQueries(['users']);
       setShowAssignModal(false);
       setSelectedUser(null);
+      toast.success('Role assigned successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to assign role: ' + error.message);
     }
   });
 
@@ -63,6 +68,10 @@ export default function RolesPermissions() {
         description: "",
         permissions: {}
       });
+      toast.success(editingRole ? 'Role updated successfully' : 'Role created successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to save role: ' + error.message);
     }
   });
 
@@ -70,6 +79,10 @@ export default function RolesPermissions() {
     mutationFn: (id) => base44.entities.Role.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['roles']);
+      toast.success('Role deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete role: ' + error.message);
     }
   });
 
