@@ -194,7 +194,7 @@ export default function Activities() {
                               {activity.subject}
                             </h3>
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <span className="neuro-button px-2 py-1 text-xs">
+                              <span className="ampvibe-button px-2 py-1 text-xs">
                                 {activity.activity_type}
                               </span>
                               {activity.direction && activity.direction !== 'N/A' && (
