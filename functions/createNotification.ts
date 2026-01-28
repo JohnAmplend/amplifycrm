@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { user_id, title, message, link, entity_type, entity_id, custom_data } = await req.json();
+        const { user_id, title, message, link, notification_type } = await req.json();
 
         if (!user_id || !title || !message) {
             return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -12,12 +12,10 @@ Deno.serve(async (req) => {
         // Create notification
         const notification = await base44.asServiceRole.entities.Notifications.create({
             user_id,
-            title,
-            message,
-            link,
-            entity_type,
-            entity_id,
-            custom_data,
+            notification_type: notification_type || 'System',
+            notification_title: title,
+            notification_message: message,
+            action_url: link,
             is_read: false
         });
 

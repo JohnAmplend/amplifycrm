@@ -420,19 +420,17 @@ export default function Layout({ children, currentPageName }) {
                           className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50' : ''}`}
                           onClick={() => {
                             if (!notif.is_read) markAsRead(notif.id);
-                            if (notif.link) {
-                              window.location.href = notif.link;
-                            } else if (notif.custom_data?.card_id) {
-                              window.location.href = createPageUrl("SalesTracker") + `?cardId=${notif.custom_data.card_id}`;
-                            }
+                            if (notif.action_url) {
+                                window.location.href = notif.action_url;
+                              }
                             setShowNotifications(false);
                           }}
                         >
                           <div className="flex items-start gap-2">
                             <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notif.is_read ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate" style={{ color: "#333" }}>{notif.title}</p>
-                              <p className="text-xs truncate" style={{ color: "#666" }}>{notif.message}</p>
+                              <p className="text-sm font-medium truncate" style={{ color: "#333" }}>{notif.notification_title}</p>
+                              <p className="text-xs truncate" style={{ color: "#666" }}>{notif.notification_message}</p>
                               <p className="text-xs mt-1" style={{ color: "#999" }}>
                                 {new Date(notif.created_date).toLocaleDateString()} {new Date(notif.created_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>

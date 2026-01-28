@@ -39,8 +39,7 @@ Deno.serve(async (req) => {
                 title,
                 message,
                 link: `/tasks`,
-                entity_type: 'Task',
-                entity_id: data.id
+                notification_type: 'Task Due'
             });
         }
 

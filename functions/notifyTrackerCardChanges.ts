@@ -64,9 +64,7 @@ Deno.serve(async (req) => {
                 title,
                 message,
                 link: `/sales-tracker?cardId=${data.id}`,
-                entity_type: 'Tracker_Card',
-                entity_id: data.id,
-                custom_data: { card_id: data.id }
+                notification_type: 'Mention'
             });
         }
 

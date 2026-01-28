@@ -40,8 +40,7 @@ Deno.serve(async (req) => {
                 title: `New ${entityType} Assignment`,
                 message: `You have been assigned as owner of ${entityType.toLowerCase()}: ${entityName}`,
                 link,
-                entity_type: entityType,
-                entity_id: data.id
+                notification_type: 'System'
             });
         }
 

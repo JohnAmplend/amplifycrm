@@ -19,8 +19,7 @@ Deno.serve(async (req) => {
                     title: 'New Deal Assignment',
                     message: `You have been assigned as owner of deal: ${data.deal_name}`,
                     link: `/deals`,
-                    entity_type: 'Deal',
-                    entity_id: data.id
+                    notification_type: 'Deal Won'
                 });
             }
         }

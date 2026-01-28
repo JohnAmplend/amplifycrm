@@ -26,8 +26,7 @@ Deno.serve(async (req) => {
                 title: 'New Activity Assignment',
                 message: `You have been assigned to activity: ${data.subject}`,
                 link: `/activities`,
-                entity_type: 'Activity',
-                entity_id: data.id
+                notification_type: 'System'
             });
         }
 
