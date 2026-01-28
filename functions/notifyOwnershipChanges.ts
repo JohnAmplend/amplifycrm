@@ -35,12 +35,13 @@ Deno.serve(async (req) => {
 
         // Notify if owner changed and new owner is not the current user
         if (newOwner && newOwner !== currentUser && newOwner !== oldOwner) {
-            await base44.asServiceRole.functions.invoke('createNotification', {
+            await base44.asServiceRole.entities.Notifications.create({
                 user_id: newOwner,
-                title: `New ${entityType} Assignment`,
-                message: `You have been assigned as owner of ${entityType.toLowerCase()}: ${entityName}`,
-                link,
-                notification_type: 'System'
+                notification_type: 'System',
+                notification_title: `New ${entityType} Assignment`,
+                notification_message: `You have been assigned as owner of ${entityType.toLowerCase()}: ${entityName}`,
+                action_url: link,
+                is_read: false
             });
         }
 

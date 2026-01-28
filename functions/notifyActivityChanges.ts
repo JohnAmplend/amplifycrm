@@ -21,12 +21,13 @@ Deno.serve(async (req) => {
 
         // Create notifications
         for (const userId of usersToNotify) {
-            await base44.asServiceRole.functions.invoke('createNotification', {
+            await base44.asServiceRole.entities.Notifications.create({
                 user_id: userId,
-                title: 'New Activity Assignment',
-                message: `You have been assigned to activity: ${data.subject}`,
-                link: `/activities`,
-                notification_type: 'System'
+                notification_type: 'System',
+                notification_title: 'New Activity Assignment',
+                notification_message: `You have been assigned to activity: ${data.subject}`,
+                action_url: `/activities`,
+                is_read: false
             });
         }
 

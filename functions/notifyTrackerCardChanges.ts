@@ -59,12 +59,13 @@ Deno.serve(async (req) => {
                 message = `You were mentioned in a comment on card: ${data.title}`;
             }
 
-            await base44.asServiceRole.functions.invoke('createNotification', {
+            await base44.asServiceRole.entities.Notifications.create({
                 user_id: userId,
-                title,
-                message,
-                link: `/sales-tracker?cardId=${data.id}`,
-                notification_type: 'Mention'
+                notification_type: 'Mention',
+                notification_title: title,
+                notification_message: message,
+                action_url: `/sales-tracker?cardId=${data.id}`,
+                is_read: false
             });
         }
 

@@ -14,12 +14,13 @@ Deno.serve(async (req) => {
         // Check deal_owner
         if (data.deal_owner && data.deal_owner !== currentUser) {
             if (event.type === 'create' || (old_data && old_data.deal_owner !== data.deal_owner)) {
-                await base44.asServiceRole.functions.invoke('createNotification', {
+                await base44.asServiceRole.entities.Notifications.create({
                     user_id: data.deal_owner,
-                    title: 'New Deal Assignment',
-                    message: `You have been assigned as owner of deal: ${data.deal_name}`,
-                    link: `/deals`,
-                    notification_type: 'Deal Won'
+                    notification_type: 'Deal Won',
+                    notification_title: 'New Deal Assignment',
+                    notification_message: `You have been assigned as owner of deal: ${data.deal_name}`,
+                    action_url: `/deals`,
+                    is_read: false
                 });
             }
         }

@@ -34,12 +34,13 @@ Deno.serve(async (req) => {
                 ? `You have been assigned to task: ${data.task_name}`
                 : `You have been added as a collaborator on task: ${data.task_name}`;
 
-            await base44.asServiceRole.functions.invoke('createNotification', {
+            await base44.asServiceRole.entities.Notifications.create({
                 user_id: userId,
-                title,
-                message,
-                link: `/tasks`,
-                notification_type: 'Task Due'
+                notification_type: 'Task Due',
+                notification_title: title,
+                notification_message: message,
+                action_url: `/tasks`,
+                is_read: false
             });
         }
 
