@@ -21,7 +21,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 
-export default function CardFormModal({ isOpen, onClose, onSave, card, columns }) {
+export default function CardFormModal({ isOpen, onClose, onSave, card, columns, initialColumnId }) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -82,12 +82,30 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         comments: card.comments || []
       });
     } else {
+      // Determine initial status based on column title
+      const targetColumnId = initialColumnId || columns[0]?.id;
+      const targetColumn = columns.find(col => col.id === targetColumnId);
+      let initialStatus = "To do";
+      
+      if (targetColumn) {
+        const columnTitle = targetColumn.title.toLowerCase();
+        if (columnTitle.includes("backlog")) {
+          initialStatus = "To do";
+        } else if (columnTitle.includes("in progress")) {
+          initialStatus = "In progress";
+        } else if (columnTitle.includes("approval") || columnTitle.includes("approved")) {
+          initialStatus = "Approved";
+        } else if (columnTitle.includes("done") || columnTitle.includes("completed")) {
+          initialStatus = "Done";
+        }
+      }
+      
       setFormData({
         title: "",
         description: "",
-        column_id: columns[0]?.id || "",
+        column_id: targetColumnId,
         priority: "Medium",
-        status: "To do",
+        status: initialStatus,
         start_date: "",
         end_date: "",
         total_tasks: 0,
@@ -98,7 +116,7 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns }
         comments: []
       });
     }
-  }, [card, columns]);
+  }, [card, columns, initialColumnId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

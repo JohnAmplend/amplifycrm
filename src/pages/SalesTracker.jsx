@@ -544,6 +544,7 @@ export default function SalesTracker() {
         onSave={handleSaveCard}
         card={cardModal.card}
         columns={columns}
+        initialColumnId={cardModal.columnId}
       />
 
       <ColumnFormModal
