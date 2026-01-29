@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
                 notification_type: 'Mention',
                 notification_title: title,
                 notification_message: message,
-                action_url: `/sales-tracker?cardId=${data.id}`,
+                action_url: `/SalesTracker?cardId=${data.id}`,
                 is_read: false
             });
         }
