@@ -420,10 +420,15 @@ export default function Layout({ children, currentPageName }) {
                           className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50' : ''}`}
                           onClick={() => {
                             if (!notif.is_read) markAsRead(notif.id);
-                            if (notif.action_url) {
-                                window.location.href = notif.action_url;
-                              }
                             setShowNotifications(false);
+                            if (notif.action_url) {
+                              // Parse the URL - if it has query params, extract them
+                              const url = new URL(notif.action_url, window.location.origin);
+                              const path = url.pathname.replace(/^\//, ''); // Remove leading slash
+                              const pageName = path.charAt(0).toUpperCase() + path.slice(1); // Capitalize first letter
+                              const queryString = url.search;
+                              window.location.href = createPageUrl(pageName) + queryString;
+                            }
                           }}
                         >
                           <div className="flex items-start gap-2">
