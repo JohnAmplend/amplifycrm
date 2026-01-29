@@ -421,15 +421,15 @@ export default function Layout({ children, currentPageName }) {
                           onClick={() => {
                             if (!notif.is_read) markAsRead(notif.id);
                             setShowNotifications(false);
-                            if (notif.action_url) {
-                              // Parse the URL - if it has query params, extract them
-                              const url = new URL(notif.action_url, window.location.origin);
-                              const path = url.pathname.replace(/^\//, ''); // Remove leading slash
-                              const pageName = path.charAt(0).toUpperCase() + path.slice(1); // Capitalize first letter
-                              const queryString = url.search;
-                              window.location.href = createPageUrl(pageName) + queryString;
-                            }
                           }}
+                        >
+                          <Link
+                            to={notif.action_url || "#"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            className="block"
+                          >
                         >
                           <div className="flex items-start gap-2">
                             <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notif.is_read ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
