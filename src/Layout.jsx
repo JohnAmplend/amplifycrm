@@ -417,10 +417,7 @@ export default function Layout({ children, currentPageName }) {
                       notifications.map((notif) => (
                         <Link 
                           key={notif.id}
-                          to={notif.action_url ? (() => {
-                            const [pageName, queryString] = notif.action_url.split('?');
-                            return queryString ? `${createPageUrl(pageName)}?${queryString}` : createPageUrl(pageName);
-                          })() : "#"}
+                          to={notif.action_url ? createPageUrl(notif.action_url.split('?')[0]) + (notif.action_url.includes('?') ? '?' + notif.action_url.split('?')[1] : '') : "#"}
                           className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors block ${!notif.is_read ? 'bg-blue-50' : ''}`}
                           onClick={() => {
                             if (!notif.is_read) markAsRead(notif.id);
