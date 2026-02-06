@@ -213,11 +213,10 @@ export default function SalesTracker() {
       }
     } else {
       const columnId = formData.column_id || cardModal.columnId;
-      const columnCards = cards.filter(c => c.column_id === columnId);
       const newCard = await createCardMutation.mutateAsync({
         ...formData,
         column_id: columnId,
-        position: columnCards.length
+        position: 0
       });
       // Notify on creation
       try {
@@ -323,7 +322,7 @@ export default function SalesTracker() {
   const getColumnCards = (columnId) => {
     return filteredCards
       .filter(card => card.column_id === columnId)
-      .sort((a, b) => (a.position || 0) - (b.position || 0));
+      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
   };
 
   if (boardsLoading || columnsLoading || cardsLoading) {
