@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, LayoutGrid, List, Filter, Search, Settings, BarChart } from "lucide-react";
+import { Plus, LayoutGrid, List, Filter, Search, Settings, BarChart, Download } from "lucide-react";
 import TrackerColumn from "../components/tracker/TrackerColumn";
 import CardFormModal from "../components/tracker/CardFormModal";
 import ColumnFormModal from "../components/tracker/ColumnFormModal";
 import TrackerFilters from "../components/tracker/TrackerFilters";
+import ExportImportModal from "../components/tracker/ExportImportModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -17,6 +18,7 @@ export default function SalesTracker() {
   const [searchTerm, setSearchTerm] = useState("");
   const [cardModal, setCardModal] = useState({ isOpen: false, card: null, columnId: null });
   const [columnModal, setColumnModal] = useState({ isOpen: false, column: null });
+  const [showExportImport, setShowExportImport] = useState(false);
   const [currentBoardId, setCurrentBoardId] = useState(null);
   const [showBoardSwitcher, setShowBoardSwitcher] = useState(false);
   const [viewMode, setViewMode] = useState("board"); // "board" or "list"
@@ -407,6 +409,15 @@ export default function SalesTracker() {
             </Button>
           </Link>
 
+          {/* Export/Import Button */}
+          <Button
+            onClick={() => setShowExportImport(true)}
+            className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export/Import
+          </Button>
+
           {/* Add Column Button */}
           <Button
             onClick={handleAddColumn}
@@ -553,6 +564,13 @@ export default function SalesTracker() {
         onSave={handleSaveColumn}
         column={columnModal.column}
       />
+
+      {showExportImport && (
+        <ExportImportModal
+          boardId={currentBoardId}
+          onClose={() => setShowExportImport(false)}
+        />
+      )}
     </div>
   );
 }
