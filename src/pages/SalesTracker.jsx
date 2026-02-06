@@ -144,6 +144,7 @@ export default function SalesTracker() {
       // Card moved to different column
       const card = cards.find(c => c.id === draggableId);
       const newColumn = columns.find(c => c.id === destination.droppableId);
+      const oldColumn = columns.find(c => c.id === source.droppableId);
       
       updateCardMutation.mutate({
         id: draggableId,
@@ -153,15 +154,26 @@ export default function SalesTracker() {
         }
       });
       
-      // Notify about column move
-      if (card && newColumn) {
+      // Notify assigned users and collaborators about column move
+      if (card && newColumn && oldColumn) {
         try {
-          await base44.functions.invoke('notifyTaskAssignees', {
-            card_id: card.id,
-            card_title: card.title,
-            action: 'moved',
-            additional_info: `Moved to ${newColumn.title}`
-          });
+          const usersToNotify = new Set();
+          if (card.assigned_to) usersToNotify.add(card.assigned_to);
+          if (card.collaborators) card.collaborators.forEach(c => usersToNotify.add(c));
+          
+          const user = await base44.auth.me();
+          usersToNotify.delete(user.email); // Don't notify the person who moved it
+          
+          for (const userId of usersToNotify) {
+            await base44.entities.Notifications.create({
+              user_id: userId,
+              notification_type: 'Workflow',
+              notification_title: 'Card Moved',
+              notification_message: `"${card.title}" was moved from ${oldColumn.title} to ${newColumn.title}`,
+              action_url: `SalesTracker?cardId=${card.id}`,
+              is_read: false
+            });
+          }
         } catch (error) {
           console.error('Failed to send notifications:', error);
         }
