@@ -140,37 +140,58 @@ export default function SalesTracker() {
     }
     
     // Handle card movement
+    const movedCard = cards.find(c => c.id === draggableId);
+    const sourceColumnCards = getColumnCards(source.droppableId);
+    const destColumnCards = getColumnCards(destination.droppableId);
+    
     if (source.droppableId !== destination.droppableId) {
       // Card moved to different column
-      const card = cards.find(c => c.id === draggableId);
       const newColumn = columns.find(c => c.id === destination.droppableId);
       const oldColumn = columns.find(c => c.id === source.droppableId);
       
-      updateCardMutation.mutate({
-        id: draggableId,
-        data: {
-          column_id: destination.droppableId,
-          position: destination.index
+      // Remove from source and insert into destination
+      const newSourceCards = sourceColumnCards.filter(c => c.id !== draggableId);
+      const newDestCards = [...destColumnCards];
+      newDestCards.splice(destination.index, 0, movedCard);
+      
+      // Update positions for source column
+      newSourceCards.forEach((card, index) => {
+        if (card.position !== index) {
+          updateCardMutation.mutate({
+            id: card.id,
+            data: { position: index }
+          });
         }
       });
       
+      // Update positions for destination column including moved card
+      newDestCards.forEach((card, index) => {
+        updateCardMutation.mutate({
+          id: card.id,
+          data: {
+            column_id: destination.droppableId,
+            position: index
+          }
+        });
+      });
+      
       // Notify assigned users and collaborators about column move
-      if (card && newColumn && oldColumn) {
+      if (movedCard && newColumn && oldColumn) {
         try {
           const usersToNotify = new Set();
-          if (card.assigned_to) usersToNotify.add(card.assigned_to);
-          if (card.collaborators) card.collaborators.forEach(c => usersToNotify.add(c));
+          if (movedCard.assigned_to) usersToNotify.add(movedCard.assigned_to);
+          if (movedCard.collaborators) movedCard.collaborators.forEach(c => usersToNotify.add(c));
           
           const user = await base44.auth.me();
-          usersToNotify.delete(user.email); // Don't notify the person who moved it
+          usersToNotify.delete(user.email);
           
           for (const userId of usersToNotify) {
             await base44.entities.Notifications.create({
               user_id: userId,
               notification_type: 'Workflow',
               notification_title: 'Card Moved',
-              notification_message: `"${card.title}" was moved from ${oldColumn.title} to ${newColumn.title}`,
-              action_url: `SalesTracker?cardId=${card.id}`,
+              notification_message: `"${movedCard.title}" was moved from ${oldColumn.title} to ${newColumn.title}`,
+              action_url: `SalesTracker?cardId=${movedCard.id}`,
               is_read: false
             });
           }
@@ -180,9 +201,18 @@ export default function SalesTracker() {
       }
     } else if (source.index !== destination.index) {
       // Card reordered within same column
-      updateCardMutation.mutate({
-        id: draggableId,
-        data: { position: destination.index }
+      const reorderedCards = [...sourceColumnCards];
+      const [removed] = reorderedCards.splice(source.index, 1);
+      reorderedCards.splice(destination.index, 0, removed);
+      
+      // Update positions for all cards in the column
+      reorderedCards.forEach((card, index) => {
+        if (card.position !== index) {
+          updateCardMutation.mutate({
+            id: card.id,
+            data: { position: index }
+          });
+        }
       });
     }
   };
@@ -225,10 +255,13 @@ export default function SalesTracker() {
       }
     } else {
       const columnId = formData.column_id || cardModal.columnId;
+      const columnCards = getColumnCards(columnId);
+      const maxPosition = columnCards.length > 0 ? Math.max(...columnCards.map(c => c.position || 0)) : -1;
+      
       const newCard = await createCardMutation.mutateAsync({
         ...formData,
         column_id: columnId,
-        position: 0
+        position: maxPosition + 1
       });
       // Notify on creation
       try {
@@ -334,7 +367,7 @@ export default function SalesTracker() {
   const getColumnCards = (columnId) => {
     return filteredCards
       .filter(card => card.column_id === columnId)
-      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      .sort((a, b) => (a.position || 0) - (b.position || 0));
   };
 
   if (boardsLoading || columnsLoading || cardsLoading) {
