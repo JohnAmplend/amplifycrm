@@ -10,11 +10,12 @@ import TrackerFilters from "../components/tracker/TrackerFilters";
 import ExportImportModal from "../components/tracker/ExportImportModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function SalesTracker() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [cardModal, setCardModal] = useState({ isOpen: false, card: null, columnId: null });
   const [columnModal, setColumnModal] = useState({ isOpen: false, column: null });
@@ -228,9 +229,9 @@ export default function SalesTracker() {
 
   // Check URL for cardId and open that card
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(location.search);
     const cardId = urlParams.get('cardId');
-    if (cardId && cards.length > 0) {
+    if (cardId && cards.length > 0 && !cardModal.isOpen) {
       const card = cards.find(c => c.id === cardId);
       if (card) {
         handleEditCard(card);
@@ -238,7 +239,7 @@ export default function SalesTracker() {
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
-  }, [cards]);
+  }, [location.search, cards]);
 
   const handleSaveCard = async (formData) => {
     if (formData.id) {
