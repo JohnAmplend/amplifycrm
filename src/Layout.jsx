@@ -424,99 +424,98 @@ export default function Layout({ children, currentPageName }) {
 
             {user && !isPublicPage && (
               <>
-            <div className="relative">
-              <button 
-                className="ampvibe-button p-3 relative"
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
-                <Bell className="w-5 h-5" />
-                {unreadNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                  </span>
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 ampvibe-card shadow-2xl z-[1100]" style={{
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  backdropFilter: 'blur(30px)',
-                  WebkitBackdropFilter: 'blur(30px)',
-                  maxHeight: '400px',
-                  overflowY: 'auto'
-                }}>
-                  <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-                    <h3 className="font-bold text-sm" style={{ color: "#1E3A8A" }}>Notifications</h3>
-                    <Link 
-                      to={createPageUrl("Notifications")}
-                      className="text-xs hover:opacity-70 transition-opacity"
-                      style={{ color: "#00A86B" }}
-                      onClick={() => setShowNotifications(false)}
-                    >
-                      View All
-                    </Link>
-                  </div>
-                  <div className="divide-y" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-sm" style={{ color: "#666" }}>
-                        No notifications yet
-                      </div>
-                    ) : (
-                      notifications.map((notif) => (
-                        <Link 
-                          key={notif.id}
-                          to={notif.action_url ? createPageUrl(notif.action_url.split('?')[0]) + (notif.action_url.includes('?') ? '?' + notif.action_url.split('?')[1] : '') : "#"}
-                          className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors block ${!notif.is_read ? 'bg-blue-50' : ''}`}
-                          onClick={() => {
-                            if (!notif.is_read) markAsRead(notif.id);
-                            setShowNotifications(false);
-                          }}
-                        >
-                          <div className="flex items-start gap-2">
-                            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notif.is_read ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate" style={{ color: "#333" }}>{notif.notification_title}</p>
-                              <p className="text-xs truncate" style={{ color: "#666" }}>{notif.notification_message}</p>
-                              <p className="text-xs mt-1" style={{ color: "#999" }}>
-                                {new Date(notif.created_date).toLocaleDateString()} {new Date(notif.created_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </div>
-                          </div>
-                        </Link>
-                      ))
+                <div className="relative">
+                  <button 
+                    className="ampvibe-button p-3 relative"
+                    onClick={() => setShowNotifications(!showNotifications)}
+                  >
+                    <Bell className="w-5 h-5" />
+                    {unreadNotifications > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                        {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                      </span>
                     )}
-                  </div>
-                </div>
-              )}
-            </div>
+                  </button>
 
-            {user && (
-              <div className="hidden md:flex items-center gap-3">
-                <Link to={createPageUrl("UserProfile")}>
-                  <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" style={{
-                    background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
-                    border: '2px solid rgba(255, 255, 255, 0.5)'
-                  }}>
-                    <span className="font-semibold text-white text-sm">
-                      {user.full_name?.charAt(0) || user.email?.charAt(0)}
-                    </span>
-                  </div>
-                </Link>
-                <div className="min-w-0">
-                  <Link to={createPageUrl("UserProfile")}>
-                    <p className="text-sm font-medium truncate hover:opacity-80 transition-opacity cursor-pointer" style={{ color: "#333" }}>
-                      {user.full_name || "User"}
-                    </p>
-                  </Link>
-                  <p className="text-xs truncate" style={{ color: "#666" }}>
-                    {user.role || "User"}
-                  </p>
+                  {showNotifications && (
+                    <div className="absolute right-0 top-full mt-2 w-80 ampvibe-card shadow-2xl z-[1100]" style={{
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      backdropFilter: 'blur(30px)',
+                      WebkitBackdropFilter: 'blur(30px)',
+                      maxHeight: '400px',
+                      overflowY: 'auto'
+                    }}>
+                      <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                        <h3 className="font-bold text-sm" style={{ color: "#1E3A8A" }}>Notifications</h3>
+                        <Link 
+                          to={createPageUrl("Notifications")}
+                          className="text-xs hover:opacity-70 transition-opacity"
+                          style={{ color: "#00A86B" }}
+                          onClick={() => setShowNotifications(false)}
+                        >
+                          View All
+                        </Link>
+                      </div>
+                      <div className="divide-y" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+                        {notifications.length === 0 ? (
+                          <div className="p-4 text-center text-sm" style={{ color: "#666" }}>
+                            No notifications yet
+                          </div>
+                        ) : (
+                          notifications.map((notif) => (
+                            <Link 
+                              key={notif.id}
+                              to={notif.action_url ? createPageUrl(notif.action_url.split('?')[0]) + (notif.action_url.includes('?') ? '?' + notif.action_url.split('?')[1] : '') : "#"}
+                              className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors block ${!notif.is_read ? 'bg-blue-50' : ''}`}
+                              onClick={() => {
+                                if (!notif.is_read) markAsRead(notif.id);
+                                setShowNotifications(false);
+                              }}
+                            >
+                              <div className="flex items-start gap-2">
+                                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notif.is_read ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate" style={{ color: "#333" }}>{notif.notification_title}</p>
+                                  <p className="text-xs truncate" style={{ color: "#666" }}>{notif.notification_message}</p>
+                                  <p className="text-xs mt-1" style={{ color: "#999" }}>
+                                    {new Date(notif.created_date).toLocaleDateString()} {new Date(notif.created_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                              </div>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <button onClick={handleLogout} className="ampvibe-button p-2">
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            </>
+
+                <div className="hidden md:flex items-center gap-3">
+                  <Link to={createPageUrl("UserProfile")}>
+                    <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" style={{
+                      background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
+                      border: '2px solid rgba(255, 255, 255, 0.5)'
+                    }}>
+                      <span className="font-semibold text-white text-sm">
+                        {user.full_name?.charAt(0) || user.email?.charAt(0)}
+                      </span>
+                    </div>
+                  </Link>
+                  <div className="min-w-0">
+                    <Link to={createPageUrl("UserProfile")}>
+                      <p className="text-sm font-medium truncate hover:opacity-80 transition-opacity cursor-pointer" style={{ color: "#333" }}>
+                        {user.full_name || "User"}
+                      </p>
+                    </Link>
+                    <p className="text-xs truncate" style={{ color: "#666" }}>
+                      {user.role || "User"}
+                    </p>
+                  </div>
+                  <button onClick={handleLogout} className="ampvibe-button p-2">
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
