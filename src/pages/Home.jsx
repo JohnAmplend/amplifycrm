@@ -9,6 +9,25 @@ export default function Home() {
     <div className="min-h-screen" style={{
       background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)'
     }}>
+      {/* Navigation Header */}
+      <div className="ampvibe-card mx-4 mt-4 mb-0">
+        <div className="flex items-center justify-between px-6 py-4">
+          <h1 className="text-xl font-bold" style={{
+            background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            AmplifyCRM
+          </h1>
+          <a href={createPageUrl("Dashboard")}>
+            <button className="ampvibe-button-primary px-6 py-2">
+              Go to Dashboard <ArrowRight className="w-4 h-4 ml-2 inline" />
+            </button>
+          </a>
+        </div>
+      </div>
+
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-16">
