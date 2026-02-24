@@ -45,10 +45,13 @@ import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
 import { Toaster } from "sonner";
 
 export default function Layout({ children, currentPageName }) {
-  // Skip layout for public pages - render standalone
-  if (currentPageName === "ChatWidget" || currentPageName === "Home" || currentPageName === "Privacy" || currentPageName === "Terms") {
+  // Skip layout for widget only - render standalone
+  if (currentPageName === "ChatWidget") {
     return <>{children}</>;
   }
+
+  // Public pages that don't require auth
+  const isPublicPage = currentPageName === "Home" || currentPageName === "Privacy" || currentPageName === "Terms";
 
   const location = useLocation();
   const [user, setUser] = React.useState(null);
@@ -67,8 +70,12 @@ export default function Layout({ children, currentPageName }) {
       try {
         // Set timeout to prevent infinite loading
         loadingTimeout = setTimeout(() => {
-          console.error('Loading timeout - redirecting to login');
-          base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+          if (!isPublicPage) {
+            console.error('Loading timeout - redirecting to login');
+            base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+          } else {
+            setLoading(false);
+          }
         }, 5000);
 
         const u = await base44.auth.me();
@@ -95,8 +102,13 @@ export default function Layout({ children, currentPageName }) {
       } catch (error) {
         console.error('Authentication error:', error);
         clearTimeout(loadingTimeout);
-        // Redirect to login
-        base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+        if (isPublicPage) {
+          // Public pages don't need auth
+          setLoading(false);
+        } else {
+          // Redirect to login for protected pages
+          base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+        }
       }
     };
 
@@ -106,10 +118,10 @@ export default function Layout({ children, currentPageName }) {
       if (interval) clearInterval(interval);
       if (loadingTimeout) clearTimeout(loadingTimeout);
     };
-  }, []);
+  }, [isPublicPage]);
 
-  // Show loading while checking authentication
-  if (loading || !user) {
+  // Show loading while checking authentication (only for protected pages)
+  if (loading && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
         background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)'
@@ -325,7 +337,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="flex items-center justify-between px-6 py-4">
           {/* Logo & Brand */}
           <div className="flex items-center gap-6">
-            <Link to={createPageUrl("Dashboard")}>
+            <Link to={isPublicPage ? createPageUrl("Home") : createPageUrl("Dashboard")}>
               <h1 className="text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" style={{ 
                 background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
                 WebkitBackgroundClip: 'text',
@@ -336,8 +348,9 @@ export default function Layout({ children, currentPageName }) {
               </h1>
             </Link>
 
-            {/* Desktop Mega Menu */}
-            <nav className="hidden lg:flex items-center gap-1">
+            {/* Desktop Mega Menu - Only show for authenticated users */}
+            {user && !isPublicPage && (
+              <nav className="hidden lg:flex items-center gap-1">
               {Object.keys(megaMenuData).map((category) => (
                 <div 
                   key={category}
@@ -384,19 +397,33 @@ export default function Layout({ children, currentPageName }) {
                   </div>
                 </div>
               ))}
-            </nav>
+              </nav>
+              )}
 
-            {/* Mobile Menu Toggle */}
+              {/* Mobile Menu Toggle - Only show for authenticated users */}
+              {user && !isPublicPage && (
             <button
               className="lg:hidden ampvibe-button p-2"
               onClick={() => setShowMobileMenu(!showMobileMenu)}
             >
               {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
+            )}
           </div>
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
+            {/* Show login button for public pages without auth */}
+            {!user && isPublicPage && (
+              <Link to={createPageUrl("Dashboard")}>
+                <button className="ampvibe-button-primary px-6 py-2">
+                  Sign In
+                </button>
+              </Link>
+            )}
+
+            {user && !isPublicPage && (
+              <>
             <div className="relative">
               <button 
                 className="ampvibe-button p-3 relative"
@@ -489,12 +516,13 @@ export default function Layout({ children, currentPageName }) {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
+            </>
             )}
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {showMobileMenu && (
+        {/* Mobile Menu - Only for authenticated users */}
+        {user && !isPublicPage && showMobileMenu && (
           <div className="lg:hidden border-t px-4 py-4" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
             <Link
               to={createPageUrl("Dashboard")}
