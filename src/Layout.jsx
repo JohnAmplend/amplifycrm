@@ -59,6 +59,8 @@ export default function Layout({ children, currentPageName }) {
   const [activeMegaMenu, setActiveMegaMenu] = React.useState(null);
 
   React.useEffect(() => {
+    let interval;
+    
     const checkAuth = async () => {
       try {
         const u = await base44.auth.me();
@@ -76,12 +78,10 @@ export default function Layout({ children, currentPageName }) {
         };
         
         // Initial fetch
-        fetchNotifications();
+        await fetchNotifications();
         
         // Poll every 30 seconds
-        const interval = setInterval(fetchNotifications, 30000);
-        
-        return () => clearInterval(interval);
+        interval = setInterval(fetchNotifications, 30000);
       } catch (error) {
         console.error('Authentication error:', error);
         // Redirect to login instead of showing infinite loading
@@ -90,6 +90,10 @@ export default function Layout({ children, currentPageName }) {
     };
 
     checkAuth();
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   // Show loading while checking authentication
