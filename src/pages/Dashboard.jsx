@@ -412,9 +412,15 @@ export default function Dashboard() {
                       <p className="font-medium mb-1" style={{ color: "#666" }}>
                         {activity.subject}
                       </p>
-                      <p className="text-sm mb-2" style={{ color: "#999" }}>
-                        {activity.description?.substring(0, 80)}...
-                      </p>
+                      {activity.description && (
+                        <div 
+                          className="text-sm mb-2 line-clamp-2" 
+                          style={{ color: "#999" }}
+                          dangerouslySetInnerHTML={{ 
+                            __html: activity.description.substring(0, 150) + (activity.description.length > 150 ? '...' : '')
+                          }}
+                        />
+                      )}
                       <div className="flex items-center gap-2 text-xs" style={{ color: "#aaa" }}>
                         <span className="ampvibe-button px-2 py-1 text-xs">
                           {activity.activity_type}
