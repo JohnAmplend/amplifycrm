@@ -52,6 +52,7 @@ export default function Layout({ children, currentPageName }) {
 
   const location = useLocation();
   const [user, setUser] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
   const [unreadNotifications, setUnreadNotifications] = React.useState(0);
   const [notifications, setNotifications] = React.useState([]);
   const [showNotifications, setShowNotifications] = React.useState(false);
@@ -60,11 +61,20 @@ export default function Layout({ children, currentPageName }) {
 
   React.useEffect(() => {
     let interval;
+    let loadingTimeout;
     
     const checkAuth = async () => {
       try {
+        // Set timeout to prevent infinite loading
+        loadingTimeout = setTimeout(() => {
+          console.error('Loading timeout - redirecting to login');
+          base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+        }, 5000);
+
         const u = await base44.auth.me();
+        clearTimeout(loadingTimeout);
         setUser(u);
+        setLoading(false);
         
         const fetchNotifications = async () => {
           try {
@@ -84,7 +94,8 @@ export default function Layout({ children, currentPageName }) {
         interval = setInterval(fetchNotifications, 30000);
       } catch (error) {
         console.error('Authentication error:', error);
-        // Redirect to login instead of showing infinite loading
+        clearTimeout(loadingTimeout);
+        // Redirect to login
         base44.auth.redirectToLogin(window.location.pathname + window.location.search);
       }
     };
@@ -93,11 +104,12 @@ export default function Layout({ children, currentPageName }) {
     
     return () => {
       if (interval) clearInterval(interval);
+      if (loadingTimeout) clearTimeout(loadingTimeout);
     };
   }, []);
 
   // Show loading while checking authentication
-  if (!user) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
         background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)'
