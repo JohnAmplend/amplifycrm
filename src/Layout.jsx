@@ -59,32 +59,37 @@ export default function Layout({ children, currentPageName }) {
   const [activeMegaMenu, setActiveMegaMenu] = React.useState(null);
 
   React.useEffect(() => {
-    base44.auth.me().then(async (u) => {
-      setUser(u);
-      
-      const fetchNotifications = async () => {
-        try {
-          const allNotifications = await base44.entities.Notifications.filter({ user_id: u.email }, '-created_date', 5);
-          const unread = allNotifications.filter(n => !n.is_read);
-          setNotifications(allNotifications);
-          setUnreadNotifications(unread.length);
-        } catch (e) {
-          console.error('Failed to fetch notifications:', e);
-        }
-      };
-      
-      // Initial fetch
-      fetchNotifications();
-      
-      // Poll every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      
-      return () => clearInterval(interval);
-    }).catch((error) => {
-      console.error('Authentication error:', error);
-      // Let Base44 platform handle authentication
-      setUser(null);
-    });
+    const checkAuth = async () => {
+      try {
+        const u = await base44.auth.me();
+        setUser(u);
+        
+        const fetchNotifications = async () => {
+          try {
+            const allNotifications = await base44.entities.Notifications.filter({ user_id: u.email }, '-created_date', 5);
+            const unread = allNotifications.filter(n => !n.is_read);
+            setNotifications(allNotifications);
+            setUnreadNotifications(unread.length);
+          } catch (e) {
+            console.error('Failed to fetch notifications:', e);
+          }
+        };
+        
+        // Initial fetch
+        fetchNotifications();
+        
+        // Poll every 30 seconds
+        const interval = setInterval(fetchNotifications, 30000);
+        
+        return () => clearInterval(interval);
+      } catch (error) {
+        console.error('Authentication error:', error);
+        // Redirect to login instead of showing infinite loading
+        base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   // Show loading while checking authentication
