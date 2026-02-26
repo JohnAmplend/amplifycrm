@@ -61,9 +61,15 @@ export default function ProjectTimeline() {
                   <h3 className="font-bold mb-2" style={{ color: "#666" }}>
                     This Week
                   </h3>
-                  <div className="flex items-start gap-2">
-                    <span style={{ color: "#fa8c16" }}>⚙️</span>
-                    <p style={{ color: "#666" }}>New role and permission system rollout</p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span style={{ color: "#fa8c16" }}>⚙️</span>
+                      <p style={{ color: "#666" }}>Finalize new role and permission system</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span style={{ color: "#00A86B" }}>🏃</span>
+                      <p style={{ color: "#666" }}>Prepare multi-role access for core CRM modules</p>
+                    </div>
                   </div>
                 </div>
               </div>
