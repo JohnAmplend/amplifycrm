@@ -136,15 +136,15 @@ export default function UserProfile() {
     updateMutation.mutate({ quick_actions: updatedActions });
   };
 
-  const handleConnectGmail = () => {
-    alert(
-      "Gmail Integration Setup:\n\n" +
-      "To connect your Gmail account, please follow these steps:\n\n" +
-      "1. Your administrator needs to set up Google OAuth credentials in the app settings\n" +
-      "2. Once configured, you'll be able to authorize AmplifyCRM to access your Gmail\n" +
-      "3. After authorization, emails will automatically sync with your CRM records\n\n" +
-      "This feature is currently being prepared. Contact your administrator for more information."
-    );
+  const handleConnectGmail = async () => {
+    try {
+      const response = await base44.functions.invoke('gmail/getGmailAuthUrl', {});
+      if (response.data?.auth_url) {
+        window.location.href = response.data.auth_url;
+      }
+    } catch (err) {
+      alert('Failed to start Gmail connection: ' + err.message);
+    }
   };
 
   const tabs = [
