@@ -108,13 +108,13 @@ Deno.serve(async (req) => {
         const labelIds = msgData.labelIds || [];
 
         // Check if message already exists
-        const existingMessages = await base44.asServiceRole.entities.EmailMessage.filter({
+        const existingMessages = await base44.entities.EmailMessage.filter({
           gmail_message_id: msgData.id
         });
 
         if (existingMessages.length > 0) {
           // Update existing
-          await base44.asServiceRole.entities.EmailMessage.update(existingMessages[0].id, {
+          await base44.entities.EmailMessage.update(existingMessages[0].id, {
             thread_id: threadId,
             internal_date: internalDate,
             from_email: fromEmail,
