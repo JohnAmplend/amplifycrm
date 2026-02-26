@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     }
 
     // Get the account
-    const accounts = await base44.asServiceRole.entities.GmailAccount.filter({
+    const accounts = await base44.entities.GmailAccount.filter({
       id: gmail_account_id
     });
 
