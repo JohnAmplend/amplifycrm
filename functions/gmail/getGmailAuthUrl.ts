@@ -1,14 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-    
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
     const REDIRECT_URI = "https://crm.amplend.net/auth/google/gmail/callback";
 
@@ -16,8 +7,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Google OAuth not configured' }, { status: 400 });
     }
 
-    // Generate random state tied to user
-    const state = crypto.randomUUID() + '|' + user.email;
+    // Generate random state for CSRF protection
+    const state = crypto.randomUUID();
 
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
