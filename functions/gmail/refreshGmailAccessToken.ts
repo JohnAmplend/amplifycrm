@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     const expiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
 
     // Update the account
-    await base44.asServiceRole.entities.GmailAccount.update(gmail_account_id, {
+    await base44.entities.GmailAccount.update(gmail_account_id, {
       access_token: access_token,
       expires_at: expiresAt
     });

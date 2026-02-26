@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
           updatedCount++;
         } else {
           // Create new
-          await base44.asServiceRole.entities.EmailMessage.create({
+          await base44.entities.EmailMessage.create({
             gmail_message_id: msgData.id,
             thread_id: threadId,
             internal_date: internalDate,
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     }
 
     // Update last_sync_at
-    await base44.asServiceRole.entities.GmailAccount.update(gmail_account_id, {
+    await base44.entities.GmailAccount.update(gmail_account_id, {
       last_sync_at: new Date().toISOString()
     });
 
