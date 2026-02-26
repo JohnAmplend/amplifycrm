@@ -118,6 +118,10 @@ export default function ProjectTimeline() {
                       <span style={{ color: "#4a90e2" }}>🖼️</span>
                       <p style={{ color: "#666" }}>Enhanced analytics dashboard rollout</p>
                     </div>
+                    <div className="flex items-start gap-2">
+                      <span style={{ color: "#fa8c16" }}>📝</span>
+                      <p style={{ color: "#666" }}>Custom forms builder and website integration rollout</p>
+                    </div>
                   </div>
                 </div>
               </div>
