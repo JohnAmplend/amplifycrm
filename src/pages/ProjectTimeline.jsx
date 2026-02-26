@@ -118,9 +118,27 @@ export default function ProjectTimeline() {
                       <span style={{ color: "#4a90e2" }}>🖼️</span>
                       <p style={{ color: "#666" }}>Enhanced analytics dashboard rollout</p>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* March: Last Week */}
+            <div className="ampvibe-inset p-4 rounded-xl" style={{ border: "2px solid #00A86B" }}>
+              <div className="flex items-start gap-3 mb-3">
+                <Calendar className="w-5 h-5 mt-1" style={{ color: "#00A86B" }} />
+                <div className="flex-1">
+                  <h3 className="font-bold mb-2" style={{ color: "#00A86B" }}>
+                    March: Last Week ⭐ DEADLINE
+                  </h3>
+                  <div className="space-y-2">
                     <div className="flex items-start gap-2">
                       <span style={{ color: "#fa8c16" }}>📝</span>
                       <p style={{ color: "#666" }}>Custom forms builder and website integration rollout</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span style={{ color: "#4a90e2" }}>✉️</span>
+                      <p style={{ color: "#666" }}>Full email system availability (inbox, campaigns, templates)</p>
                     </div>
                   </div>
                 </div>
