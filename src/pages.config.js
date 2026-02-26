@@ -130,6 +130,7 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
+import ProjectTimeline from './pages/ProjectTimeline';
 import __Layout from './Layout.jsx';
 
 
@@ -217,6 +218,7 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
+    "ProjectTimeline": ProjectTimeline,
 }
 
 export const pagesConfig = {
