@@ -3,21 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { code, state } = await req.json();
 
     if (!code || !state) {
       return Response.json({ error: 'Missing code or state' }, { status: 400 });
-    }
-
-    // Validate state contains current user's email
-    if (!state.includes(user.email)) {
-      return Response.json({ error: 'Invalid state parameter' }, { status: 400 });
     }
 
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
