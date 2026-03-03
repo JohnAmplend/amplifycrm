@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { ArrowRight, Users, Building2, DollarSign, Activity, Mail, MessageSquare, BarChart } from "lucide-react";
@@ -27,11 +26,12 @@ export default function Home() {
             AmplifyCRM helps businesses streamline sales, marketing, and customer service operations. Track leads, manage deals through your pipeline, automate email campaigns, and get actionable insights with powerful analytics.
           </p>
           <div className="flex flex-col items-center gap-4">
-            <a href={createPageUrl("Dashboard")}>
-              <button className="ampvibe-button-primary px-8 py-4 text-lg">
-                Get Started <ArrowRight className="w-5 h-5 ml-2 inline" />
-              </button>
-            </a>
+            <button
+              className="ampvibe-button-primary px-8 py-4 text-lg"
+              onClick={() => base44.auth.redirectToLogin(createPageUrl("Dashboard"))}
+            >
+              Get Started <ArrowRight className="w-5 h-5 ml-2 inline" />
+            </button>
             <div className="flex gap-4 text-sm">
               <a href="https://crm.amplend.net/privacy" className="hover:opacity-70 transition-opacity" style={{ color: "#00A86B" }}>
                 Privacy Policy
