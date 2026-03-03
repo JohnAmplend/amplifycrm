@@ -1,7 +1,7 @@
 Deno.serve(async (req) => {
   try {
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
-    const REDIRECT_URI = "https://crm.amplend.net/auth/google/gmail/callback";
+    const REDIRECT_URI = Deno.env.get("GOOGLE_OAUTH_REDIRECT_URI") || "https://crm.amplend.net/auth/google/gmail/callback";
 
     if (!GOOGLE_CLIENT_ID) {
       return Response.json({ error: 'Google OAuth not configured' }, { status: 400 });
