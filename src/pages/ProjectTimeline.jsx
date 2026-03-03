@@ -83,9 +83,15 @@ export default function ProjectTimeline() {
                   <h3 className="font-bold mb-2" style={{ color: "#666" }}>
                     March: Week 1
                   </h3>
-                  <div className="flex items-start gap-2">
-                    <span style={{ color: "#00A86B" }}>🏃</span>
-                    <p style={{ color: "#666" }}>Contact / Company / Lead / Deal multi-role re-onboarding + QA</p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span style={{ color: "#4a90e2" }}>☁️</span>
+                      <p style={{ color: "#666" }}>Configuring and verifying Google Cloud Console — OAuth credentials, redirect URIs, and API permissions</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span style={{ color: "#00A86B" }}>✅</span>
+                      <p style={{ color: "#666" }}>Verifying Gmail integration end-to-end (auth flow, token exchange, inbox sync)</p>
+                    </div>
                   </div>
                 </div>
               </div>
