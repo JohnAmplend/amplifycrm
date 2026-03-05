@@ -401,7 +401,7 @@ export default function Layout({ children, currentPageName }) {
               )}
 
               {/* Mobile Menu Toggle - Only show for authenticated users */}
-              {user && !isPublicPage && (
+              {user && (
             <button
               className="lg:hidden ampvibe-button p-2"
               onClick={() => setShowMobileMenu(!showMobileMenu)}
