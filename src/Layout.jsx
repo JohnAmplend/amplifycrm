@@ -79,6 +79,8 @@ export default function Layout({ children, currentPageName }) {
         clearTimeout(loadingTimeout);
         setUser(u);
         setLoading(false);
+        // Track last login time
+        base44.auth.updateMe({ last_login: new Date().toISOString() }).catch(() => {});
         
         const fetchNotifications = async () => {
           try {
