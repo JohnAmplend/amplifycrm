@@ -126,15 +126,29 @@ export default function UserManagement() {
             {users.map((user) => (
               <div
                 key={user.email}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 ${user.is_frozen ? 'bg-red-50 border-red-200' : ''}`}
               >
                 <div className="flex-1">
-                  <p className="font-medium">{user.full_name || user.email}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{user.full_name || user.email}</p>
+                    {user.is_frozen && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        Frozen
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-600">{user.email}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-xs text-gray-500">
                       Role: {user.role || 'user'}
                     </p>
+                    {user.last_login && (
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Last login: {new Date(user.last_login).toLocaleString()}
+                      </span>
+                    )}
                     {user.temporary_password && (
                       <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
@@ -143,7 +157,7 @@ export default function UserManagement() {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap justify-end">
                   <Button
                     onClick={() => resendInvite(user)}
                     variant="outline"
@@ -162,6 +176,16 @@ export default function UserManagement() {
                     <Key className="w-4 h-4" />
                     Set Password
                   </Button>
+                  {user.id !== currentUser?.id && (
+                    <Button
+                      onClick={() => toggleFreeze(user)}
+                      variant={user.is_frozen ? "default" : "outline"}
+                      size="sm"
+                      className={`gap-2 ${user.is_frozen ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-red-600 border-red-300 hover:bg-red-50'}`}
+                    >
+                      {user.is_frozen ? <><Unlock className="w-4 h-4" /> Unfreeze</> : <><Lock className="w-4 h-4" /> Freeze</>}
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
