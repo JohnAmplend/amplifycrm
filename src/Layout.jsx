@@ -521,7 +521,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Mobile Menu - Only for authenticated users */}
-        {user && !isPublicPage && showMobileMenu && (
+        {user && showMobileMenu && (
           <div className="lg:hidden border-t px-4 py-4" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
             <Link
               to={createPageUrl("Dashboard")}
