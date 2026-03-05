@@ -348,7 +348,7 @@ export default function Layout({ children, currentPageName }) {
               </h1>
             </Link>
 
-            {/* Desktop Mega Menu - Only show for authenticated users */}
+            {/* Desktop Mega Menu - Only show for authenticated users on non-public pages */}
             {user && !isPublicPage && (
               <nav className="hidden lg:flex items-center gap-1">
               {Object.keys(megaMenuData).map((category) => (
