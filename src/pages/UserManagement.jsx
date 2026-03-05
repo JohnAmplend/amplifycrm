@@ -29,11 +29,12 @@ export default function UserManagement() {
       
       if (me.role !== 'admin') {
         toast.error('Only admins can access this page');
+        setLoading(false);
         return;
       }
 
-      const response = await base44.functions.invoke('getAllUsers');
-      setUsers(response.data.users || []);
+      const allUsers = await base44.entities.User.list();
+      setUsers(allUsers || []);
     } catch (error) {
       toast.error('Failed to load users');
       console.error(error);
