@@ -113,6 +113,11 @@ export default function Layout({ children, currentPageName }) {
     };
   }, [isPublicPage]);
 
+  // Show frozen screen if account is suspended
+  if (!loading && user?.is_frozen) {
+    return <FrozenAccountScreen />;
+  }
+
   // Show loading spinner only for protected pages
   if (loading && !isPublicPage) {
     return (
