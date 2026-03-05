@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Mail, Key, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Mail, Key, Loader2, AlertCircle, CheckCircle2, Lock, Unlock, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export default function UserManagement() {
