@@ -591,6 +591,16 @@ export default function Layout({ children, currentPageName }) {
                   <UserIcon className="w-4 h-4" />
                   <span className="text-sm">Account Settings</span>
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    to={createPageUrl("UserManagement")}
+                    className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2 mb-2"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm">User Management</span>
+                  </Link>
+                )}
                 <button onClick={handleLogout} className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2">
                   <LogOut className="w-4 h-4" />
                   <span className="text-sm">Logout</span>
