@@ -292,6 +292,7 @@ export default function RolesPermissions() {
                   <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Email</th>
                   <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>System Role</th>
                   <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Custom Role</th>
+                  <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Status</th>
                   <th className="text-left py-3 px-4 font-semibold" style={{ color: "#6b7280" }}>Actions</th>
                 </tr>
               </thead>
