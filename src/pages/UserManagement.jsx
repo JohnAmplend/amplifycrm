@@ -187,6 +187,20 @@ export default function UserManagement() {
                     Resend Invite
                   </Button>
                   <Button
+                    onClick={() => sendPasswordReset(user)}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={sendingReset === user.id}
+                  >
+                    {sendingReset === user.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Reset Password
+                  </Button>
+                  <Button
                     onClick={() => openPasswordDialog(user)}
                     variant="outline"
                     size="sm"
