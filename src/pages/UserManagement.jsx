@@ -82,6 +82,23 @@ export default function UserManagement() {
     }
   };
 
+  const sendPasswordReset = async (user) => {
+    setSendingReset(user.id);
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: user.email,
+        subject: "Password Reset Request - AmplifyCRM",
+        body: `Hi ${user.full_name || user.email},\n\nYour CRM administrator has requested a password reset for your account.\n\nPlease contact your CRM admin to receive your new temporary password, or log in and use the "Forgot Password" option.\n\nIf you did not request this, please ignore this email.\n\nBest regards,\nAmplifyCRM Team`
+      });
+      toast.success(`Password reset email sent to ${user.email}`);
+    } catch (error) {
+      toast.error('Failed to send reset email');
+      console.error(error);
+    } finally {
+      setSendingReset(null);
+    }
+  };
+
   const toggleFreeze = async (user) => {
     try {
       const newFrozenState = !user.is_frozen;
