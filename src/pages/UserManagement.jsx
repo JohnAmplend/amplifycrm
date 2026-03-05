@@ -80,6 +80,18 @@ export default function UserManagement() {
     }
   };
 
+  const toggleFreeze = async (user) => {
+    try {
+      const newFrozenState = !user.is_frozen;
+      await base44.entities.User.update(user.id, { is_frozen: newFrozenState });
+      toast.success(`Account ${newFrozenState ? 'frozen' : 'unfrozen'} for ${user.email}`);
+      loadUsers();
+    } catch (error) {
+      toast.error('Failed to update account status');
+      console.error(error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
