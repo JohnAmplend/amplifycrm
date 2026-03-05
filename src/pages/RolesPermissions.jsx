@@ -324,15 +324,28 @@ export default function RolesPermissions() {
                         )}
                       </td>
                       <td className="py-3 px-4">
-                        <NeuroButton 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedUser(u);
-                            setShowAssignModal(true);
-                          }}
-                        >
-                          Assign Role
-                        </NeuroButton>
+                       {u.is_frozen ? (
+                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">
+                           <Lock className="w-3 h-3" />
+                           Frozen
+                         </span>
+                       ) : (
+                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
+                           <Unlock className="w-3 h-3" />
+                           Active
+                         </span>
+                       )}
+                      </td>
+                      <td className="py-3 px-4">
+                       <NeuroButton 
+                         size="sm"
+                         onClick={() => {
+                           setSelectedUser(u);
+                           setShowAssignModal(true);
+                         }}
+                       >
+                         Assign Role
+                       </NeuroButton>
                       </td>
                     </tr>
                   );

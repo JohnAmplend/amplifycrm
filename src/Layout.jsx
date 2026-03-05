@@ -42,6 +42,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import AIAssistant from "@/components/crm/AIAssistant";
 import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
+import FrozenAccountScreen from "@/components/crm/FrozenAccountScreen";
 import { Toaster } from "sonner";
 
 export default function Layout({ children, currentPageName }) {
