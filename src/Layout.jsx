@@ -45,14 +45,6 @@ import OnboardingAssistant from "@/components/crm/OnboardingAssistant";
 import { Toaster } from "sonner";
 
 export default function Layout({ children, currentPageName }) {
-  // Skip layout for widget only - render standalone
-  if (currentPageName === "ChatWidget") {
-    return <>{children}</>;
-  }
-
-  // Public pages that don't require auth
-  const isPublicPage = currentPageName === "Home" || currentPageName === "Privacy" || currentPageName === "Terms";
-
   const location = useLocation();
   const [user, setUser] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -62,19 +54,24 @@ export default function Layout({ children, currentPageName }) {
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
   const [activeMegaMenu, setActiveMegaMenu] = React.useState(null);
 
+  // Skip layout for widget only - render standalone
+  if (currentPageName === "ChatWidget") {
+    return <>{children}</>;
+  }
+
+  // Public pages that don't require auth
+  const isPublicPage = currentPageName === "Home" || currentPageName === "Privacy" || currentPageName === "Terms";
+
   React.useEffect(() => {
     let interval;
     let loadingTimeout;
     
     const checkAuth = async () => {
       try {
-        // Set timeout to prevent infinite loading
         loadingTimeout = setTimeout(() => {
+          setLoading(false);
           if (!isPublicPage) {
-            console.error('Loading timeout - redirecting to login');
             base44.auth.redirectToLogin(window.location.pathname + window.location.search);
-          } else {
-            setLoading(false);
           }
         }, 5000);
 
@@ -94,19 +91,12 @@ export default function Layout({ children, currentPageName }) {
           }
         };
         
-        // Initial fetch
         await fetchNotifications();
-        
-        // Poll every 30 seconds
         interval = setInterval(fetchNotifications, 30000);
       } catch (error) {
-        console.error('Authentication error:', error);
         clearTimeout(loadingTimeout);
-        if (isPublicPage) {
-          // Public pages don't need auth
-          setLoading(false);
-        } else {
-          // Redirect to login for protected pages
+        setLoading(false);
+        if (!isPublicPage) {
           base44.auth.redirectToLogin(window.location.pathname + window.location.search);
         }
       }
@@ -120,7 +110,7 @@ export default function Layout({ children, currentPageName }) {
     };
   }, [isPublicPage]);
 
-  // Show loading while checking authentication (only for protected pages)
+  // Show loading spinner only for protected pages
   if (loading && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
