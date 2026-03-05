@@ -422,7 +422,7 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             )}
 
-            {user && !isPublicPage && (
+            {user && (
               <>
                 <div className="relative">
                   <button 
