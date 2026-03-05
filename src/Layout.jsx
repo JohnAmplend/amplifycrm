@@ -277,6 +277,7 @@ export default function Layout({ children, currentPageName }) {
         {
           title: 'System',
           items: [
+            { name: "User Management", icon: Users, page: "UserManagement" },
             { name: "Roles & Permissions", icon: Shield, page: "RolesPermissions" },
             { name: "Data Enrichment", icon: Sparkles, page: "DataEnrichment" },
             { name: "Data Quality", icon: CheckSquare, page: "DataQuality" }
