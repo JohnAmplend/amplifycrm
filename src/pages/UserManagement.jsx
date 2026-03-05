@@ -15,6 +15,8 @@ export default function UserManagement() {
   const [newPassword, setNewPassword] = useState("");
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [sendingReset, setSendingReset] = useState(null);
 
   useEffect(() => {
     loadUsers();
