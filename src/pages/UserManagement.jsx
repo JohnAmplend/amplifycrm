@@ -232,18 +232,34 @@ export default function UserManagement() {
             <DialogTitle>Set Password for {selectedUser?.email}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {selectedUser?.temporary_password && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs font-medium text-blue-700 mb-1">Current Temporary Password</p>
+                <p className="text-sm font-mono text-blue-900">{selectedUser.temporary_password}</p>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium mb-2 block">New Password</label>
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password (min 6 characters)"
-                autoComplete="new-password"
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 6 characters)"
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <p className="text-xs text-gray-500">
-              This password will be stored and the user can use it to log in.
+              This sets a temporary password the user can use to log in.
             </p>
           </div>
           <DialogFooter>
