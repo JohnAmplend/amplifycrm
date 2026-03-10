@@ -322,6 +322,7 @@ export default function EmailInbox() {
           <Badge variant="outline" className="text-xs text-gray-500">{gmailConnection.user_email}</Badge>
         </div>
         <div className="flex items-center gap-2">
+          {syncError && <span className="text-xs text-red-500 max-w-xs truncate" title={syncError}>Sync error: {syncError}</span>}
           <Button variant="outline" size="sm" onClick={syncEmails} disabled={syncing} className="gap-2">
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
             {syncing ? "Syncing..." : "Sync"}
