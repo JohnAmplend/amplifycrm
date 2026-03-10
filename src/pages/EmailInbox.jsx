@@ -90,7 +90,8 @@ export default function EmailInbox() {
     authUrl.searchParams.set("prompt", "consent");
     authUrl.searchParams.set("state", JSON.stringify({ user_id: currentUser?.id }));
     const popup = window.open(authUrl.toString(), "gmail_auth", "width=600,height=700,scrollbars=yes");
-    if (!popup) alert("Please allow popups to connect Gmail.");
+    if (!popup) { alert("Please allow popups to connect Gmail."); return; }
+    pollForConnection(popup);
   };
 
   const syncEmails = async () => {
