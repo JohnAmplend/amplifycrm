@@ -132,6 +132,7 @@ import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
 import GmailCallback from './pages/GmailCallback';
+import EmailInbox from './pages/EmailInbox';
 import __Layout from './Layout.jsx';
 
 
@@ -221,6 +222,7 @@ export const PAGES = {
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
     "GmailCallback": GmailCallback,
+    "EmailInbox": EmailInbox,
 }
 
 export const pagesConfig = {
