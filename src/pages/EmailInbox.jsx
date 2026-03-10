@@ -35,6 +35,20 @@ export default function EmailInbox() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
+  const pollForConnection = (popup) => {
+    const interval = setInterval(async () => {
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) { clearInterval(interval); return; }
+      const connections = await base44.entities.GmailAccount.filter({ user_id: user.id }).catch(() => []);
+      if (connections.length > 0) {
+        setGmailConnection(connections[0]);
+        clearInterval(interval);
+      }
+      if (popup?.closed) clearInterval(interval);
+    }, 2000);
+    setTimeout(() => clearInterval(interval), 120000); // stop after 2 min
+  };
+
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
