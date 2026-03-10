@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, Star, Send, Inbox, RefreshCw, Search, ChevronLeft, Reply, Forward, Trash2, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = "1098736480238-46d7qllnh6ttgv4rdvrtelrt1qasdlde.apps.googleusercontent.com";
 
 export default function EmailInbox() {
   const [emails, setEmails] = useState([]);
@@ -91,7 +91,7 @@ export default function EmailInbox() {
           body: new URLSearchParams({
             refresh_token: conn.refresh_token,
             client_id: GOOGLE_CLIENT_ID,
-            client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+            client_secret: "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",
             grant_type: "refresh_token",
           }),
         });

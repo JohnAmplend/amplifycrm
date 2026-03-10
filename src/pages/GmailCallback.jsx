@@ -32,8 +32,8 @@ export default function GmailCallback() {
       try {
         const currentUser = await base44.auth.me();
         const redirectUri = `${window.location.origin}/gmail-callback`;
-        const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-        const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
+        const GOOGLE_CLIENT_ID = "1098736480238-46d7qllnh6ttgv4rdvrtelrt1qasdlde.apps.googleusercontent.com";
+        const GOOGLE_CLIENT_SECRET = "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";
 
         const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
           method: "POST",
