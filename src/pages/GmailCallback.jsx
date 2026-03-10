@@ -63,19 +63,17 @@ export default function GmailCallback() {
 
         const expiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+        const now = new Date().toISOString();
         const connectionData = {
-          user_id: currentUser.id,
-          user_email: currentUser.email,
-          gmail_address: profile.email,
+          user_email: profile.email,
+          google_sub: profile.id,
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
-          token_expiry: expiry,
-          is_active: true,
-          sync_status: "active",
-          total_messages_synced: 0,
+          expires_at: expiry,
+          connected_at: now,
         };
 
-        const existing = await base44.entities.GmailAccount.filter({ user_id: currentUser.id });
+        const existing = await base44.entities.GmailAccount.filter({ user_email: profile.email });
         console.log("[GmailCallback] Existing connections:", existing.length);
         if (existing.length > 0) {
           const updated = { ...connectionData };
