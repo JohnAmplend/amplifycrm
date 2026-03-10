@@ -216,7 +216,10 @@ export default function EmailInbox() {
 
       await base44.entities.GmailAccount.update(conn.id, { last_sync_at: new Date().toISOString() }).catch(() => {});
       await loadEmails();
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error("[Sync Error]", err);
+      setSyncError(err.message);
+    }
     setSyncing(false);
   };
 
