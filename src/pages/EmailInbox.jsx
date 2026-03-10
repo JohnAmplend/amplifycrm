@@ -248,7 +248,7 @@ export default function EmailInbox() {
       const mimeLines = [
         `To: ${compose.to}`,
         `Subject: ${compose.subject}`,
-        `From: ${conn.gmail_address}`,
+        `From: ${conn.user_email}`,
         "Content-Type: text/plain; charset=utf-8",
         "",
         compose.body,
