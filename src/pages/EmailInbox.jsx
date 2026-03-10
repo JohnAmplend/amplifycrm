@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Star, Send, Inbox, RefreshCw, Search, ChevronLeft, Reply, Forward, Trash2, Plus, X } from "lucide-react";
+import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 
 const GOOGLE_CLIENT_ID = "1098736480238-46d7qllnh6ttgv4rdvrtelrt1qasdlde.apps.googleusercontent.com";

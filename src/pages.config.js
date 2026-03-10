@@ -87,6 +87,7 @@ import Documents from './pages/Documents';
 import DuplicateManagement from './pages/DuplicateManagement';
 import Email from './pages/Email';
 import EmailCampaignBuilder from './pages/EmailCampaignBuilder';
+import EmailInbox from './pages/EmailInbox';
 import EmailSequences from './pages/EmailSequences';
 import EmailTemplates from './pages/EmailTemplates';
 import FormBuilder from './pages/FormBuilder';
@@ -94,6 +95,7 @@ import FormSubmissions from './pages/FormSubmissions';
 import Forms from './pages/Forms';
 import FunnelBoard from './pages/FunnelBoard';
 import Funnels from './pages/Funnels';
+import GmailCallback from './pages/GmailCallback';
 import Goals from './pages/Goals';
 import Home from './pages/Home';
 import HubSpotSync from './pages/HubSpotSync';
@@ -131,8 +133,6 @@ import UserProfile from './pages/UserProfile';
 import WebsiteTracking from './pages/WebsiteTracking';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import Workflows from './pages/Workflows';
-import GmailCallback from './pages/GmailCallback';
-import EmailInbox from './pages/EmailInbox';
 import __Layout from './Layout.jsx';
 
 
@@ -177,6 +177,7 @@ export const PAGES = {
     "DuplicateManagement": DuplicateManagement,
     "Email": Email,
     "EmailCampaignBuilder": EmailCampaignBuilder,
+    "EmailInbox": EmailInbox,
     "EmailSequences": EmailSequences,
     "EmailTemplates": EmailTemplates,
     "FormBuilder": FormBuilder,
@@ -184,6 +185,7 @@ export const PAGES = {
     "Forms": Forms,
     "FunnelBoard": FunnelBoard,
     "Funnels": Funnels,
+    "GmailCallback": GmailCallback,
     "Goals": Goals,
     "Home": Home,
     "HubSpotSync": HubSpotSync,
@@ -221,8 +223,6 @@ export const PAGES = {
     "WebsiteTracking": WebsiteTracking,
     "WorkflowBuilder": WorkflowBuilder,
     "Workflows": Workflows,
-    "GmailCallback": GmailCallback,
-    "EmailInbox": EmailInbox,
 }
 
 export const pagesConfig = {
