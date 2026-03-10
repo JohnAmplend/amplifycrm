@@ -182,7 +182,7 @@ export default function EmailInbox() {
         };
         extractBody(msgData.payload);
 
-        const isOwner = fromEmail.toLowerCase() === conn.gmail_address?.toLowerCase();
+        const isOwner = fromEmail.toLowerCase() === conn.user_email?.toLowerCase();
         const direction = isOwner ? "outbound" : "inbound";
         const hasAttachments = (msgData.payload?.parts || []).some(p => p.filename && p.filename.length > 0);
 
