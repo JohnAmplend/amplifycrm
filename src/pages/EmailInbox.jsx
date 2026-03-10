@@ -312,7 +312,7 @@ export default function EmailInbox() {
         <div className="flex items-center gap-3">
           <Mail className="w-5 h-5 text-blue-600" />
           <h1 className="text-lg font-semibold text-gray-800">Email</h1>
-          <Badge variant="outline" className="text-xs text-gray-500">{gmailConnection.gmail_address}</Badge>
+          <Badge variant="outline" className="text-xs text-gray-500">{gmailConnection.user_email}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={syncEmails} disabled={syncing} className="gap-2">
