@@ -61,7 +61,7 @@ export default function EmailInbox() {
   const loadEmails = async () => {
     setLoading(true);
     try {
-      const allEmails = await base44.entities.EmailMessage.filter({ user_id: currentUser.id });
+      const allEmails = await base44.entities.EmailMessage.filter({ user_email: currentUser.email });
       let filtered = allEmails;
       if (folder === "inbox") filtered = allEmails.filter(e => e.direction === "inbound");
       if (folder === "sent") filtered = allEmails.filter(e => e.direction === "outbound");
