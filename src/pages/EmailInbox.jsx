@@ -23,6 +23,7 @@ export default function EmailInbox() {
   const [compose, setCompose] = useState({ to: "", subject: "", body: "" });
   const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  const [syncError, setSyncError] = useState(null);
 
   useEffect(() => { loadData(); }, []);
   useEffect(() => { if (currentUser) loadEmails(); }, [folder, currentUser]);
