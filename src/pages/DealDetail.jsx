@@ -11,6 +11,7 @@ import ActivityTimeline from "../components/crm/ActivityTimeline.jsx";
 import TaskList from "../components/crm/TaskList.jsx";
 import ActivityTimelinePanel from "../components/crm/ActivityTimelinePanel";
 import TaskManager from "../components/crm/TaskManager";
+import EmailTimeline from "../components/email/EmailTimeline";
 
 export default function DealDetail() {
   const navigate = useNavigate();

@@ -15,6 +15,7 @@ import ViewLayoutEditor from "../components/crm/ViewLayoutEditor.jsx";
 import ActivityFeed from "../components/crm/ActivityFeed";
 import TaskManager from "../components/crm/TaskManager";
 import ActivityTimelinePanel from "../components/crm/ActivityTimelinePanel";
+import EmailTimeline from "../components/email/EmailTimeline";
 
 export default function ContactDetail() {
   const navigate = useNavigate();
