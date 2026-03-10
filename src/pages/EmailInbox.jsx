@@ -98,7 +98,7 @@ export default function EmailInbox() {
     setSyncing(true);
     try {
       const conn = gmailConnection;
-      const tokenExpiry = new Date(conn.token_expiry);
+      const tokenExpiry = new Date(conn.expires_at);
       let token = conn.access_token;
       if (tokenExpiry < new Date(Date.now() + 60000)) {
         const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -116,7 +116,7 @@ export default function EmailInbox() {
           token = tokens.access_token;
           await base44.entities.GmailAccount.update(conn.id, {
             access_token: tokens.access_token,
-            token_expiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+            expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
           });
         }
       }
