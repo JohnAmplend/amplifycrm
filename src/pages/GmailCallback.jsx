@@ -32,7 +32,7 @@ export default function GmailCallback() {
 
       try {
         const currentUser = await base44.auth.me();
-        const redirectUri = `${window.location.origin}${createPageUrl("GmailCallback")}`;
+        const redirectUri = "https://crm.amplend.net/gmailcallback";
         const GOOGLE_CLIENT_ID = "1098736480238-46d7qllnh6ttgv4rdvrtelrt1qasdlde.apps.googleusercontent.com";
         const GOOGLE_CLIENT_SECRET = "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";
 

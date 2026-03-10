@@ -59,8 +59,7 @@ export default function EmailInbox() {
   };
 
   const connectGmail = () => {
-    const redirectUri = `${window.location.origin}${createPageUrl("GmailCallback")}`;
-    console.log("Gmail OAuth redirect URI:", redirectUri);
+    const redirectUri = "https://crm.amplend.net/gmailcallback";
     const scopes = [
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.send",
