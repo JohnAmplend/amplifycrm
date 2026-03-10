@@ -53,7 +53,7 @@ export default function EmailInbox() {
     try {
       const user = await base44.auth.me();
       setCurrentUser(user);
-      const connections = await base44.entities.GmailAccount.filter({ user_id: user.id });
+      const connections = await base44.entities.GmailAccount.filter({ user_email: user.email });
       if (connections.length > 0) setGmailConnection(connections[0]);
     } catch (err) { console.error(err); }
   };
