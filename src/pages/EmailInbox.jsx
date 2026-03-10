@@ -39,7 +39,7 @@ export default function EmailInbox() {
     const interval = setInterval(async () => {
       const user = await base44.auth.me().catch(() => null);
       if (!user) { clearInterval(interval); return; }
-      const connections = await base44.entities.GmailAccount.filter({ user_id: user.id }).catch(() => []);
+      const connections = await base44.entities.GmailAccount.filter({ user_email: user.email }).catch(() => []);
       if (connections.length > 0) {
         setGmailConnection(connections[0]);
         clearInterval(interval);
