@@ -62,7 +62,9 @@ export default function EmailInbox() {
   const loadEmails = async () => {
     setLoading(true);
     try {
-      const allEmails = await base44.entities.EmailMessage.filter({ user_email: currentUser.email });
+      // Use the Gmail account's email (not CRM login email) since that's what's stored on EmailMessage records
+      const gmailEmail = gmailConnection?.user_email || currentUser.email;
+      const allEmails = await base44.entities.EmailMessage.filter({ user_email: gmailEmail });
       let filtered = allEmails;
       if (folder === "inbox") filtered = allEmails.filter(e => e.direction === "inbound");
       if (folder === "sent") filtered = allEmails.filter(e => e.direction === "outbound");
