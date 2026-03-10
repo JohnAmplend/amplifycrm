@@ -414,11 +414,12 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center gap-3">
             {/* Show login button for public pages without auth */}
             {!user && isPublicPage && (
-              <Link to={createPageUrl("Dashboard")}>
-                <button className="ampvibe-button-primary px-6 py-2">
-                  Sign In
-                </button>
-              </Link>
+              <button
+                className="ampvibe-button-primary px-6 py-2"
+                onClick={() => base44.auth.redirectToLogin(createPageUrl("Dashboard"))}
+              >
+                Sign In
+              </button>
             )}
 
             {user && (
