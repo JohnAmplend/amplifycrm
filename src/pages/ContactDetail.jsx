@@ -585,6 +585,12 @@ export default function ContactDetail() {
               objectName={`${contact.first_name} ${contact.last_name}`}
             />
 
+            {/* Email Timeline */}
+            <NeuroCard>
+              <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>Emails</h2>
+              <EmailTimeline contact_id={contactId} />
+            </NeuroCard>
+
             {/* Task Manager */}
             <TaskManager
               relatedToType="Contact"

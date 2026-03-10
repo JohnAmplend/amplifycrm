@@ -235,6 +235,12 @@ export default function DealDetail() {
               objectName={deal.deal_name}
             />
 
+            {/* Email Timeline */}
+            <NeuroCard>
+              <h2 className="text-xl font-bold mb-4" style={{ color: "#666" }}>Emails</h2>
+              <EmailTimeline deal_id={dealId} />
+            </NeuroCard>
+
             {/* Task Manager */}
             <TaskManager
               relatedToType="Deal"
