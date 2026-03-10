@@ -133,7 +133,7 @@ export default function EmailInbox() {
       const sentData = await sentRes.json();
       const allMessages = [...(inboxData.messages || []), ...(sentData.messages || [])];
 
-      const existing = await base44.entities.EmailMessage.filter({ user_id: currentUser.id });
+      const existing = await base44.entities.EmailMessage.filter({ user_email: currentUser.email });
       const existingIds = new Set(existing.map(m => m.gmail_message_id));
       const seenIds = new Set();
       const newMessages = allMessages.filter(m => {
