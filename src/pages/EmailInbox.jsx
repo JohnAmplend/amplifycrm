@@ -59,7 +59,7 @@ export default function EmailInbox() {
   };
 
   const connectGmail = () => {
-    const redirectUri = `${window.location.origin}/gmail-callback`;
+    const redirectUri = `${window.location.origin}${createPageUrl("GmailCallback")}`;
     const scopes = [
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.send",
