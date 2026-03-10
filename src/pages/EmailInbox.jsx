@@ -99,6 +99,7 @@ export default function EmailInbox() {
 
   const syncEmails = async () => {
     setSyncing(true);
+    setSyncError(null);
     try {
       const conn = gmailConnection;
       const tokenExpiry = new Date(conn.expires_at);
