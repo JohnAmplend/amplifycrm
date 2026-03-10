@@ -31,7 +31,10 @@ export default function GmailCallback() {
       }
 
       try {
+        console.log("[GmailCallback] Starting OAuth exchange...");
         const currentUser = await base44.auth.me();
+        console.log("[GmailCallback] Current user:", currentUser?.id, currentUser?.email);
+
         const redirectUri = "https://crm.amplend.net/gmailcallback";
         const GOOGLE_CLIENT_ID = "1098736480238-46d7qllnh6ttgv4rdvrtelrt1qasdlde.apps.googleusercontent.com";
         const GOOGLE_CLIENT_SECRET = "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";
@@ -48,43 +51,40 @@ export default function GmailCallback() {
           }),
         });
         const tokens = await tokenRes.json();
-        if (tokens.error) throw new Error(tokens.error_description);
+        console.log("[GmailCallback] Token response:", tokens.error || "OK", "has_refresh:", !!tokens.refresh_token);
+        if (tokens.error) throw new Error(`Token exchange failed: ${tokens.error} - ${tokens.error_description}`);
 
         const profileRes = await fetch("https://www.googleapis.com/oauth2/v1/userinfo", {
           headers: { Authorization: `Bearer ${tokens.access_token}` },
         });
         const profile = await profileRes.json();
+        console.log("[GmailCallback] Profile email:", profile.email);
+        if (!profile.email) throw new Error("Failed to get Gmail profile");
+
         const expiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+        const connectionData = {
+          user_id: currentUser.id,
+          user_email: currentUser.email,
+          gmail_address: profile.email,
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expiry: expiry,
+          is_active: true,
+          sync_status: "active",
+          total_messages_synced: 0,
+        };
+
         const existing = await base44.entities.GmailAccount.filter({ user_id: currentUser.id });
+        console.log("[GmailCallback] Existing connections:", existing.length);
         if (existing.length > 0) {
-          await base44.entities.GmailAccount.update(existing[0].id, {
-            gmail_address: profile.email,
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token || existing[0].refresh_token,
-            token_expiry: expiry,
-            expires_at: expiry,
-            connected_at: new Date().toISOString(),
-            google_sub: profile.id,
-            is_active: true,
-            sync_status: "active",
-            error_message: null,
-          });
+          const updated = { ...connectionData };
+          if (!tokens.refresh_token) updated.refresh_token = existing[0].refresh_token;
+          await base44.entities.GmailAccount.update(existing[0].id, updated);
+          console.log("[GmailCallback] Updated existing connection");
         } else {
-          await base44.entities.GmailAccount.create({
-            user_id: currentUser.id,
-            user_email: currentUser.email,
-            gmail_address: profile.email,
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            token_expiry: expiry,
-            expires_at: expiry,
-            connected_at: new Date().toISOString(),
-            google_sub: profile.id,
-            is_active: true,
-            sync_status: "active",
-            total_messages_synced: 0,
-          });
+          await base44.entities.GmailAccount.create(connectionData);
+          console.log("[GmailCallback] Created new connection");
         }
 
         setStatus("success");
@@ -92,14 +92,15 @@ export default function GmailCallback() {
           window.opener.postMessage({ type: "GMAIL_AUTH_SUCCESS" }, "*");
           setTimeout(() => window.close(), 1500);
         } else {
-          setTimeout(() => navigate("/email-inbox"), 2000);
+          setTimeout(() => navigate(createPageUrl("EmailInbox")), 2000);
         }
       } catch (err) {
+        console.error("[GmailCallback] Error:", err.message, err);
         setError(err.message);
         setStatus("error");
         if (window.opener) {
           window.opener.postMessage({ type: "GMAIL_AUTH_ERROR", error: err.message }, "*");
-          setTimeout(() => window.close(), 2000);
+          setTimeout(() => window.close(), 3000);
         }
       }
     };
