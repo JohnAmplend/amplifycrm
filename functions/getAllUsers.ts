@@ -9,10 +9,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     const appId = Deno.env.get('BASE44_APP_ID');
     const serviceToken = req.headers.get('x-base44-service-token') || req.headers.get('authorization')?.replace('Bearer ', '');
 
