@@ -9,23 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const appId = Deno.env.get('BASE44_APP_ID');
-    const serviceToken = req.headers.get('x-base44-service-token') || req.headers.get('authorization')?.replace('Bearer ', '');
-
-    const response = await fetch(`https://api.base44.com/api/apps/${appId}/entities/User/`, {
-      headers: {
-        'Authorization': `Bearer ${serviceToken}`,
-        'x-base44-service-role': 'true',
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      return Response.json({ success: false, error: err, users: [] }, { status: response.status });
-    }
-
-    const users = await response.json();
+    const users = await base44.asServiceRole.entities.User.list();
     return Response.json({ success: true, users: users || [] });
 
   } catch (error) {
