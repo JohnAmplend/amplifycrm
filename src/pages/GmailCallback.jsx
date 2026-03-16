@@ -35,55 +35,9 @@ export default function GmailCallback() {
         const currentUser = await base44.auth.me();
         console.log("[GmailCallback] Current user:", currentUser?.id, currentUser?.email);
 
-        const redirectUri = "https://crm.amplend.net/gmailcallback";
-        const GOOGLE_CLIENT_ID = "1098736480238-46d7qllnh6ttgv4rdvrtelrt1qasdlde.apps.googleusercontent.com";
-        const GOOGLE_CLIENT_SECRET = "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";
-
-        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            code,
-            client_id: GOOGLE_CLIENT_ID,
-            client_secret: GOOGLE_CLIENT_SECRET,
-            redirect_uri: redirectUri,
-            grant_type: "authorization_code",
-          }),
-        });
-        const tokens = await tokenRes.json();
-        console.log("[GmailCallback] Token response:", tokens.error || "OK", "has_refresh:", !!tokens.refresh_token);
-        if (tokens.error) throw new Error(`Token exchange failed: ${tokens.error} - ${tokens.error_description}`);
-
-        const profileRes = await fetch("https://www.googleapis.com/oauth2/v1/userinfo", {
-          headers: { Authorization: `Bearer ${tokens.access_token}` },
-        });
-        const profile = await profileRes.json();
-        console.log("[GmailCallback] Profile email:", profile.email);
-        if (!profile.email) throw new Error("Failed to get Gmail profile");
-
-        const expiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
-
-        const now = new Date().toISOString();
-        const connectionData = {
-          user_email: profile.email,
-          google_sub: profile.id,
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: expiry,
-          connected_at: now,
-        };
-
-        const existing = await base44.entities.GmailAccount.filter({ user_email: profile.email });
-        console.log("[GmailCallback] Existing connections:", existing.length);
-        if (existing.length > 0) {
-          const updated = { ...connectionData };
-          if (!tokens.refresh_token) updated.refresh_token = existing[0].refresh_token;
-          await base44.entities.GmailAccount.update(existing[0].id, updated);
-          console.log("[GmailCallback] Updated existing connection");
-        } else {
-          await base44.entities.GmailAccount.create(connectionData);
-          console.log("[GmailCallback] Created new connection");
-        }
+        // Route token exchange through secure backend function
+        const result = await base44.functions.invoke('handleGmailCallback', { code, state: params.get("state") });
+        if (!result.data?.success) throw new Error(result.data?.error || "Gmail callback failed");
 
         setStatus("success");
         if (window.opener) {
