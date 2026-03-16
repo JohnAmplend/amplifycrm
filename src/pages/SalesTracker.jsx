@@ -257,12 +257,12 @@ export default function SalesTracker() {
     } else {
       const columnId = formData.column_id || cardModal.columnId;
       const columnCards = getColumnCards(columnId);
-      const maxPosition = columnCards.length > 0 ? Math.max(...columnCards.map(c => c.position || 0)) : -1;
+      const minPosition = columnCards.length > 0 ? Math.min(...columnCards.map(c => c.position || 0)) : 0;
       
       const newCard = await createCardMutation.mutateAsync({
         ...formData,
         column_id: columnId,
-        position: maxPosition + 1
+        position: minPosition - 1
       });
       // Notify on creation
       try {
