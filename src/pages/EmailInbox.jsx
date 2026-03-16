@@ -8,7 +8,7 @@ import { Mail, Star, Send, Inbox, RefreshCw, Search, ChevronLeft, Reply, Forward
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 
-const GOOGLE_CLIENT_ID = "1098736480238-46d7qllnh6ttgv4rdvrtelrt1qasdlde.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function EmailInbox() {
   const [emails, setEmails] = useState([]);
