@@ -46,22 +46,16 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns, 
     base44.auth.me().then(user => setCurrentUser(user));
   }, []);
 
-  // Fetch users via backend function (accessible to all users)
+  // Fetch users only when modal is open
   const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('getAllUsers');
-        console.log('getAllUsers response:', response);
-        return response.data?.users || [];
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        return [];
-      }
+      const response = await base44.functions.invoke('getAllUsers');
+      return response.data?.users || [];
     },
+    enabled: isOpen,
     retry: 1,
-    staleTime: 300000, // 5 minutes
-    cacheTime: 600000 // 10 minutes
+    staleTime: 600000, // 10 minutes
   });
 
   useEffect(() => {
