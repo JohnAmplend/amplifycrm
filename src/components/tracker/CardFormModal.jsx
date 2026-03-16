@@ -329,11 +329,11 @@ export default function CardFormModal({ isOpen, onClose, onSave, card, columns, 
               <SelectContent className="z-[1100]">
                 <SelectItem value={null}>Unassigned</SelectItem>
                 {usersLoading ? (
-                  <SelectItem value={null} disabled>Loading users...</SelectItem>
+                  <SelectItem value="loading" disabled>Loading users...</SelectItem>
                 ) : usersError ? (
-                  <SelectItem value={null} disabled>Error loading users</SelectItem>
+                  <SelectItem value="error" disabled>Error loading users</SelectItem>
                 ) : users.length === 0 ? (
-                  <SelectItem value={null} disabled>No users available</SelectItem>
+                  <SelectItem value="empty" disabled>No users available</SelectItem>
                 ) : (
                   users.map((user) => (
                     <SelectItem key={user.id} value={user.email}>
