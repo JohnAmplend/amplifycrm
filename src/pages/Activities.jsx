@@ -25,13 +25,15 @@ export default function Activities() {
   const queryClient = useQueryClient();
 
   const { data: activities = [], isLoading } = useQuery({
-    queryKey: ['activities'],
-    queryFn: () => base44.entities.Activity.list('-activity_date')
+    queryKey: ['activities-full'],
+    queryFn: () => base44.entities.Activity.list('-activity_date'),
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 10 * 60 * 1000,
   });
 
   const getActivityIcon = (type) => {

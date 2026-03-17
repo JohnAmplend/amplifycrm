@@ -42,13 +42,15 @@ export default function Tasks() {
   }, []);
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date')
+    queryKey: ['tasks-all'],
+    queryFn: () => base44.entities.Task.list('-created_date'),
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 10 * 60 * 1000,
   });
 
   const createMutation = useMutation({
