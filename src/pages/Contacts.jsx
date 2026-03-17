@@ -134,7 +134,8 @@ export default function Contacts() {
       performed_by: currentUser.email,
       object_type: 'Contact'
     }).then(ops => ops.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))),
-    enabled: !!currentUser
+    enabled: !!currentUser,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: leads = [] } = useQuery({
