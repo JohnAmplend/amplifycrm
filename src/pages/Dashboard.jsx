@@ -36,39 +36,46 @@ export default function Dashboard() {
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['contacts'],
-    queryFn: () => base44.entities.Contact.list()
+    queryFn: () => base44.entities.Contact.list('-created_date', 500),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.list()
+    queryFn: () => base44.entities.Company.list('-created_date', 500),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: deals = [] } = useQuery({
     queryKey: ['deals'],
-    queryFn: () => base44.entities.Deal.list()
+    queryFn: () => base44.entities.Deal.list('-created_date', 500),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: leads = [] } = useQuery({
     queryKey: ['leads'],
-    queryFn: () => base44.entities.Lead.list()
+    queryFn: () => base44.entities.Lead.list('-created_date', 500),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities'],
-    queryFn: () => base44.entities.Activity.list('-created_date', 5)
+    queryFn: () => base44.entities.Activity.list('-created_date', 5),
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list()
+    queryFn: () => base44.entities.Task.filter({ status: 'Not Started' }, '-due_date', 50),
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch token usage data - only for admin users
   const { data: tokenUsage = [] } = useQuery({
     queryKey: ['token-usage'],
     queryFn: () => base44.entities.Token_Usage.list('-created_date', 100),
-    enabled: user?.role === 'admin'
+    enabled: !!user && user?.role === 'admin',
+    staleTime: 10 * 60 * 1000,
   });
 
   const totalDealValue = deals.reduce((sum, deal) => sum + (deal.deal_amount || 0), 0);

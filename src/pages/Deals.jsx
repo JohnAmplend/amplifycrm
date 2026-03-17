@@ -38,7 +38,8 @@ export default function Deals() {
 
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ['deals'],
-    queryFn: () => base44.entities.Deal.list('-created_date')
+    queryFn: () => base44.entities.Deal.list('-created_date'),
+    staleTime: 2 * 60 * 1000,
   });
 
   const createMutation = useMutation({

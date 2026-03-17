@@ -101,12 +101,14 @@ export default function Contacts() {
 
   const { data: contacts = [], isLoading } = useQuery({
     queryKey: ['contacts'],
-    queryFn: () => base44.entities.Contact.list('-created_date')
+    queryFn: () => base44.entities.Contact.list('-created_date'),
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 10 * 60 * 1000,
   });
 
   // Bulk selection
@@ -137,7 +139,8 @@ export default function Contacts() {
 
   const { data: leads = [] } = useQuery({
     queryKey: ['leads'],
-    queryFn: () => base44.entities.Lead.list()
+    queryFn: () => base44.entities.Lead.list(),
+    staleTime: 5 * 60 * 1000,
   });
 
   const newThisWeek = contacts.filter(c => {
