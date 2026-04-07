@@ -1,9 +1,39 @@
-# Base44 Preview Template for MicroVM sandbox
+# AmplifyCRM
 
-This template is used by the server to preview user-apps.
+## Overview
+AmplifyCRM is a dynamic CRM frontend powered by Base44.  
+The server injects pages, components, and configuration at runtime, enabling flexible and multi-tenant UI generation.
 
-## user files
-server creates the user-app files in the __components__, __pages__ folders
+---
 
-## server injected data
-server injects app related data to __app.config.js__, which is used by App.jsx to render the components in the files.
+## 🧠 Architecture
+
+- React + Vite  
+- TailwindCSS + Radix UI  
+- React Query (data fetching)  
+- Zod (validation)  
+
+---
+
+## ⚙️ How It Works
+
+1. Server generates:
+   - `__components__/`
+   - `__pages__/`
+   - `__app.config.js`
+
+2. `App.jsx`:
+   - Loads config  
+   - Dynamically renders UI  
+
+---
+
+## 📦 Example Config
+
+```js
+export default {
+  pages: [
+    { name: 'Dashboard', path: '/' }
+  ],
+  components: []
+}
