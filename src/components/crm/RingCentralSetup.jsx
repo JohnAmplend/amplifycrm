@@ -18,13 +18,21 @@ export default function RingCentralSetup({ user, onConnected }) {
 
   useEffect(() => { loadConfig(); }, [user?.email]);
 
-  const handleConnect = () => {
-    const clientId = import.meta.env.VITE_RINGCENTRAL_CLIENT_ID || '';
-    const redirectUri = encodeURIComponent(window.location.origin + "/RingCentralOAuthCallback");
-    const scopes = encodeURIComponent("ReadAccounts ReadCallLog Calls SMS Messaging ReadMessages WebhookSubscriptions");
-    const authUrl = `https://platform.ringcentral.com/restapi/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}`;
-
+  const handleConnect = async () => {
     setConnecting(true);
+    const redirectUri = window.location.origin + "/RingCentralOAuthCallback";
+
+    let authUrl;
+    try {
+      const res = await base44.functions.invoke("ringcentral/getOAuthUrl", { redirect_uri: redirectUri });
+      authUrl = res.data?.auth_url;
+      if (!authUrl) throw new Error(res.data?.error || 'No auth URL returned');
+    } catch (e) {
+      alert('Failed to start OAuth: ' + e.message);
+      setConnecting(false);
+      return;
+    }
+
     const popup = window.open(authUrl, "rc_oauth", "width=600,height=700,scrollbars=yes");
 
     const handler = (e) => {
