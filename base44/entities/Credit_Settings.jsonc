@@ -1,0 +1,39 @@
+{
+  "name": "Credit_Settings",
+  "type": "object",
+  "properties": {
+    "credit_type": {
+      "type": "string",
+      "enum": [
+        "message_credits",
+        "integration_credits"
+      ],
+      "description": "Type of credit being configured"
+    },
+    "is_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this credit type is enabled"
+    },
+    "monthly_limit": {
+      "type": "number",
+      "description": "Monthly credit limit (0 = unlimited)"
+    },
+    "alert_threshold": {
+      "type": "number",
+      "description": "Alert when usage reaches this percentage (0-100)"
+    },
+    "current_usage": {
+      "type": "number",
+      "default": 0,
+      "description": "Current month usage count"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes"
+    }
+  },
+  "required": [
+    "credit_type"
+  ]
+}

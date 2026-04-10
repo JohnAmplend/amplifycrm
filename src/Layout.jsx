@@ -294,7 +294,8 @@ export default function Layout({ children, currentPageName }) {
           title: 'App Settings',
           items: [
             { name: "App Sync", icon: Settings, page: "AppSync" },
-            { name: "API Settings", icon: Settings, page: "APISettings" }
+            { name: "API Settings", icon: Settings, page: "APISettings" },
+            { name: "Credits Monitor", icon: BarChart3, page: "CreditsMonitor" }
           ]
         }
       ]
