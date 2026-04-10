@@ -20,11 +20,10 @@ export default function RingCentralSetup({ user, onConnected }) {
 
   const handleConnect = async () => {
     setConnecting(true);
-    const redirectUri = window.location.origin + "/RingCentralOAuthCallback";
 
     let authUrl;
     try {
-      const res = await base44.functions.invoke("ringcentral/getOAuthUrl", { redirect_uri: redirectUri });
+      const res = await base44.functions.invoke("ringcentral/getOAuthUrl", {});
       authUrl = res.data?.auth_url;
       if (!authUrl) throw new Error(res.data?.error || 'No auth URL returned');
     } catch (e) {
