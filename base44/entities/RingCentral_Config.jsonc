@@ -1,0 +1,43 @@
+{
+  "name": "RingCentral_Config",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user this config belongs to"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "RingCentral App Client ID"
+    },
+    "client_secret": {
+      "type": "string",
+      "description": "RingCentral App Client Secret"
+    },
+    "jwt_token": {
+      "type": "string",
+      "description": "RingCentral JWT Token for server-to-server auth"
+    },
+    "account_id": {
+      "type": "string",
+      "description": "RingCentral Account ID (optional, defaults to ~)"
+    },
+    "extension_id": {
+      "type": "string",
+      "description": "RingCentral Extension ID (optional, defaults to ~)"
+    },
+    "is_connected": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the connection has been verified"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last successful sync timestamp"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}
