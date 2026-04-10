@@ -4,37 +4,44 @@
   "properties": {
     "user_email": {
       "type": "string",
-      "description": "Email of the user this config belongs to"
+      "description": "CRM user email"
     },
-    "client_id": {
+    "access_token": {
       "type": "string",
-      "description": "RingCentral App Client ID"
+      "description": "OAuth access token"
     },
-    "client_secret": {
+    "refresh_token": {
       "type": "string",
-      "description": "RingCentral App Client Secret"
+      "description": "OAuth refresh token"
     },
-    "jwt_token": {
+    "expires_at": {
       "type": "string",
-      "description": "RingCentral JWT Token for server-to-server auth"
+      "format": "date-time",
+      "description": "Token expiry time"
     },
-    "account_id": {
+    "ringcentral_account_id": {
       "type": "string",
-      "description": "RingCentral Account ID (optional, defaults to ~)"
+      "description": "RC account ID"
     },
     "extension_id": {
       "type": "string",
-      "description": "RingCentral Extension ID (optional, defaults to ~)"
+      "description": "RC extension ID"
+    },
+    "extension_number": {
+      "type": "string",
+      "description": "RC extension phone number"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "RC account display name"
     },
     "is_connected": {
       "type": "boolean",
-      "default": false,
-      "description": "Whether the connection has been verified"
+      "default": false
     },
     "last_synced_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Last successful sync timestamp"
+      "format": "date-time"
     }
   },
   "required": [

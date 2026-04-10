@@ -1,0 +1,54 @@
+{
+  "name": "RC_Message",
+  "type": "object",
+  "properties": {
+    "contact_id": {
+      "type": "string",
+      "description": "CRM contact ID"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "CRM user email"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "inbound",
+        "outbound"
+      ]
+    },
+    "content": {
+      "type": "string",
+      "description": "SMS message content"
+    },
+    "from_number": {
+      "type": "string"
+    },
+    "to_number": {
+      "type": "string"
+    },
+    "rc_message_id": {
+      "type": "string",
+      "description": "RingCentral message ID"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "delivered",
+        "failed",
+        "received"
+      ],
+      "default": "sent"
+    }
+  },
+  "required": [
+    "user_email",
+    "direction",
+    "content"
+  ]
+}
