@@ -16,6 +16,9 @@ export default function RingCentral() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDirection, setFilterDirection] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   useEffect(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); }, []);
 
