@@ -1,0 +1,97 @@
+{
+  "name": "RingCentral_Call",
+  "type": "object",
+  "properties": {
+    "call_id": {
+      "type": "string",
+      "description": "Unique call ID from RingCentral"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "Inbound",
+        "Outbound"
+      ]
+    },
+    "from_number": {
+      "type": "string"
+    },
+    "to_number": {
+      "type": "string"
+    },
+    "duration_seconds": {
+      "type": "number"
+    },
+    "call_status": {
+      "type": "string",
+      "enum": [
+        "Completed",
+        "Missed",
+        "Voicemail",
+        "Busy"
+      ],
+      "default": "Completed"
+    },
+    "recording_url": {
+      "type": "string",
+      "description": "URL to call recording"
+    },
+    "contact_id": {
+      "type": "string"
+    },
+    "company_id": {
+      "type": "string"
+    },
+    "deal_id": {
+      "type": "string",
+      "description": "Matched deal ID"
+    },
+    "call_datetime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "transcript": {
+      "type": "string",
+      "description": "Full call transcript text"
+    },
+    "transcript_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "completed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "summary": {
+      "type": "string",
+      "description": "AI-generated call summary"
+    },
+    "key_points": {
+      "type": "string",
+      "description": "Bullet-point key takeaways from call"
+    },
+    "sentiment": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "neutral",
+        "negative"
+      ],
+      "description": "Overall call sentiment"
+    },
+    "action_items": {
+      "type": "string",
+      "description": "Follow-up action items extracted by AI"
+    },
+    "ai_processed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When AI processing completed"
+    }
+  },
+  "required": [
+    "call_id"
+  ]
+}

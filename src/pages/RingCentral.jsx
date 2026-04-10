@@ -6,6 +6,7 @@ import { createPageUrl } from "@/utils";
 import { Phone, CheckCircle, XCircle, Search, Settings as SettingsIcon, Key, RefreshCw, Download } from "lucide-react";
 import RingCentralSetup from "../components/crm/RingCentralSetup";
 import RingCentralDialer from "../components/crm/RingCentralDialer";
+import CallAIInsights from "../components/crm/CallAIInsights";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import NeuroSelect from "../components/crm/NeuroSelect";
@@ -28,6 +29,8 @@ export default function RingCentral() {
         .catch(() => {});
     }).catch(() => {});
   }, []);
+
+  const [callsVersion, setCallsVersion] = useState(0);
 
   const { data: calls = [], isLoading, refetch: refetchCalls } = useQuery({
     queryKey: ['ringcentral_calls'],
@@ -238,7 +241,10 @@ export default function RingCentral() {
                       </td>
                       <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
                         {call.recording_url ? (
-                          <audio controls className="h-8 w-40" src={call.recording_url} />
+                          <div className="space-y-1">
+                            <audio controls className="h-8 w-40" src={call.recording_url} />
+                            <CallAIInsights call={call} onUpdated={() => { setCallsVersion(v => v + 1); refetchCalls(); }} />
+                          </div>
                         ) : (
                           <span className="text-xs" style={{ color: "#ccc" }}>—</span>
                         )}
