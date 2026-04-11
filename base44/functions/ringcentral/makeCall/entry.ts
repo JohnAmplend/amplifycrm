@@ -1,10 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 function toE164(number) {
+  if (!number) return '';
   const digits = number.replace(/\D/g, '');
+  if (number.startsWith('+')) return number;
   if (digits.startsWith('1') && digits.length === 11) return `+${digits}`;
   if (digits.length === 10) return `+1${digits}`;
-  if (number.startsWith('+')) return number;
   return `+${digits}`;
 }
 
@@ -18,7 +19,6 @@ async function getValidToken(base44, userEmail) {
   const expiresAt = new Date(config.expires_at);
   if (expiresAt - now > 5 * 60 * 1000) return { token: config.access_token, config };
 
-  // Refresh token
   const clientId = Deno.env.get('RINGCENTRAL_CLIENT_ID');
   const clientSecret = Deno.env.get('RINGCENTRAL_CLIENT_SECRET');
   const credentials = btoa(`${clientId}:${clientSecret}`);
@@ -35,7 +35,6 @@ async function getValidToken(base44, userEmail) {
     access_token: data.access_token,
     expires_at: new Date(Date.now() + data.expires_in * 1000).toISOString()
   });
-
   return { token: data.access_token, config: { ...config, access_token: data.access_token } };
 }
 
@@ -43,18 +42,17 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     const { to_number, from_number, contact_id } = await req.json();
-    if (!to_number) return Response.json({ error: 'to_number required' }, { status: 400 });
+    if (!to_number) return Response.json({ success: false, error: 'to_number required' });
 
     const { token, config } = await getValidToken(base44, user.email);
 
-    // Use stored extension number as from if not provided
     const fromNumber = toE164(from_number || config.extension_number || '');
     const toNumber = toE164(to_number);
 
-    console.log(`Making RingOut call from ${fromNumber} to ${toNumber}`);
+    if (!fromNumber) return Response.json({ success: false, error: 'No from number — check your RingCentral extension_number in config' });
 
     const payload = {
       from: { phoneNumber: fromNumber },
@@ -62,7 +60,7 @@ Deno.serve(async (req) => {
       playPrompt: false
     };
 
-    console.log('RingOut payload:', JSON.stringify(payload));
+    console.log('RingOut request payload:', JSON.stringify(payload));
 
     const res = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/ring-out', {
       method: 'POST',
@@ -73,19 +71,22 @@ Deno.serve(async (req) => {
       body: JSON.stringify(payload)
     });
 
-    const data = await res.json();
-    console.log('RingCentral API response:', JSON.stringify(data));
+    const rcStatus = res.status;
+    const rcData = await res.json();
+    console.log('RingCentral response status:', rcStatus);
+    console.log('RingCentral response body:', JSON.stringify(rcData));
 
     if (!res.ok) {
       return Response.json({
-        error: data.message || data.error_description || 'RingOut call failed',
-        rc_error: data
-      }, { status: res.status });
+        success: false,
+        status: rcStatus,
+        error: rcData.message || rcData.error_description || 'RingOut call failed',
+        rc_error: rcData
+      });
     }
 
-    // Log the call record
     await base44.asServiceRole.entities.RingCentral_Call.create({
-      call_id: data.id || `ringout-${Date.now()}`,
+      call_id: rcData.id || `ringout-${Date.now()}`,
       direction: 'Outbound',
       to_number: toNumber,
       from_number: fromNumber,
@@ -94,9 +95,9 @@ Deno.serve(async (req) => {
       call_datetime: new Date().toISOString()
     });
 
-    return Response.json({ success: true, call_id: data.id, status: data.status?.callStatus });
+    return Response.json({ success: true, call_id: rcData.id, status: rcData.status?.callStatus });
   } catch (error) {
-    console.error('makeCall error:', error.message);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('makeCall exception:', error.message);
+    return Response.json({ success: false, error: error.message });
   }
 });

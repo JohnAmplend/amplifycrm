@@ -19,7 +19,6 @@ async function getValidToken(base44, userEmail) {
   const expiresAt = new Date(config.expires_at);
   if (expiresAt - now > 5 * 60 * 1000) return { token: config.access_token, config };
 
-  // Refresh token
   const clientId = Deno.env.get('RINGCENTRAL_CLIENT_ID');
   const clientSecret = Deno.env.get('RINGCENTRAL_CLIENT_SECRET');
   const credentials = btoa(`${clientId}:${clientSecret}`);
@@ -43,17 +42,17 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     const { to_number, content, contact_id } = await req.json();
-    if (!to_number || !content) return Response.json({ error: 'to_number and content required' }, { status: 400 });
+    if (!to_number || !content) return Response.json({ success: false, error: 'to_number and content required' });
 
     const { token, config } = await getValidToken(base44, user.email);
 
     const fromNumber = toE164(config.extension_number || '');
     const toNumber = toE164(to_number);
 
-    if (!fromNumber) return Response.json({ error: 'No from number configured — check your RingCentral extension_number' }, { status: 400 });
+    if (!fromNumber) return Response.json({ success: false, error: 'No from number — check your RingCentral extension_number in config' });
 
     const payload = {
       from: { phoneNumber: fromNumber },
@@ -61,7 +60,7 @@ Deno.serve(async (req) => {
       text: content
     };
 
-    console.log('SMS payload:', JSON.stringify(payload));
+    console.log('SMS request payload:', JSON.stringify(payload));
 
     const res = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/sms', {
       method: 'POST',
@@ -72,17 +71,20 @@ Deno.serve(async (req) => {
       body: JSON.stringify(payload)
     });
 
-    const data = await res.json();
-    console.log('RingCentral SMS response:', JSON.stringify(data));
+    const rcStatus = res.status;
+    const rcData = await res.json();
+    console.log('RingCentral SMS response status:', rcStatus);
+    console.log('RingCentral SMS response body:', JSON.stringify(rcData));
 
     if (!res.ok) {
       return Response.json({
-        error: data.message || data.error_description || 'SMS send failed',
-        rc_error: data
-      }, { status: res.status });
+        success: false,
+        status: rcStatus,
+        error: rcData.message || rcData.error_description || 'SMS send failed',
+        rc_error: rcData
+      });
     }
 
-    // Store in RC_Message
     await base44.asServiceRole.entities.RC_Message.create({
       contact_id: contact_id || null,
       user_email: user.email,
@@ -90,14 +92,14 @@ Deno.serve(async (req) => {
       content,
       from_number: fromNumber,
       to_number: toNumber,
-      rc_message_id: data.id,
+      rc_message_id: rcData.id,
       timestamp: new Date().toISOString(),
       status: 'sent'
     });
 
-    return Response.json({ success: true, messageId: data.id });
+    return Response.json({ success: true, messageId: rcData.id });
   } catch (error) {
-    console.error('sendSMS error:', error.message);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('sendSMS exception:', error.message);
+    return Response.json({ success: false, error: error.message });
   }
 });
