@@ -8,6 +8,8 @@ export default function RingCentralDialer({ contactId, phoneNumber, contactName 
   const [toNumber, setToNumber] = useState(phoneNumber || "");
   const [smsText, setSmsText] = useState("");
   const [callStatus, setCallStatus] = useState(null); // null | calling | connected | failed
+  const [callError, setCallError] = useState(null);
+  const [smsError, setSmsError] = useState(null);
   const [smsSending, setSmsSending] = useState(false);
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -31,6 +33,7 @@ export default function RingCentralDialer({ contactId, phoneNumber, contactName 
   const handleCall = async () => {
     if (!toNumber) return;
     setCallStatus("calling");
+    setCallError(null);
     try {
       const res = await base44.functions.invoke("ringcentral/makeCall", {
         to_number: toNumber,
@@ -40,26 +43,39 @@ export default function RingCentralDialer({ contactId, phoneNumber, contactName 
         setCallStatus("connected");
         setTimeout(() => setCallStatus(null), 4000);
       } else {
+        const errMsg = res.data?.rc_error?.message || res.data?.error || 'Unknown error';
+        const errCode = res.data?.rc_error?.errorCode || res.data?.rc_error?.code || '';
+        setCallError(errCode ? `${errMsg} (${errCode})` : errMsg);
         setCallStatus("failed");
-        setTimeout(() => setCallStatus(null), 4000);
+        setTimeout(() => { setCallStatus(null); setCallError(null); }, 6000);
       }
-    } catch {
+    } catch (e) {
+      setCallError(e.message || 'Request failed');
       setCallStatus("failed");
-      setTimeout(() => setCallStatus(null), 4000);
+      setTimeout(() => { setCallStatus(null); setCallError(null); }, 6000);
     }
   };
 
   const handleSendSMS = async () => {
     if (!toNumber || !smsText.trim()) return;
     setSmsSending(true);
-    const res = await base44.functions.invoke("ringcentral/sendSMS", {
-      to_number: toNumber,
-      content: smsText.trim(),
-      contact_id: contactId || null
-    }).catch(() => null);
-    if (res?.data?.success) {
-      setSmsText("");
-      await loadMessages();
+    setSmsError(null);
+    try {
+      const res = await base44.functions.invoke("ringcentral/sendSMS", {
+        to_number: toNumber,
+        content: smsText.trim(),
+        contact_id: contactId || null
+      });
+      if (res?.data?.success) {
+        setSmsText("");
+        await loadMessages();
+      } else {
+        const errMsg = res?.data?.rc_error?.message || res?.data?.error || 'SMS failed';
+        const errCode = res?.data?.rc_error?.errorCode || res?.data?.rc_error?.code || '';
+        setSmsError(errCode ? `${errMsg} (${errCode})` : errMsg);
+      }
+    } catch (e) {
+      setSmsError(e.message || 'Request failed');
     }
     setSmsSending(false);
   };
@@ -67,7 +83,7 @@ export default function RingCentralDialer({ contactId, phoneNumber, contactName 
   const callStatusConfig = {
     calling: { color: "#fa8c16", icon: <Loader2 className="w-4 h-4 animate-spin" />, label: "Ringing..." },
     connected: { color: "#52c41a", icon: <PhoneCall className="w-4 h-4" />, label: "Call initiated!" },
-    failed: { color: "#ef4444", icon: <PhoneOff className="w-4 h-4" />, label: "Call failed" }
+    failed: { color: "#ef4444", icon: <PhoneOff className="w-4 h-4" />, label: callError ? `Failed: ${callError}` : "Call failed" }
   };
 
   return (
@@ -169,6 +185,11 @@ export default function RingCentralDialer({ contactId, phoneNumber, contactName 
                   onChange={e => setSmsText(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendSMS(); } }}
                 />
+                {smsError && (
+                  <div className="text-xs p-2 rounded-lg" style={{ background: "#fff1f0", color: "#ef4444", border: "1px solid #ffa39e" }}>
+                    ⚠ {smsError}
+                  </div>
+                )}
                 <NeuroButton
                   variant="primary"
                   onClick={handleSendSMS}
@@ -176,8 +197,8 @@ export default function RingCentralDialer({ contactId, phoneNumber, contactName 
                 >
                   {smsSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </NeuroButton>
-              </div>
-            </div>
+                </div>
+                </div>
           )}
         </div>
       )}
