@@ -20,6 +20,8 @@ export default function RingCentral() {
   const [filterDirection, setFilterDirection] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [contactSearch, setContactSearch] = useState("");
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -39,7 +41,7 @@ export default function RingCentral() {
 
   const { data: contacts = [] } = useQuery({
     queryKey: ['contacts_rc'],
-    queryFn: () => base44.entities.Contact.list()
+    queryFn: () => base44.entities.Contact.list('-created_date', 200)
   });
 
   const handleSync = async () => {
@@ -143,10 +145,56 @@ export default function RingCentral() {
           </NeuroCard>
         </div>
 
-        {/* Quick Dialer — only when connected */}
+        {/* Contacts + Dialer Panel — only when connected */}
         {rcConfig?.is_connected && (
-          <div className="mb-6">
-            <RingCentralDialer />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Contact Quick Access */}
+            <NeuroCard className="lg:col-span-1">
+              <h2 className="text-base font-bold mb-3" style={{ color: "#555" }}>Quick Dial Contacts</h2>
+              <input
+                type="text"
+                placeholder="Search contacts..."
+                value={contactSearch}
+                onChange={e => setContactSearch(e.target.value)}
+                className="ampvibe-input w-full mb-3"
+              />
+              <div className="space-y-1 max-h-80 overflow-y-auto">
+                {contacts
+                  .filter(c => (c.phone || c.mobile) && (
+                    !contactSearch ||
+                    `${c.first_name} ${c.last_name}`.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                    (c.phone || '').includes(contactSearch) ||
+                    (c.mobile || '').includes(contactSearch)
+                  ))
+                  .slice(0, 50)
+                  .map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedContact(c)}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-all text-sm ${
+                        selectedContact?.id === c.id ? 'ampvibe-button active' : 'ampvibe-button'
+                      }`}
+                    >
+                      <p className="font-medium" style={{ color: "#444" }}>{c.first_name} {c.last_name}</p>
+                      {c.phone && <p className="text-xs" style={{ color: "#888" }}>📞 {c.phone}</p>}
+                      {c.mobile && c.mobile !== c.phone && <p className="text-xs" style={{ color: "#888" }}>📱 {c.mobile}</p>}
+                    </button>
+                  ))
+                }
+                {contacts.filter(c => c.phone || c.mobile).length === 0 && (
+                  <p className="text-center text-xs py-6" style={{ color: "#bbb" }}>No contacts with phone numbers</p>
+                )}
+              </div>
+            </NeuroCard>
+
+            {/* Dialer */}
+            <div className="lg:col-span-2">
+              <RingCentralDialer
+                contactId={selectedContact?.id}
+                phoneNumber={selectedContact?.phone || selectedContact?.mobile || ""}
+                contactName={selectedContact ? `${selectedContact.first_name} ${selectedContact.last_name}` : undefined}
+              />
+            </div>
           </div>
         )}
 
