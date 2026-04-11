@@ -49,10 +49,31 @@ Deno.serve(async (req) => {
 
     const { token, config } = await getValidToken(base44, user.email);
 
-    const fromNumber = toE164(config.extension_number || '');
+    // Resolve from number: stored extension_number > fetch live
+    let fromRaw = config.extension_number || '';
+
+    if (!fromRaw) {
+      const phoneRes = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/phone-number', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const phoneData = phoneRes.ok ? await phoneRes.json() : {};
+      const records = phoneData.records || [];
+      const direct = records.find(p => p.usageType === 'DirectNumber' || p.type === 'VoiceFax');
+      fromRaw = (direct || records[0])?.phoneNumber || '';
+
+      if (fromRaw && config.id) {
+        await base44.asServiceRole.entities.RingCentral_Config.update(config.id, { extension_number: fromRaw });
+      }
+    }
+
+    const fromNumber = toE164(fromRaw);
     const toNumber = toE164(to_number);
 
-    if (!fromNumber) return Response.json({ success: false, error: 'No from number — check your RingCentral extension_number in config' });
+    console.log('sendSMS from:', fromNumber, 'to:', toNumber);
+
+    if (!fromNumber) {
+      return Response.json({ success: false, error: 'No RingCentral phone number assigned to this user. Please check your RingCentral account has a DID number.' });
+    }
 
     const payload = {
       from: { phoneNumber: fromNumber },
@@ -64,17 +85,13 @@ Deno.serve(async (req) => {
 
     const res = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/sms', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     const rcStatus = res.status;
     const rcData = await res.json();
-    console.log('RingCentral SMS response status:', rcStatus);
-    console.log('RingCentral SMS response body:', JSON.stringify(rcData));
+    console.log('RingCentral SMS response status:', rcStatus, 'body:', JSON.stringify(rcData));
 
     if (!res.ok) {
       return Response.json({

@@ -38,6 +38,25 @@ Deno.serve(async (req) => {
     });
     const extData = extRes.ok ? await extRes.json() : {};
 
+    // Fetch actual DID phone numbers assigned to this extension
+    const phoneRes = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/phone-number', {
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+    });
+    const phoneData = phoneRes.ok ? await phoneRes.json() : {};
+    const phoneRecords = phoneData.records || [];
+
+    console.log('Phone number records:', JSON.stringify(phoneRecords));
+
+    // Prefer DirectNumber, fall back to first available
+    const directNumber = phoneRecords.find(p => p.usageType === 'DirectNumber' || p.type === 'VoiceFax');
+    const anyNumber = phoneRecords[0];
+    const resolvedPhoneNumber = (directNumber || anyNumber)?.phoneNumber ||
+      extData.contact?.businessPhone ||
+      extData.extensionNumber ||
+      '';
+
+    console.log('Resolved extension_number:', resolvedPhoneNumber);
+
     const configData = {
       user_email: user.email,
       access_token: tokenData.access_token,
@@ -45,7 +64,7 @@ Deno.serve(async (req) => {
       expires_at: expiresAt,
       ringcentral_account_id: extData.account?.id || '~',
       extension_id: extData.id || '~',
-      extension_number: extData.contact?.businessPhone || extData.extensionNumber || '',
+      extension_number: resolvedPhoneNumber,
       display_name: extData.name || extData.contact?.firstName || '',
       is_connected: true,
       last_synced_at: new Date().toISOString()
