@@ -1,14 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+function toE164(number) {
+  if (!number) return '';
+  const digits = number.replace(/\D/g, '');
+  if (number.startsWith('+')) return number;
+  if (digits.startsWith('1') && digits.length === 11) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  return `+${digits}`;
+}
+
 async function getValidToken(base44, userEmail) {
   const configs = await base44.asServiceRole.entities.RingCentral_Config.filter({ user_email: userEmail });
   const config = configs[0];
-  if (!config) throw new Error('RingCentral not connected');
+  if (!config) throw new Error('RingCentral not connected for this user');
+  if (!config.access_token) throw new Error('No access token — please reconnect RingCentral');
 
   const now = new Date();
   const expiresAt = new Date(config.expires_at);
   if (expiresAt - now > 5 * 60 * 1000) return { token: config.access_token, config };
 
+  // Refresh token
   const clientId = Deno.env.get('RINGCENTRAL_CLIENT_ID');
   const clientSecret = Deno.env.get('RINGCENTRAL_CLIENT_SECRET');
   const credentials = btoa(`${clientId}:${clientSecret}`);
@@ -20,12 +31,12 @@ async function getValidToken(base44, userEmail) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error_description || 'Token refresh failed');
-  const newToken = data.access_token;
+
   await base44.asServiceRole.entities.RingCentral_Config.update(config.id, {
-    access_token: newToken,
+    access_token: data.access_token,
     expires_at: new Date(Date.now() + data.expires_in * 1000).toISOString()
   });
-  return { token: newToken, config };
+  return { token: data.access_token, config: { ...config, access_token: data.access_token } };
 }
 
 Deno.serve(async (req) => {
@@ -39,18 +50,37 @@ Deno.serve(async (req) => {
 
     const { token, config } = await getValidToken(base44, user.email);
 
+    const fromNumber = toE164(config.extension_number || '');
+    const toNumber = toE164(to_number);
+
+    if (!fromNumber) return Response.json({ error: 'No from number configured — check your RingCentral extension_number' }, { status: 400 });
+
+    const payload = {
+      from: { phoneNumber: fromNumber },
+      to: [{ phoneNumber: toNumber }],
+      text: content
+    };
+
+    console.log('SMS payload:', JSON.stringify(payload));
+
     const res = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/sms', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: { phoneNumber: config.extension_number || undefined },
-        to: [{ phoneNumber: to_number }],
-        text: content
-      })
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
-    if (!res.ok) return Response.json({ error: data.message || 'SMS failed' }, { status: 400 });
+    console.log('RingCentral SMS response:', JSON.stringify(data));
+
+    if (!res.ok) {
+      return Response.json({
+        error: data.message || data.error_description || 'SMS send failed',
+        rc_error: data
+      }, { status: res.status });
+    }
 
     // Store in RC_Message
     await base44.asServiceRole.entities.RC_Message.create({
@@ -58,8 +88,8 @@ Deno.serve(async (req) => {
       user_email: user.email,
       direction: 'outbound',
       content,
-      from_number: config.extension_number || '',
-      to_number,
+      from_number: fromNumber,
+      to_number: toNumber,
       rc_message_id: data.id,
       timestamp: new Date().toISOString(),
       status: 'sent'
@@ -67,6 +97,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, messageId: data.id });
   } catch (error) {
+    console.error('sendSMS error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
