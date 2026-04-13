@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Download, Calendar, BarChart3, FileText, Users, Sparkles, TrendingUp, AlertTriangle, Target, Lightbulb, RefreshCw, MessageCircle, Brain, Search, Heart, ThumbsUp, ThumbsDown, Smile, Frown, Meh } from "lucide-react";
+import { ArrowLeft, Download, Calendar, BarChart3, FileText, Users, Sparkles, TrendingUp, AlertTriangle, Target, Lightbulb, RefreshCw, MessageCircle, Brain, Search, Heart, ThumbsUp, ThumbsDown, Smile, Frown, Meh, DollarSign } from "lucide-react";
 import NeuroCard from "../components/crm/NeuroCard";
 import NeuroButton from "../components/crm/NeuroButton";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';

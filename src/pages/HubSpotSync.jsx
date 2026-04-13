@@ -89,35 +89,33 @@ export default function HubSpotSync() {
     }
   };
 
-  const createSyncMutation = (functionName, key, queryKeys) => {
-    return useMutation({
-      mutationFn: async () => {
-        const response = await base44.functions.invoke(functionName, {});
-        return response.data;
-      },
-      onSuccess: (data) => {
-        setSyncResults(prev => ({ ...prev, [key]: data }));
-        queryKeys.forEach(qk => queryClient.invalidateQueries([qk]));
-        queryClient.invalidateQueries(['sync_logs']);
-        loadHubSpotCounts();
-      },
-      onError: (error) => {
-        setSyncResults(prev => ({ ...prev, [key]: {
-          success: false,
-          error: error.message || `Failed to sync ${key}`
-        }}));
-      }
-    });
-  };
+  const makeMutationConfig = (functionName, key, queryKeys) => ({
+    mutationFn: async () => {
+      const response = await base44.functions.invoke(functionName, {});
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setSyncResults(prev => ({ ...prev, [key]: data }));
+      queryKeys.forEach(qk => queryClient.invalidateQueries([qk]));
+      queryClient.invalidateQueries(['sync_logs']);
+      loadHubSpotCounts();
+    },
+    onError: (error) => {
+      setSyncResults(prev => ({ ...prev, [key]: {
+        success: false,
+        error: error.message || `Failed to sync ${key}`
+      }}));
+    }
+  });
 
-  const contactsMutation = createSyncMutation('syncHubSpotContacts', 'contacts', ['contacts']);
-  const companiesMutation = createSyncMutation('syncHubSpotCompanies', 'companies', ['companies']);
-  const dealsMutation = createSyncMutation('syncHubSpotDeals', 'deals', ['deals']);
-  const ticketsMutation = createSyncMutation('syncHubSpotTickets', 'tickets', ['tickets']);
-  const campaignsMutation = createSyncMutation('syncHubSpotEmailCampaigns', 'campaigns', ['campaigns']);
-  const formsMutation = createSyncMutation('syncHubSpotForms', 'forms', ['forms']);
-  const engagementsMutation = createSyncMutation('syncHubSpotEngagements', 'engagements', ['activities']);
-  const tasksMutation = createSyncMutation('syncHubSpotTasks', 'tasks', ['tasks']);
+  const contactsMutation = useMutation(makeMutationConfig('syncHubSpotContacts', 'contacts', ['contacts']));
+  const companiesMutation = useMutation(makeMutationConfig('syncHubSpotCompanies', 'companies', ['companies']));
+  const dealsMutation = useMutation(makeMutationConfig('syncHubSpotDeals', 'deals', ['deals']));
+  const ticketsMutation = useMutation(makeMutationConfig('syncHubSpotTickets', 'tickets', ['tickets']));
+  const campaignsMutation = useMutation(makeMutationConfig('syncHubSpotEmailCampaigns', 'campaigns', ['campaigns']));
+  const formsMutation = useMutation(makeMutationConfig('syncHubSpotForms', 'forms', ['forms']));
+  const engagementsMutation = useMutation(makeMutationConfig('syncHubSpotEngagements', 'engagements', ['activities']));
+  const tasksMutation = useMutation(makeMutationConfig('syncHubSpotTasks', 'tasks', ['tasks']));
 
   const allMutations = [contactsMutation, companiesMutation, dealsMutation, ticketsMutation, campaignsMutation, formsMutation, engagementsMutation, tasksMutation];
   const isAnySyncing = allMutations.some(m => m.isPending);

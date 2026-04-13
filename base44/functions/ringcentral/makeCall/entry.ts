@@ -9,16 +9,29 @@ function toE164(number) {
   return `+${digits}`;
 }
 
-async function getValidToken(base44, userEmail) {
-  const configs = await base44.asServiceRole.entities.RingCentral_Config.filter({ user_email: userEmail });
+async function getValidToken(base44, user) {
+  console.log('Looking up config for user.id:', user.id, 'user.email:', user.email);
+
+  // Try by user_id first, then fall back to user_email
+  let configs = await base44.asServiceRole.entities.RingCentral_Config.filter({ user_id: user.id });
+  if (!configs.length) {
+    configs = await base44.asServiceRole.entities.RingCentral_Config.filter({ user_email: user.email });
+  }
+
+  // Use most recent
+  configs.sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date));
   const config = configs[0];
-  if (!config) throw new Error('RingCentral not connected for this user');
+
+  console.log('Config found:', !!config, config ? `id=${config.id} has_token=${!!config.access_token}` : 'none');
+
+  if (!config) throw new Error('No RingCentral connection found for this user');
   if (!config.access_token) throw new Error('No access token — please reconnect RingCentral');
 
   const now = new Date();
   const expiresAt = new Date(config.expires_at);
   if (expiresAt - now > 5 * 60 * 1000) return { token: config.access_token, config };
 
+  // Refresh token
   const clientId = Deno.env.get('RINGCENTRAL_CLIENT_ID');
   const clientSecret = Deno.env.get('RINGCENTRAL_CLIENT_SECRET');
   const credentials = btoa(`${clientId}:${clientSecret}`);
@@ -47,12 +60,10 @@ Deno.serve(async (req) => {
     const { to_number, from_number, contact_id } = await req.json();
     if (!to_number) return Response.json({ success: false, error: 'to_number required' });
 
-    const { token, config } = await getValidToken(base44, user.email);
+    const { token, config } = await getValidToken(base44, user);
 
-    // Resolve from number: explicit override > stored extension_number > fetch live
     let fromRaw = from_number || config.extension_number || '';
 
-    // If still empty, try fetching live from RingCentral
     if (!fromRaw) {
       const phoneRes = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/phone-number', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -61,8 +72,6 @@ Deno.serve(async (req) => {
       const records = phoneData.records || [];
       const direct = records.find(p => p.usageType === 'DirectNumber' || p.type === 'VoiceFax');
       fromRaw = (direct || records[0])?.phoneNumber || '';
-
-      // Persist it for future calls
       if (fromRaw && config.id) {
         await base44.asServiceRole.entities.RingCentral_Config.update(config.id, { extension_number: fromRaw });
       }
@@ -77,13 +86,8 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'No RingCentral phone number assigned to this user. Please check your RingCentral account has a DID number.' });
     }
 
-    const payload = {
-      from: { phoneNumber: fromNumber },
-      to: { phoneNumber: toNumber },
-      playPrompt: false
-    };
-
-    console.log('RingOut request payload:', JSON.stringify(payload));
+    const payload = { from: { phoneNumber: fromNumber }, to: { phoneNumber: toNumber }, playPrompt: false };
+    console.log('RingOut payload:', JSON.stringify(payload));
 
     const res = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/ring-out', {
       method: 'POST',
@@ -96,12 +100,7 @@ Deno.serve(async (req) => {
     console.log('RingCentral response status:', rcStatus, 'body:', JSON.stringify(rcData));
 
     if (!res.ok) {
-      return Response.json({
-        success: false,
-        status: rcStatus,
-        error: rcData.message || rcData.error_description || 'RingOut call failed',
-        rc_error: rcData
-      });
+      return Response.json({ success: false, status: rcStatus, error: rcData.message || rcData.error_description || 'RingOut failed', rc_error: rcData });
     }
 
     await base44.asServiceRole.entities.RingCentral_Call.create({

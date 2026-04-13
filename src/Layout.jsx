@@ -55,18 +55,15 @@ export default function Layout({ children, currentPageName }) {
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
   const [activeMegaMenu, setActiveMegaMenu] = React.useState(null);
 
-  // Skip layout for widget only - render standalone
-  if (currentPageName === "ChatWidget") {
-    return <>{children}</>;
-  }
-
-  // Public pages that don't require auth
   const isPublicPage = currentPageName === "Home" || currentPageName === "Privacy" || currentPageName === "Terms";
+  const isChatWidget = currentPageName === "ChatWidget";
 
   React.useEffect(() => {
+    if (isChatWidget) return;
+
     let interval;
     let loadingTimeout;
-    
+
     const checkAuth = async () => {
       try {
         loadingTimeout = setTimeout(() => {
@@ -80,9 +77,8 @@ export default function Layout({ children, currentPageName }) {
         clearTimeout(loadingTimeout);
         setUser(u);
         setLoading(false);
-        // Track last login time
         base44.auth.updateMe({ last_login: new Date().toISOString() }).catch(() => {});
-        
+
         const fetchNotifications = async () => {
           try {
             const allNotifications = await base44.entities.Notifications.filter({ user_id: u.email }, '-created_date', 5);
@@ -93,7 +89,7 @@ export default function Layout({ children, currentPageName }) {
             console.error('Failed to fetch notifications:', e);
           }
         };
-        
+
         await fetchNotifications();
         interval = setInterval(fetchNotifications, 30000);
       } catch (error) {
@@ -106,12 +102,17 @@ export default function Layout({ children, currentPageName }) {
     };
 
     checkAuth();
-    
+
     return () => {
       if (interval) clearInterval(interval);
       if (loadingTimeout) clearTimeout(loadingTimeout);
     };
-  }, [isPublicPage]);
+  }, [isPublicPage, isChatWidget]);
+
+  // Skip layout for widget only - render standalone
+  if (isChatWidget) {
+    return <>{children}</>;
+  }
 
   // Show frozen screen if account is suspended
   if (!loading && user?.is_frozen) {
@@ -121,7 +122,7 @@ export default function Layout({ children, currentPageName }) {
   // Show loading spinner only for protected pages
   if (loading && !isPublicPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ 
+      <div className="min-h-screen flex items-center justify-center" style={{
         background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)'
       }}>
         <div className="text-center">
@@ -303,7 +304,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ 
+    <div className="min-h-screen flex flex-col" style={{
       background: 'linear-gradient(135deg, #F5F7FA 0%, #E6F0FA 100%)'
     }}>
       <style>{`
@@ -338,7 +339,7 @@ export default function Layout({ children, currentPageName }) {
           {/* Logo & Brand */}
           <div className="flex items-center gap-6">
             <Link to={isPublicPage ? createPageUrl("Home") : createPageUrl("Dashboard")}>
-              <h1 className="text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" style={{ 
+              <h1 className="text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" style={{
                 background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -351,69 +352,67 @@ export default function Layout({ children, currentPageName }) {
             {/* Desktop Mega Menu - Show for authenticated users */}
             {user && (
               <nav className="hidden lg:flex items-center gap-1">
-              {Object.keys(megaMenuData).map((category) => (
-                <div 
-                  key={category}
-                  className="relative"
-                  onMouseEnter={() => setActiveMegaMenu(category)}
-                  onMouseLeave={() => setActiveMegaMenu(null)}
-                >
-                  <button className="ampvibe-button px-4 py-2 flex items-center gap-2">
-                    {category}
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
+                {Object.keys(megaMenuData).map((category) => (
+                  <div
+                    key={category}
+                    className="relative"
+                    onMouseEnter={() => setActiveMegaMenu(category)}
+                    onMouseLeave={() => setActiveMegaMenu(null)}
+                  >
+                    <button className="ampvibe-button px-4 py-2 flex items-center gap-2">
+                      {category}
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
 
-                  {/* Mega Menu Dropdown */}
-                  <div className={`mega-menu ${activeMegaMenu === category ? 'active' : ''}`}>
-                    <div className="ampvibe-card mt-2 p-6 shadow-2xl" style={{ 
-                      minWidth: '600px',
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      backdropFilter: 'blur(30px)',
-                      WebkitBackdropFilter: 'blur(30px)'
-                    }}>
-                      <div className="grid grid-cols-2 gap-6">
-                        {megaMenuData[category].sections.map((section) => (
-                          <div key={section.title}>
-                            <h3 className="font-bold mb-3 text-sm" style={{ color: "#1E3A8A" }}>
-                              {section.title}
-                            </h3>
-                            <div className="space-y-1">
-                              {section.items.map((item) => (
-                                <Link
-                                  key={item.page}
-                                  to={createPageUrl(item.page)}
-                                  className={`ampvibe-button ${isActive(item.page) ? 'active' : ''} flex items-center gap-3 px-3 py-2 w-full text-left text-sm`}
-                                  onClick={() => setActiveMegaMenu(null)}
-                                >
-                                  <item.icon className="w-4 h-4" />
-                                  <span>{item.name}</span>
-                                </Link>
-                              ))}
+                    <div className={`mega-menu ${activeMegaMenu === category ? 'active' : ''}`}>
+                      <div className="ampvibe-card mt-2 p-6 shadow-2xl" style={{
+                        minWidth: '600px',
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        backdropFilter: 'blur(30px)',
+                        WebkitBackdropFilter: 'blur(30px)'
+                      }}>
+                        <div className="grid grid-cols-2 gap-6">
+                          {megaMenuData[category].sections.map((section) => (
+                            <div key={section.title}>
+                              <h3 className="font-bold mb-3 text-sm" style={{ color: "#1E3A8A" }}>
+                                {section.title}
+                              </h3>
+                              <div className="space-y-1">
+                                {section.items.map((item) => (
+                                  <Link
+                                    key={item.page}
+                                    to={createPageUrl(item.page)}
+                                    className={`ampvibe-button ${isActive(item.page) ? 'active' : ''} flex items-center gap-3 px-3 py-2 w-full text-left text-sm`}
+                                    onClick={() => setActiveMegaMenu(null)}
+                                  >
+                                    <item.icon className="w-4 h-4" />
+                                    <span>{item.name}</span>
+                                  </Link>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
               </nav>
-              )}
+            )}
 
-              {/* Mobile Menu Toggle - Only show for authenticated users */}
-              {user && (
-            <button
-              className="lg:hidden ampvibe-button p-2"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-            >
-              {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* Mobile Menu Toggle */}
+            {user && (
+              <button
+                className="lg:hidden ampvibe-button p-2"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+              >
+                {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             )}
           </div>
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
-            {/* Show login button for public pages without auth */}
             {!user && isPublicPage && (
               <button
                 className="ampvibe-button-primary px-6 py-2"
@@ -426,7 +425,7 @@ export default function Layout({ children, currentPageName }) {
             {user && (
               <>
                 <div className="relative">
-                  <button 
+                  <button
                     className="ampvibe-button p-3 relative"
                     onClick={() => setShowNotifications(!showNotifications)}
                   >
@@ -448,7 +447,7 @@ export default function Layout({ children, currentPageName }) {
                     }}>
                       <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
                         <h3 className="font-bold text-sm" style={{ color: "#1E3A8A" }}>Notifications</h3>
-                        <Link 
+                        <Link
                           to={createPageUrl("Notifications")}
                           className="text-xs hover:opacity-70 transition-opacity"
                           style={{ color: "#00A86B" }}
@@ -464,7 +463,7 @@ export default function Layout({ children, currentPageName }) {
                           </div>
                         ) : (
                           notifications.map((notif) => (
-                            <Link 
+                            <Link
                               key={notif.id}
                               to={notif.action_url ? createPageUrl(notif.action_url.split('?')[0]) + (notif.action_url.includes('?') ? '?' + notif.action_url.split('?')[1] : '') : "#"}
                               className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors block ${!notif.is_read ? 'bg-blue-50' : ''}`}
@@ -521,7 +520,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </div>
 
-        {/* Mobile Menu - Only for authenticated users */}
+        {/* Mobile Menu */}
         {user && showMobileMenu && (
           <div className="lg:hidden border-t px-4 py-4" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
             <Link
@@ -561,54 +560,52 @@ export default function Layout({ children, currentPageName }) {
               </div>
             ))}
 
-            {user && (
-              <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+            <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
+              <Link
+                to={createPageUrl("UserProfile")}
+                className="flex items-center gap-3 mb-3"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center" style={{
+                  background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
+                  border: '2px solid rgba(255, 255, 255, 0.5)'
+                }}>
+                  <span className="font-semibold text-white">
+                    {user.full_name?.charAt(0) || user.email?.charAt(0)}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: "#333" }}>
+                    {user.full_name || "User"}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: "#666" }}>
+                    {user.role || "User"}
+                  </p>
+                </div>
+              </Link>
+              <Link
+                to={createPageUrl("UserProfile")}
+                className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2 mb-2"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <UserIcon className="w-4 h-4" />
+                <span className="text-sm">Account Settings</span>
+              </Link>
+              {user?.role === 'admin' && (
                 <Link
-                  to={createPageUrl("UserProfile")}
-                  className="flex items-center gap-3 mb-3"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <div className="ampvibe-inset w-10 h-10 rounded-full flex items-center justify-center" style={{
-                    background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
-                    border: '2px solid rgba(255, 255, 255, 0.5)'
-                  }}>
-                    <span className="font-semibold text-white">
-                      {user.full_name?.charAt(0) || user.email?.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: "#333" }}>
-                      {user.full_name || "User"}
-                    </p>
-                    <p className="text-xs truncate" style={{ color: "#666" }}>
-                      {user.role || "User"}
-                    </p>
-                  </div>
-                </Link>
-                <Link
-                  to={createPageUrl("UserProfile")}
+                  to={createPageUrl("UserManagement")}
                   className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2 mb-2"
                   onClick={() => setShowMobileMenu(false)}
                 >
-                  <UserIcon className="w-4 h-4" />
-                  <span className="text-sm">Account Settings</span>
+                  <Users className="w-4 h-4" />
+                  <span className="text-sm">User Management</span>
                 </Link>
-                {user?.role === 'admin' && (
-                  <Link
-                    to={createPageUrl("UserManagement")}
-                    className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2 mb-2"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <Users className="w-4 h-4" />
-                    <span className="text-sm">User Management</span>
-                  </Link>
-                )}
-                <button onClick={handleLogout} className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2">
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm">Logout</span>
-                </button>
-              </div>
-            )}
+              )}
+              <button onClick={handleLogout} className="ampvibe-button w-full px-4 py-2 flex items-center justify-center gap-2">
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm">Logout</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -616,7 +613,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">{children}</div>
 
-      {/* Footer with Privacy & Terms */}
+      {/* Footer */}
       <div className="ampvibe-card m-4 mt-0">
         <div className="px-6 py-4 text-center border-t" style={{ borderColor: "rgba(30, 58, 138, 0.1)" }}>
           <div className="flex justify-center gap-6 text-sm">
@@ -630,14 +627,9 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </div>
 
-      {/* AI Assistant - Global */}
       <AIAssistant />
-
-      {/* Onboarding Assistant - Shows for new users */}
       <OnboardingAssistant />
-
-      {/* Toast Notifications */}
       <Toaster position="top-right" />
-      </div>
-      );
-      }
+    </div>
+  );
+}
