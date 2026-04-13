@@ -345,7 +345,7 @@ export default function Layout({ children, currentPageName }) {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
               }}>
-                AmplifyCRM
+                test john website
               </h1>
             </Link>
 
