@@ -339,14 +339,6 @@ export default function Layout({ children, currentPageName }) {
           {/* Logo & Brand */}
           <div className="flex items-center gap-6">
             <Link to={isPublicPage ? createPageUrl("Home") : createPageUrl("Dashboard")}>
-              <h1 className="text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" style={{
-                background: 'linear-gradient(135deg, #1E3A8A 0%, #00A86B 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>
-                test john website
-              </h1>
             </Link>
 
             {/* Desktop Mega Menu - Show for authenticated users */}
